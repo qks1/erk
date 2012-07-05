@@ -6,6 +6,7 @@
 #include "helpers.h"
 #include "switcher.h"
 #include "catalog.h"
+#include "table.h"
 
 /*
   Класс поисковика.
@@ -18,7 +19,7 @@ public:
     explicit Searcher(QWidget *parent = 0);
     
 private:
-    QTableWidget *table;                    // таблица "белого экрана"
+    Table *white_table;                     // таблица "белого экрана"
     Catalog *catalog;                       // каталог групп
     QSplitter *splitter;                    // разделитель каталога и таблицы
     Filters filters;                        // набор фильтров (см. класс Filters)
@@ -31,7 +32,6 @@ private:
     inline void initialize();               // инициализация переменных
     void resizeEvent(QResizeEvent *);       // реакция на изменение размеров окна
 
-    switcher *swtch;
 
     // ПЕРЕМЕННЫЕ:
 

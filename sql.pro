@@ -14,11 +14,13 @@ HEADERS += \
     constants.h \
     helpers.h \
     switcher.h \
-    catalog.h
+    catalog.h \
+    table.h
 SOURCES += sql.cpp \
     searcher.cpp \
     filters.cpp \
     helpers.cpp \
     switcher.cpp \
     catalog.cpp \
-    constants.cpp
+    constants.cpp \
+    table.cpp

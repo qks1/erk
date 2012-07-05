@@ -2,12 +2,17 @@
 #include <QtSql>
 #include "searcher.h"
 #include "helpers.h"
+#include "constants.h"
 
 int main(int argc, char **argv){
     QApplication app(argc,argv);
 
     // устанавливаем кодировку строк
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("utf-8"));
+
+    // инициализируем глобальные переменные из constants.cpp
+    init_vars();
+
 
     // создаём объект базы данных и соединяемся с ним
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");

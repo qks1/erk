@@ -22,6 +22,16 @@ void Filters::set_columns_filter(QStringList c){
     this->columns = c;
 }
 
+// установить значение переменной begin
+void Filters::set_begin(int value){
+    this->begin = value;
+}
+
+// установить значение переменной end
+void Filters::set_end(int value){
+    this->end = value;
+}
+
 // вернуть значение group_filter
 int Filters::group_filter(){
     return this->group;
@@ -30,4 +40,14 @@ int Filters::group_filter(){
 // вернуть значение columns_filter
 QStringList Filters::columns_filter(){
     return this->columns;
+}
+
+// вернуть значение begin
+int Filters::begin_value(){
+    return this->begin;
+}
+
+// вернуть значение end
+int Filters::end_value(){
+    return this->end;
 }

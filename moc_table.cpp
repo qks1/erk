@@ -1,15 +1,15 @@
 /****************************************************************************
-** Meta object code from reading C++ file 'searcher.h'
+** Meta object code from reading C++ file 'table.h'
 **
-** Created: Thu Jul 5 17:10:29 2012
+** Created: Thu Jul 5 17:10:33 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
 
-#include "searcher.h"
+#include "table.h"
 #if !defined(Q_MOC_OUTPUT_REVISION)
-#error "The header file 'searcher.h' doesn't include <QObject>."
+#error "The header file 'table.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 63
 #error "This file was generated using the moc from 4.8.1. It"
 #error "cannot be used with the include files from this version of Qt."
@@ -17,7 +17,7 @@
 #endif
 
 QT_BEGIN_MOC_NAMESPACE
-static const uint qt_meta_data_Searcher[] = {
+static const uint qt_meta_data_Table[] = {
 
  // content:
        6,       // revision
@@ -31,54 +31,54 @@ static const uint qt_meta_data_Searcher[] = {
        0,       // signalCount
 
  // slots: signature, parameters, type, tag, flags
-      10,    9,    9,    9, 0x08,
+       7,    6,    6,    6, 0x08,
 
        0        // eod
 };
 
-static const char qt_meta_stringdata_Searcher[] = {
-    "Searcher\0\0set_group_filter(int)\0"
+static const char qt_meta_stringdata_Table[] = {
+    "Table\0\0change_page(int)\0"
 };
 
-void Searcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+void Table::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
     if (_c == QMetaObject::InvokeMetaMethod) {
         Q_ASSERT(staticMetaObject.cast(_o));
-        Searcher *_t = static_cast<Searcher *>(_o);
+        Table *_t = static_cast<Table *>(_o);
         switch (_id) {
-        case 0: _t->set_group_filter((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 0: _t->change_page((*reinterpret_cast< int(*)>(_a[1]))); break;
         default: ;
         }
     }
 }
 
-const QMetaObjectExtraData Searcher::staticMetaObjectExtraData = {
+const QMetaObjectExtraData Table::staticMetaObjectExtraData = {
     0,  qt_static_metacall 
 };
 
-const QMetaObject Searcher::staticMetaObject = {
-    { &QWidget::staticMetaObject, qt_meta_stringdata_Searcher,
-      qt_meta_data_Searcher, &staticMetaObjectExtraData }
+const QMetaObject Table::staticMetaObject = {
+    { &QWidget::staticMetaObject, qt_meta_stringdata_Table,
+      qt_meta_data_Table, &staticMetaObjectExtraData }
 };
 
 #ifdef Q_NO_DATA_RELOCATION
-const QMetaObject &Searcher::getStaticMetaObject() { return staticMetaObject; }
+const QMetaObject &Table::getStaticMetaObject() { return staticMetaObject; }
 #endif //Q_NO_DATA_RELOCATION
 
-const QMetaObject *Searcher::metaObject() const
+const QMetaObject *Table::metaObject() const
 {
     return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
 }
 
-void *Searcher::qt_metacast(const char *_clname)
+void *Table::qt_metacast(const char *_clname)
 {
     if (!_clname) return 0;
-    if (!strcmp(_clname, qt_meta_stringdata_Searcher))
-        return static_cast<void*>(const_cast< Searcher*>(this));
+    if (!strcmp(_clname, qt_meta_stringdata_Table))
+        return static_cast<void*>(const_cast< Table*>(this));
     return QWidget::qt_metacast(_clname);
 }
 
-int Searcher::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+int Table::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
     _id = QWidget::qt_metacall(_c, _id, _a);
     if (_id < 0)

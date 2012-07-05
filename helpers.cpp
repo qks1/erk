@@ -37,6 +37,8 @@ bool createConnection(QSqlDatabase db){
     db.setPassword(DB_PASSWORD);
     db.setHostName(DB_HOST);
 
+    // инициализируем глобальные переменные из constants.cpp
+
     // если db.open завершается неудачно, выдаём ошибку и выходим из программы
     if(!(db.open()))
         critical_error("Ошибка", QString("Не удалось подключиться к базе данных:\n").append(db.lastError().text()));

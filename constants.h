@@ -15,9 +15,25 @@ extern QString GROUPS_TABLE;
 extern QString SUBGROUPS_TABLE;
 extern QString TOVMARKS_TABLE;
 
+extern QFont SMALL_FONT;
+extern int SMALL_FONT_SIZE;
+
 extern int ITEMS_ON_PAGE;
 
 extern int ENLARGER;
+
+extern QPixmap first_icon;
+extern QPixmap prev_icon;
+extern QPixmap next_icon;
+extern QPixmap last_icon;
+
+extern int PAGE_FIRST;
+extern int PAGE_PREV;
+extern int PAGE_NEXT;
+extern int PAGE_LAST;
+
+
+void init_vars();
 
 
 #endif // CONSTANTS_H

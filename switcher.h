@@ -7,11 +7,14 @@
   Класс переключателя страниц для таблицы.
 */
 
-class switcher : public QWidget
+class Switcher : public QWidget
 {
     Q_OBJECT
 public:
-    explicit switcher(QWidget *parent = 0);
+    explicit Switcher(QWidget *parent = 0);
+
+    void set_current_page(int);
+    void set_total_pages(QString);
 
 private:
     // таблица, которой управляет данный переключатель
@@ -28,8 +31,17 @@ private:
     QLabel *onpage;             // надпись "элементов на странице"
 
     void layout();
+    inline void connects();
 
 signals:
+    void page_changed(int);
+
+private slots:
+    // слоты, срабатывающие при нажатии на кнопку переключения
+    void first_clicked();
+    void prev_clicked();
+    void next_clicked();
+    void last_clicked();
     
 public slots:
     
