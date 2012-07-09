@@ -22,6 +22,8 @@ extern int ITEMS_ON_PAGE;
 
 extern int ENLARGER;
 
+extern QString DEFAULT_CATALOG_HEADER;
+
 extern QPixmap first_icon;
 extern QPixmap prev_icon;
 extern QPixmap next_icon;
@@ -32,6 +34,9 @@ extern const int PAGE_PREV;
 extern const int PAGE_NEXT;
 extern const int PAGE_LAST;
 extern const int PAGE_NUMBER;
+
+extern const int MULTIPAGE_MODE;
+extern const int SINGLEPAGE_MODE;
 
 extern int MAX_ITEMS_WITHOUT_WARNING;
 

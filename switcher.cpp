@@ -2,57 +2,58 @@
 #include "constants.h"
 #include <QtGui>
 
+//--------------------------------------------------------------------------//
+//--------------------------- КОНСТРУКТОР-----------------------------------//
+//--------------------------------------------------------------------------//
+
 Switcher::Switcher(QWidget *parent) :
     QWidget(parent)
 {
-    // создаём объекты
-    page_layout = new QHBoxLayout;
+    // СОЗДАЁМ ОБЪЕКТЫ:
+    // layout
+    switcher_layout = new QHBoxLayout;
+
+    // элементы для постраничного режима
     first = new QPushButton();
     prev = new QPushButton();
     current = new QLineEdit();
-    total = new QLabel();
+    total_pages = new QLabel();
     next = new QPushButton();
     last = new QPushButton();
     items = new QLineEdit();
-    onpage = new QLabel("на странице / ");
-    all = new QPushButton();
+    items_on_page = new QLabel("на странице / ");
+    show_all = new QPushButton();
 
-    tot_items = new QLabel();
+    // элементы для одоностраничного режима
+    total_items = new QLabel();
     switch_to_pages = new QPushButton("Постранично");
+    // для кнопок items_on_page и switch_to_pages устанавливаем текст прямо в конструкторе, т.к. меняться он не будет
 
-    mode = 1;
+    // режим по умолчанию - постраничный
+    mode = MULTIPAGE_MODE;
 
+
+
+    // размеры по умолчанию (что есть что - см. в хедере)
     button_size = 16;
     total_label_size = SMALL_FONT_SIZE*4;
     line_edit_size = SMALL_FONT_SIZE*3;
     big_button_size = SMALL_FONT_SIZE*7;
-    spacing = 10;
 
-
-    // иконки для переключателя страниц
+    // иконки для кнопок переключения страниц
     QPixmap first_icon("images/first.png");
     QPixmap prev_icon("images/prev.png");
     QPixmap next_icon("images/next.png");
     QPixmap last_icon("images/last.png");
 
+    // устанавливаем их
     first->setIcon(first_icon);
     prev->setIcon(prev_icon);
     next->setIcon(next_icon);
     last->setIcon(last_icon);
 
-    QFont lineFont;
-    lineFont.setPixelSize(10);
-
-    current->setFont(lineFont);
-    items->setFont(lineFont);
-    total->setFont(lineFont);
-    onpage->setFont(lineFont);
-    all->setFont(lineFont);
-    tot_items->setFont(lineFont);
-    switch_to_pages->setFont(lineFont);
-
+    set_fonts();
     set_sizes();
-    //set_onepage_layout();
 
     // меняем размеры элементов и размещаем их
     set_layout();
@@ -82,17 +83,17 @@ inline void Switcher::connects(){
     QObject::connect(this->current, SIGNAL(returnPressed()),
                      this, SLOT(page_entered()));
 
-    // при вводе кол-ва элементов на странице - послать сигнал onpage_changed
+    // при вводе кол-ва элементов на странице - послать сигнал items_on_page_changed
     QObject::connect(this->items, SIGNAL(returnPressed()),
-                     this, SLOT(onpage_entered()));
+                     this, SLOT(items_on_page_entered()));
 
-    // при нажатии на кнопку "все на одной странице" - послать сигнал "all_selected"
-    QObject::connect(this->all, SIGNAL(clicked()),
-                     this, SLOT(all_clicked()));
+    // при нажатии на кнопку "все на одной странице" - послать сигнал "singlepage_mode_selected"
+    QObject::connect(this->show_all, SIGNAL(clicked()),
+                     this, SLOT(singlepage_mode_clicked()));
 
-    // при нажатии на кнопку "постранично" - послать сигнал "page_mode_selected"
+    // при нажатии на кнопку "постранично" - послать сигнал "multipage_mode_selected"
     QObject::connect(this->switch_to_pages, SIGNAL(clicked()),
-                     this, SLOT(page_mode_clicked()));
+                     this, SLOT(multipage_mode_clicked()));
 
 
 }
@@ -111,48 +112,63 @@ inline void Switcher::set_sizes(){
     last->setFixedSize(button_size,button_size);
     current->setFixedSize(line_edit_size,button_size);
     items->setFixedSize(line_edit_size,button_size);
-    total->setFixedWidth(total_label_size);
-    onpage->adjustSize();
-    onpage->setFixedWidth(onpage->width());
-    all->setFixedSize(big_button_size,button_size);
+    total_pages->setFixedWidth(total_label_size);
+    items_on_page->adjustSize();
+    items_on_page->setFixedWidth(items_on_page->width());
+    show_all->setFixedSize(big_button_size,button_size);
 
-    tot_items->setFixedSize(big_button_size, button_size);
+    total_items->setFixedSize(big_button_size, button_size);
     switch_to_pages->setFixedSize(big_button_size, button_size);
 }
 
+inline void Switcher::set_fonts(){
+    // в переключателе должен использоваться шрифт меньший, чем в остальной программе.
+    QFont lineFont;
+    lineFont.setPixelSize(SMALL_FONT_SIZE);
+
+    // установим шрифт на элементы: кнопки (кроме тех, что с иконками), текстовые поля, лейблы
+    current->setFont(lineFont);
+    items->setFont(lineFont);
+    total_pages->setFont(lineFont);
+    items_on_page->setFont(lineFont);
+    show_all->setFont(lineFont);
+    total_items->setFont(lineFont);
+    switch_to_pages->setFont(lineFont);
+}
+
 inline void Switcher::set_layout(){
-    page_layout->setMargin(0);
-    page_layout->setSpacing(0);
+    switcher_layout->setMargin(0);
+    switcher_layout->setSpacing(0);
 
-    if(mode == 1){
-        page_layout->addWidget(first);
-        page_layout->addWidget(prev);
-        page_layout->addWidget(current);
-        page_layout->addWidget(total);
-        page_layout->addWidget(next);
-        page_layout->addWidget(last);
-        //page_layout->addSpacing(spacing);
-        page_layout->addWidget(items);
-        page_layout->addWidget(onpage);
-        page_layout->addWidget(all);
+    if(mode == MULTIPAGE_MODE){
+        switcher_layout->addWidget(first);
+        switcher_layout->addWidget(prev);
+        switcher_layout->addWidget(current);
+        switcher_layout->addWidget(total_pages);
+        switcher_layout->addWidget(next);
+        switcher_layout->addWidget(last);
+        //switcher_layout->addSpacing(spacing);
+        switcher_layout->addWidget(items);
+        switcher_layout->addWidget(items_on_page);
+        switcher_layout->addWidget(show_all);
 
-        this->setFixedSize(button_size*4+line_edit_size*2+total_label_size+onpage->width()+big_button_size, button_size);
+        this->setFixedSize(button_size*4+line_edit_size*2+total_label_size+items_on_page->width()+big_button_size, button_size);
     }
-    else if(mode == 2){
-        page_layout->addWidget(tot_items);
-        page_layout->addWidget(switch_to_pages);
+    else if(mode == SINGLEPAGE_MODE){
+        switcher_layout->addWidget(total_items);
+        switcher_layout->addWidget(switch_to_pages);
 
         this->setFixedSize(big_button_size*2, button_size);
 
     }
-    this->setLayout(page_layout);
+    this->setLayout(switcher_layout);
 }
 
 void Switcher::clear_layout(){
     /*
     QLayoutItem *item;
-    while((item = page_layout->takeAt(0)) != 0){
-        page_layout->removeItem(item);
+    while((item = switcher_layout->takeAt(0)) != 0){
+        switcher_layout->removeItem(item);
         item->widget()->hide();
     }
     */
@@ -161,34 +177,34 @@ void Switcher::clear_layout(){
       Естественно, надо бы использовать закомментированную часть.
       Но она почему-то работает не всегда корректно, посему да, мы не ищем лёгких путей.
     */
-    if(this->mode == 1){
-        page_layout->removeWidget(first);
-        page_layout->removeWidget(prev);
-        page_layout->removeWidget(current);
-        page_layout->removeWidget(total);
-        page_layout->removeWidget(next);
-        page_layout->removeWidget(last);
-        page_layout->removeWidget(items);
-        page_layout->removeWidget(onpage);
-        page_layout->removeWidget(all);
+    if(this->mode == MULTIPAGE_MODE){
+        switcher_layout->removeWidget(first);
+        switcher_layout->removeWidget(prev);
+        switcher_layout->removeWidget(current);
+        switcher_layout->removeWidget(total_pages);
+        switcher_layout->removeWidget(next);
+        switcher_layout->removeWidget(last);
+        switcher_layout->removeWidget(items);
+        switcher_layout->removeWidget(items_on_page);
+        switcher_layout->removeWidget(show_all);
         first->hide();
         prev->hide();
         current->hide();
-        total->hide();
+        total_pages->hide();
         next->hide();
         last->hide();
         items->hide();
-        onpage->hide();
-        all->hide();
+        items_on_page->hide();
+        show_all->hide();
     }
-    else{
-        page_layout->removeWidget(tot_items);
-        page_layout->removeWidget(switch_to_pages);
-        tot_items->hide();
+    else if(this->mode = SINGLEPAGE_MODE){
+        switcher_layout->removeWidget(total_items);
+        switcher_layout->removeWidget(switch_to_pages);
+        total_items->hide();
         switch_to_pages->hide();
     }
 
-    delete page_layout;
+    delete switcher_layout;
 }
 
 
@@ -196,12 +212,12 @@ void Switcher::set_current_page(int page){
     current->setText(QString::number(page));
 }
 
-void Switcher::set_total_items(int items){
-    all->setText("Все " + QString::number(items));
+void Switcher::set_show_all(int items){
+    show_all->setText("Все " + QString::number(items));
 }
 
 void Switcher::set_total_pages(int pages){
-    total->setText("из " + QString::number(pages));
+    total_pages->setText("из " + QString::number(pages));
 }
 
 void Switcher::set_items_on_page(int iop){
@@ -209,40 +225,40 @@ void Switcher::set_items_on_page(int iop){
 }
 
 void Switcher::set_total_items_label(int items){
-    tot_items->setText("Позиций: " + QString::number(items));
+    total_items->setText("Позиций: " + QString::number(items));
 }
 
 
 
-void Switcher::switch_to_onepage_mode(){
-    if(this->mode == 1){
+void Switcher::switch_to_singlepage_mode(){
+    if(this->mode == MULTIPAGE_MODE){
         this->clear_layout();
 
-        page_layout = new QHBoxLayout;
-        this->mode = 2;
+        switcher_layout = new QHBoxLayout;
+        this->mode = SINGLEPAGE_MODE;
         this->set_layout();
 
-        tot_items->show();
+        total_items->show();
         switch_to_pages->show();
     }
 }
 
-void Switcher::switch_to_page_mode(){
-    if(this->mode == 2){
+void Switcher::switch_to_multipage_mode(){
+    if(this->mode == SINGLEPAGE_MODE){
         this->clear_layout();
-        page_layout = new QHBoxLayout;
-        this->mode = 1;
+        switcher_layout = new QHBoxLayout;
+        this->mode = MULTIPAGE_MODE;
         this->set_layout();
 
         first->show();
         prev->show();
         current->show();
-        total->show();
+        total_pages->show();
         next->show();
         last->show();
         items->show();
-        onpage->show();
-        all->show();
+        items_on_page->show();
+        show_all->show();
     }
 }
 
@@ -274,15 +290,15 @@ void Switcher::page_entered(){
     emit(page_changed(PAGE_NUMBER));
 }
 
-void Switcher::onpage_entered(){
-    emit onpage_changed(items->text().toInt());
+void Switcher::items_on_page_entered(){
+    emit items_on_page_changed(items->text().toInt());
 }
 
-void Switcher::all_clicked(){
-    emit all_selected();
+void Switcher::singlepage_mode_clicked(){
+    emit singlepage_mode_selected();
 }
 
-void Switcher::page_mode_clicked(){
-    emit page_mode_selected();
+void Switcher::multipage_mode_clicked(){
+    emit multipage_mode_selected();
 }
 

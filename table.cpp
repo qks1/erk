@@ -18,6 +18,12 @@ Table::Table(QWidget *parent) :
     begin = 0;
     offset = 0;
 
+    table->verticalHeader()->hide();
+    table->horizontalHeader()->setMovable(true);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+
     move_switcher();
     layout();
     connects();
@@ -30,16 +36,17 @@ inline void Table::connects(){
                      this, SLOT(change_page(int)));
 
     // если получен сигнал о смене кол-ва элементов на странице, сменить значение items_on_page и послать сигнал поисковику
-    QObject::connect(this->switcher, SIGNAL(onpage_changed(int)),
+    QObject::connect(this->switcher, SIGNAL(items_on_page_changed(int)),
                      this, SLOT(change_onpage(int)));
 
-    // если получен сигнал all_selected, снять лимит записей
-    QObject::connect(this->switcher, SIGNAL(all_selected()),
+    // если получен сигнал singlepage_mode_selected, снять лимит записей
+    QObject::connect(this->switcher, SIGNAL(singlepage_mode_selected()),
                      this, SLOT(remove_limits()));
 
-    // если получен сигнал page_mode_selected, установить лимит записей
-    QObject::connect(this->switcher, SIGNAL(page_mode_selected()),
+    // если получен сигнал multipage_mode_selected, установить лимит записей
+    QObject::connect(this->switcher, SIGNAL(multipage_mode_selected()),
                      this, SLOT(restore_limits()));
+
 }
 
 inline void Table::layout(){
@@ -70,7 +77,6 @@ void Table::fill(QSqlQuery query, QStringList columns, bool reset_page){
 
     table->setColumnCount(columns.size());
     table->setHorizontalHeaderLabels(columns);
-    table->horizontalHeader()->setMovable(true);
 
     QSqlRecord rec = query.record();
     QString val;
@@ -112,7 +118,7 @@ int Table::get_items_on_page(){
 void Table::update_switcher_values(){
     this->switcher->set_current_page(this->current_page);
     this->switcher->set_total_pages(this->total_pages);
-    this->switcher->set_total_items(this->total_items);
+    this->switcher->set_show_all(this->total_items);
     this->switcher->set_items_on_page(this->items_on_page);
     this->switcher->set_total_items_label(this->total_items);
     move_switcher();
@@ -208,17 +214,17 @@ void Table::remove_limits(){
     if(total_items > MAX_ITEMS_WITHOUT_WARNING){
         if(question("Вы уверены?", "Вы действительно хотите показать все строки? (" + QString::number(total_items) + ")\n"
                         + "Это может занять продолжительное время.")){
-            this->switcher->switch_to_onepage_mode();
+            this->switcher->switch_to_singlepage_mode();
             emit(limits_removed());
         }
     }
     else
-        this->switcher->switch_to_onepage_mode();
+        this->switcher->switch_to_singlepage_mode();
         emit(limits_removed());
 }
 
 void Table::restore_limits(){
-    this->switcher->switch_to_page_mode();
+    this->switcher->switch_to_multipage_mode();
     emit(limits_restored());
 }
 

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'searcher.h'
 **
-** Created: Mon Jul 9 12:30:38 2012
+** Created: Mon Jul 9 18:00:47 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!

@@ -10,12 +10,10 @@
 Catalog::Catalog(QWidget *parent) :
     QWidget(parent){
 
-    // инициализируем переменные
-    initialize();
-
-    // В конструкторе класса создаём необходимые объекты
+    // В конструкторе класса создаём объекты
     groups = new QTreeWidget();
     header = groups->header();
+    default_header = "Выберите группу";
 
     // кнопка сброса фильтра по группам должна лежать на заголовке каталога,
     // поэтому передаём указатель на него в качестве виджета-предка
@@ -26,7 +24,7 @@ Catalog::Catalog(QWidget *parent) :
     groups->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
     // устанавливаем заголовок каталога по умолчанию
-    groups->setHeaderLabel(DEFAULT_HEADER);
+    groups->setHeaderLabel(default_header);
 
     // заполняем каталог
     addGroups();
@@ -42,12 +40,6 @@ Catalog::Catalog(QWidget *parent) :
     // соединяем сигналы со слотами
     connects();
 
-}
-
-//--------------------------------------------------------------------------//
-
-inline void Catalog::initialize(){
-    DEFAULT_HEADER = "Выберите группу";
 }
 
 //--------------------------------------------------------------------------//
@@ -184,7 +176,7 @@ void Catalog::change_header(QTreeWidgetItem *qtwi, int column){
 
 void Catalog::clear_header(){
     // устанавливаем заголовок по умолчанию
-    this->groups->setHeaderLabel(DEFAULT_HEADER);
+    this->groups->setHeaderLabel(default_header);
 }
 
 

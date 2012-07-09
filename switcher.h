@@ -2,70 +2,100 @@
 #define SWITCHER_H
 
 #include <QtGui>
+#include "constants.h"
 
 /*
   Класс переключателя страниц для таблицы.
+  В зависимости от режима отображения данных, включает в себя различные элементы.
+  -- постраничный режим:
+     -- кнопки "на первую страницу", "на предыдущую страницу", "на следующую страницу", "на последнюю страницу"
+     -- редактируемое текстовое поле, содержащее номер страницы
+     -- надпись (label) с общим количеством страниц
+     -- редактируемое текстовое поле, содержащее кол-во элементов на странице
+     -- надпись (label) "на странице"
+     -- кнопка переключения в одностраничный режим
+  -- одностраничный режим:
+     -- надпись (label), содержащая общее кол-во элементов
+     -- кнопка переключения в постраничный режим
+
+  Переключатель является элементом класса Table и жёстко привязан к родительской таблице.
+  При использовании одного из элементов управления (смены страницы, кол-ва элементов на странице, режима)
+  родительскому объекту класса Table высылается соответствующий сигнал.
 */
 
 class Switcher : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Switcher(QWidget *parent = 0);
+    explicit Switcher(QWidget *parent = 0);         // конструктор
 
-    void set_current_page(int);
-    void set_total_pages(int);
-    void set_total_items(int);
-    void set_items_on_page(int);
+    // функции, устанавливающие текст в соответствующие виджеты
+    void set_current_page(int);                     // в текстовое поле "текущая страница"
+    void set_total_pages(int);                      // в лейбл "всего страниц"
+    void set_items_on_page(int);                    // в текстовое поле "элементов на странице"
+    void set_show_all(int);                         // в кнопку "все на одной странице"
+    void set_total_items_label(int);                // в надпись "всего элементов" (в одностраничном режиме)
 
-    void set_total_items_label(int);
+    // функции переключения режима
+    void switch_to_singlepage_mode();
+    void switch_to_multipage_mode();
 
-    void switch_to_onepage_mode();
-    void switch_to_page_mode();
-
+    // функция, возвращающая номер страницы в поле current_page
     int page_number();
 
 private:
-    // текущий режим (постраничный или все элементы на одной странице)
+    // текущий режим (MULTIPAGE_MODE или SINGLEPAGE_MODE)
     short mode;
+
+    // указатель на расположение. Будет активно использоваться, т.к. элементы в нём будут часто меняться
+    QHBoxLayout *switcher_layout;
 
     // элементы слева направо:
     // для постраничного режима:
-    QHBoxLayout *page_layout;
-    QPushButton *first;             // кнопка "На первую страницу"
-    QPushButton *prev;              // кнопка "На предыдущую страницу"
-    QLineEdit *current;             // текстовое поле "На страницу №"
-    QLabel *total;                  // надпись "всего страниц"
-    QPushButton *next;              // кнопка "На следующую страницу"
-    QPushButton *last;              // кнопка "На последнюю страницу"
-    QLineEdit *items;               // текстовое поле "элементов на странице"
-    QLabel *onpage;                 // надпись "элементов на странице"
-    QPushButton *all;               // кнопка "Показать все"
+    QPushButton *first;                     // кнопка "На первую страницу"
+    QPushButton *prev;                      // кнопка "На предыдущую страницу"
+    QLineEdit *current;                     // текстовое поле "На страницу №"
+    QLabel *total_pages;                    // надпись, содержащая общее кол-во страниц
+    QPushButton *next;                      // кнопка "На следующую страницу"
+    QPushButton *last;                      // кнопка "На последнюю страницу"
+    QLineEdit *items;                       // текстовое поле "элементов на странице"
+    QLabel *items_on_page;                  // надпись "элементов на странице"
+    QPushButton *show_all;                  // кнопка "Показать все"
 
     // для одностраничного режима
-    QLabel *tot_items;              // надпись "%count% элементов"
-    QPushButton *switch_to_pages;   // кнопка переключения на постраничный режим
+    QLabel *total_items;                    // надпись "%count% элементов"
+    QPushButton *switch_to_pages;           // кнопка переключения на постраничный режим
 
+    // переменные, отвечающие за размеры элементов переключателя:
+    int button_size;                        // размер обычной квадратной кнопки (переключения страниц)
+    int total_label_size;                   // размер надписи, содержащей общее кол-во страниц
+    int line_edit_size;                     // размер однострочного текстового поля
+    int big_button_size;                    // размер кнопок переключения режима ("Показать все" и "Постранично")
+
+    // функция, устанавливающая параметры расположения и добавляющая элементы в него.
+    // Если вызывается не из конструктора, предварительно switcher_layout должен быть очищен функцией clear_layout().
+    // В зависимости от режима, добавляются и удаляются разные элементы.
     inline void set_layout();
-    inline void set_onepage_layout();
-    inline void set_sizes();
-    inline void background();
-    inline void connects();
-
     void clear_layout();
 
-    int button_size;
-    int total_label_size;
-    int line_edit_size;
-    int big_button_size;
-    int spacing;
+    // функция, устанавливающая размеры элементов.
+    inline void set_sizes();
+
+    // функция, определяющая шрифт и устанавливающая его на элементы
+    inline void set_fonts();
+
+    // функция, устанавливающая непрозрачный белый фон
+    inline void background();
+
+    // функция, соединяющая сигналы и слоты
+    inline void connects();
 
 
 signals:
-    void page_changed(int);
-    void onpage_changed(int);
-    void all_selected();
-    void page_mode_selected();
+    void page_changed(int);                 // высылается при смене номера страницы (нажатии на кнопку или ввода в текстовое поле)
+    void items_on_page_changed(int);        // высылается при смене кол-ва элементов на странице
+    void singlepage_mode_selected();        // высылается при нажатии на кнопку "Все на одной странице"
+    void multipage_mode_selected();         // высылается при нажатии на кнопку "Постраничный режим"
 
 private slots:
     // слоты, срабатывающие при нажатии на кнопку переключения
@@ -75,16 +105,16 @@ private slots:
     void last_clicked();
 
     // слот, срабатывающий при вводе кол-ва элементов на странице
-    void onpage_entered();
+    void items_on_page_entered();
 
     // слот, срабатывающий при вводе номера страницы
     void page_entered();
 
-    // слот, срабатывающий при нажатии на кнопку "все на одной странице"
-    void all_clicked();
+    // слот, срабатывающий при нажатии на кнопку "Все на одной странице"
+    void singlepage_mode_clicked();
 
-    // слот, срабатывающий при нажатии на кнопку "постранично"
-    void page_mode_clicked();
+    // слот, срабатывающий при нажатии на кнопку "Постраничный режим"
+    void multipage_mode_clicked();
     
 public slots:
     

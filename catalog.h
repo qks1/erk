@@ -18,19 +18,15 @@ private:
     QTreeWidget *groups;                        // древовидный каталог групп
     QHeaderView *header;                        // заголовок каталога
     QPushButton *reset_groups;                  // кнопка сброса фильтра по группам
+    QString default_header;                    // заголовок каталога по умолчанию
 
     // функции добавления групп и подгрупп в каталог
     void addGroups();
     void addSubgroup(QTreeWidgetItem *groupItem, int groupNum);
 
     inline void connects();                     // функция соединения сигналов и слотов
-    inline void initialize();                   // функция инициализации переменных
 
     void resizeEvent(QResizeEvent *);           // реакция на изменение размеров окна
-
-    // ПЕРЕМЕННЫЕ:
-    QString DEFAULT_HEADER;
-
     
 signals:
     void group_changed(int);                    // испускается при изменении выбранной группы

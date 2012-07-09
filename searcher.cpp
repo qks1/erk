@@ -83,7 +83,7 @@ inline void Searcher::connects(){
 
 QStringList Searcher::get_columns_list(){
     QStringList lst;
-    lst << "id" << "name" << "subgroup_id" << "price_ret";
+    lst << "id" << "name" << "subgroup_id" << "price_ret" << "par1_val" << "par2_val" << "par3_val" << "par4_val";
     this->filters->set_columns_filter(lst);
     return filters->columns_filter();
 }

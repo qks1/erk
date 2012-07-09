@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'switcher.h'
 **
-** Created: Mon Jul 9 12:30:40 2012
+** Created: Mon Jul 9 18:00:49 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -33,30 +33,31 @@ static const uint qt_meta_data_Switcher[] = {
  // signals: signature, parameters, type, tag, flags
       10,    9,    9,    9, 0x05,
       28,    9,    9,    9, 0x05,
-      48,    9,    9,    9, 0x05,
-      63,    9,    9,    9, 0x05,
+      55,    9,    9,    9, 0x05,
+      82,    9,    9,    9, 0x05,
 
  // slots: signature, parameters, type, tag, flags
-      84,    9,    9,    9, 0x08,
-     100,    9,    9,    9, 0x08,
-     115,    9,    9,    9, 0x08,
-     130,    9,    9,    9, 0x08,
-     145,    9,    9,    9, 0x08,
-     162,    9,    9,    9, 0x08,
-     177,    9,    9,    9, 0x08,
-     191,    9,    9,    9, 0x08,
+     108,    9,    9,    9, 0x08,
+     124,    9,    9,    9, 0x08,
+     139,    9,    9,    9, 0x08,
+     154,    9,    9,    9, 0x08,
+     169,    9,    9,    9, 0x08,
+     193,    9,    9,    9, 0x08,
+     208,    9,    9,    9, 0x08,
+     234,    9,    9,    9, 0x08,
 
        0        // eod
 };
 
 static const char qt_meta_stringdata_Switcher[] = {
     "Switcher\0\0page_changed(int)\0"
-    "onpage_changed(int)\0all_selected()\0"
-    "page_mode_selected()\0first_clicked()\0"
+    "items_on_page_changed(int)\0"
+    "singlepage_mode_selected()\0"
+    "multipage_mode_selected()\0first_clicked()\0"
     "prev_clicked()\0next_clicked()\0"
-    "last_clicked()\0onpage_entered()\0"
-    "page_entered()\0all_clicked()\0"
-    "page_mode_clicked()\0"
+    "last_clicked()\0items_on_page_entered()\0"
+    "page_entered()\0singlepage_mode_clicked()\0"
+    "multipage_mode_clicked()\0"
 };
 
 void Switcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -66,17 +67,17 @@ void Switcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         Switcher *_t = static_cast<Switcher *>(_o);
         switch (_id) {
         case 0: _t->page_changed((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 1: _t->onpage_changed((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 2: _t->all_selected(); break;
-        case 3: _t->page_mode_selected(); break;
+        case 1: _t->items_on_page_changed((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 2: _t->singlepage_mode_selected(); break;
+        case 3: _t->multipage_mode_selected(); break;
         case 4: _t->first_clicked(); break;
         case 5: _t->prev_clicked(); break;
         case 6: _t->next_clicked(); break;
         case 7: _t->last_clicked(); break;
-        case 8: _t->onpage_entered(); break;
+        case 8: _t->items_on_page_entered(); break;
         case 9: _t->page_entered(); break;
-        case 10: _t->all_clicked(); break;
-        case 11: _t->page_mode_clicked(); break;
+        case 10: _t->singlepage_mode_clicked(); break;
+        case 11: _t->multipage_mode_clicked(); break;
         default: ;
         }
     }
@@ -129,20 +130,20 @@ void Switcher::page_changed(int _t1)
 }
 
 // SIGNAL 1
-void Switcher::onpage_changed(int _t1)
+void Switcher::items_on_page_changed(int _t1)
 {
     void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
     QMetaObject::activate(this, &staticMetaObject, 1, _a);
 }
 
 // SIGNAL 2
-void Switcher::all_selected()
+void Switcher::singlepage_mode_selected()
 {
     QMetaObject::activate(this, &staticMetaObject, 2, 0);
 }
 
 // SIGNAL 3
-void Switcher::page_mode_selected()
+void Switcher::multipage_mode_selected()
 {
     QMetaObject::activate(this, &staticMetaObject, 3, 0);
 }
