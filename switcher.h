@@ -54,17 +54,17 @@ private:
     // для постраничного режима:
     QPushButton *first;                     // кнопка "На первую страницу"
     QPushButton *prev;                      // кнопка "На предыдущую страницу"
-    QLineEdit *current;                     // текстовое поле "На страницу №"
+    QLineEdit *current_page;                // текстовое поле "На страницу №"
     QLabel *total_pages;                    // надпись, содержащая общее кол-во страниц
     QPushButton *next;                      // кнопка "На следующую страницу"
     QPushButton *last;                      // кнопка "На последнюю страницу"
-    QLineEdit *items;                       // текстовое поле "элементов на странице"
-    QLabel *items_on_page;                  // надпись "элементов на странице"
-    QPushButton *show_all;                  // кнопка "Показать все"
+    QLineEdit *items_on_page;               // текстовое поле "элементов на странице"
+    QLabel *onpage_label;                   // надпись "элементов на странице"
+    QPushButton *show_all;                  // кнопка "Все на одной странице"
 
     // для одностраничного режима
     QLabel *total_items;                    // надпись "%count% элементов"
-    QPushButton *switch_to_pages;           // кнопка переключения на постраничный режим
+    QPushButton *switch_to_multipages;      // кнопка переключения на постраничный режим
 
     // переменные, отвечающие за размеры элементов переключателя:
     int button_size;                        // размер обычной квадратной кнопки (переключения страниц)
@@ -85,7 +85,7 @@ private:
     inline void set_fonts();
 
     // функция, устанавливающая непрозрачный белый фон
-    inline void background();
+    inline void set_background();
 
     // функция, соединяющая сигналы и слоты
     inline void connects();
