@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'table.h'
 **
-** Created: Thu Jul 5 17:10:33 2012
+** Created: Mon Jul 9 12:30:42 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,21 +23,32 @@ static const uint qt_meta_data_Table[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       1,   14, // methods
+       7,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       0,       // signalCount
+       3,       // signalCount
+
+ // signals: signature, parameters, type, tag, flags
+       7,    6,    6,    6, 0x05,
+      28,    6,    6,    6, 0x05,
+      45,    6,    6,    6, 0x05,
 
  // slots: signature, parameters, type, tag, flags
-       7,    6,    6,    6, 0x08,
+      63,    6,    6,    6, 0x08,
+      80,    6,    6,    6, 0x08,
+      99,    6,    6,    6, 0x08,
+     115,    6,    6,    6, 0x08,
 
        0        // eod
 };
 
 static const char qt_meta_stringdata_Table[] = {
-    "Table\0\0change_page(int)\0"
+    "Table\0\0limits_changed(pair)\0"
+    "limits_removed()\0limits_restored()\0"
+    "change_page(int)\0change_onpage(int)\0"
+    "remove_limits()\0restore_limits()\0"
 };
 
 void Table::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -46,7 +57,13 @@ void Table::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void 
         Q_ASSERT(staticMetaObject.cast(_o));
         Table *_t = static_cast<Table *>(_o);
         switch (_id) {
-        case 0: _t->change_page((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 0: _t->limits_changed((*reinterpret_cast< pair(*)>(_a[1]))); break;
+        case 1: _t->limits_removed(); break;
+        case 2: _t->limits_restored(); break;
+        case 3: _t->change_page((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 4: _t->change_onpage((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 5: _t->remove_limits(); break;
+        case 6: _t->restore_limits(); break;
         default: ;
         }
     }
@@ -84,10 +101,29 @@ int Table::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 1)
+        if (_id < 7)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 1;
+        _id -= 7;
     }
     return _id;
+}
+
+// SIGNAL 0
+void Table::limits_changed(pair _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 0, _a);
+}
+
+// SIGNAL 1
+void Table::limits_removed()
+{
+    QMetaObject::activate(this, &staticMetaObject, 1, 0);
+}
+
+// SIGNAL 2
+void Table::limits_restored()
+{
+    QMetaObject::activate(this, &staticMetaObject, 2, 0);
 }
 QT_END_MOC_NAMESPACE

@@ -1,4 +1,5 @@
 #include "filters.h"
+#include <QtGui>
 
 // конструктор, в котором присваиваем значения фильтров по умолчанию
 Filters::Filters(){
@@ -22,15 +23,19 @@ void Filters::set_columns_filter(QStringList c){
     this->columns = c;
 }
 
-// установить значение переменной begin
-void Filters::set_begin(int value){
-    this->begin = value;
+// установить значение переменной limits
+void Filters::set_limits(pair l){
+    this->limits = l;
 }
 
-// установить значение переменной end
-void Filters::set_end(int value){
-    this->end = value;
+void Filters::remove_limits(){
+    this->nolimits = true;
 }
+
+void Filters::restore_limits(){
+    this->nolimits = false;
+}
+
 
 // вернуть значение group_filter
 int Filters::group_filter(){
@@ -42,12 +47,17 @@ QStringList Filters::columns_filter(){
     return this->columns;
 }
 
-// вернуть значение begin
-int Filters::begin_value(){
-    return this->begin;
+// вернуть значение limits
+pair Filters::limits_filter(){
+    return this->limits;
 }
 
-// вернуть значение end
-int Filters::end_value(){
-    return this->end;
+// вернуть начало выборки
+int Filters::begin(){
+    return this->limits.begin;
 }
+
+bool Filters::are_there_limits(){
+    return (nolimits ? false : true);
+}
+

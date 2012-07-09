@@ -2,12 +2,15 @@
 #define FILTERS_H
 
 #include <QtGui>
+#include "helpers.h"
 
 /*  класс, описывающий фильтры для поисковика.
     Возможные фильтры:
     -- фильтр по группам (groups_filter) - целое число;
     -- фильтр по столбцам (columns_filter) - список строк
-    -- limit - начало и конец выборки (переменные begin и end)
+    -- limits - начало и конец выборки (пара limits)
+    -- nolimits - булева переменная. Если true, то значение limits игнорируется и должен выбираться весь объём данных
+
 */
 
 class Filters
@@ -18,21 +21,23 @@ public:
     void set_group_filter(int);
     void set_columns_filter(QStringList);
     void clear_columns();   // очистить фильтр по столбцам
-    void set_begin(int);
-    void set_end(int);
+    void set_limits(pair);
+    void remove_limits();   // установить nolimits = true
+    void restore_limits();   // установить nolimits = false
 
     // функции, возвращающие значения фильтров:
     int group_filter();
     QStringList columns_filter();
-    int begin_value();
-    int end_value();
+    pair limits_filter();
+    int begin();
+    bool are_there_limits();
 
 // непосредственно значения фильтров - private
 private:
     int group;              // по группам
     QStringList columns;    // по столбцам
-    int begin;              // начало выборки
-    int end;                // конец выборки
+    pair limits;            // начало и конец выборки
+    bool nolimits;          // выбрать весь объём данных?
 
 };
 

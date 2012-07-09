@@ -27,10 +27,13 @@ extern QPixmap prev_icon;
 extern QPixmap next_icon;
 extern QPixmap last_icon;
 
-extern int PAGE_FIRST;
-extern int PAGE_PREV;
-extern int PAGE_NEXT;
-extern int PAGE_LAST;
+extern const int PAGE_FIRST;
+extern const int PAGE_PREV;
+extern const int PAGE_NEXT;
+extern const int PAGE_LAST;
+extern const int PAGE_NUMBER;
+
+extern int MAX_ITEMS_WITHOUT_WARNING;
 
 
 void init_vars();

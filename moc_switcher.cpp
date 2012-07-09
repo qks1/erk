@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'switcher.h'
 **
-** Created: Thu Jul 5 17:10:31 2012
+** Created: Mon Jul 9 12:30:40 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,29 +23,40 @@ static const uint qt_meta_data_Switcher[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       5,   14, // methods
+      12,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       1,       // signalCount
+       4,       // signalCount
 
  // signals: signature, parameters, type, tag, flags
       10,    9,    9,    9, 0x05,
+      28,    9,    9,    9, 0x05,
+      48,    9,    9,    9, 0x05,
+      63,    9,    9,    9, 0x05,
 
  // slots: signature, parameters, type, tag, flags
-      28,    9,    9,    9, 0x08,
-      44,    9,    9,    9, 0x08,
-      59,    9,    9,    9, 0x08,
-      74,    9,    9,    9, 0x08,
+      84,    9,    9,    9, 0x08,
+     100,    9,    9,    9, 0x08,
+     115,    9,    9,    9, 0x08,
+     130,    9,    9,    9, 0x08,
+     145,    9,    9,    9, 0x08,
+     162,    9,    9,    9, 0x08,
+     177,    9,    9,    9, 0x08,
+     191,    9,    9,    9, 0x08,
 
        0        // eod
 };
 
 static const char qt_meta_stringdata_Switcher[] = {
-    "Switcher\0\0page_changed(int)\0first_clicked()\0"
+    "Switcher\0\0page_changed(int)\0"
+    "onpage_changed(int)\0all_selected()\0"
+    "page_mode_selected()\0first_clicked()\0"
     "prev_clicked()\0next_clicked()\0"
-    "last_clicked()\0"
+    "last_clicked()\0onpage_entered()\0"
+    "page_entered()\0all_clicked()\0"
+    "page_mode_clicked()\0"
 };
 
 void Switcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -55,10 +66,17 @@ void Switcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         Switcher *_t = static_cast<Switcher *>(_o);
         switch (_id) {
         case 0: _t->page_changed((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 1: _t->first_clicked(); break;
-        case 2: _t->prev_clicked(); break;
-        case 3: _t->next_clicked(); break;
-        case 4: _t->last_clicked(); break;
+        case 1: _t->onpage_changed((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 2: _t->all_selected(); break;
+        case 3: _t->page_mode_selected(); break;
+        case 4: _t->first_clicked(); break;
+        case 5: _t->prev_clicked(); break;
+        case 6: _t->next_clicked(); break;
+        case 7: _t->last_clicked(); break;
+        case 8: _t->onpage_entered(); break;
+        case 9: _t->page_entered(); break;
+        case 10: _t->all_clicked(); break;
+        case 11: _t->page_mode_clicked(); break;
         default: ;
         }
     }
@@ -96,9 +114,9 @@ int Switcher::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 5)
+        if (_id < 12)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 5;
+        _id -= 12;
     }
     return _id;
 }
@@ -108,5 +126,24 @@ void Switcher::page_changed(int _t1)
 {
     void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);
+}
+
+// SIGNAL 1
+void Switcher::onpage_changed(int _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 1, _a);
+}
+
+// SIGNAL 2
+void Switcher::all_selected()
+{
+    QMetaObject::activate(this, &staticMetaObject, 2, 0);
+}
+
+// SIGNAL 3
+void Switcher::page_mode_selected()
+{
+    QMetaObject::activate(this, &staticMetaObject, 3, 0);
 }
 QT_END_MOC_NAMESPACE

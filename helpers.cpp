@@ -22,6 +22,17 @@ void error(QString title, QString text){
     int ret = QMessageBox::warning(0, title, text);
 }
 
+// Сообщение с вопросом (да/нет)
+bool question(QString title, QString text){
+    int ret = QMessageBox::warning(0, title, text, "Да", "Отмена", QString(), 0, 1);
+    if(ret == 0){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
 //-------------------------------------------------------------------------------//
 
 

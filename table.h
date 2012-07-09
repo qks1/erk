@@ -7,7 +7,7 @@
 #include "switcher.h"
 
 /*
-    Класс, реализующий таблицу с переключателем страниц
+    Класс, реализующий таблицу с переключателем страниц.
 */
 
 class Table : public QWidget
@@ -16,13 +16,11 @@ class Table : public QWidget
 public:
     explicit Table(QWidget *parent = 0);
 
-    void fill_table(QSqlQuery query, QStringList columns);       // функция заполнения таблицы
+    void set_totals(int);
+    int get_items_on_page();
 
-    // ПЕРЕМЕННЫЕ ДЛЯ ПЕРЕКЛЮЧАТЕЛЯ:
-    int current_page;                       // текущая страница
-    int items_on_page;                      // записей на странице
-    Switcher *switcher;                     // переключатель страниц
-    int total_pages;
+
+    void fill(QSqlQuery query, QStringList columns, bool reset_page);       // функция заполнения таблицы
 
 private:
     QTableWidget *table;                    // таблица
@@ -31,14 +29,32 @@ private:
     void move_switcher();
     inline void connects();
 
+    // ПЕРЕМЕННЫЕ ДЛЯ ПЕРЕКЛЮЧАТЕЛЯ:
+    Switcher *switcher;                     // переключатель страниц
+    int current_page;                       // текущая страница
+    int items_on_page;                      // записей на странице
+    int total_pages;
+    int total_items;
+    int begin;
+    // при смене кол-ва записей на странице первая запись должна остаться той же.
+    // поэтому номер первой записи не всегда будет кратным числу записей на странице.
+    // в переменной offset хранится этот самый сдвиг.
+    int offset;
+    void update_switcher_values();
+
     void resizeEvent(QResizeEvent *);           // реакция на изменение размеров окна
 
 
 signals:
-
+    void limits_changed(pair);
+    void limits_removed();
+    void limits_restored();
 
 private slots:
     void change_page(int);
+    void change_onpage(int);
+    void remove_limits();
+    void restore_limits();
 
 public slots:
 
