@@ -5,6 +5,7 @@
 #include <QtSql>
 #include "helpers.h"
 #include "switcher.h"
+#include "constants.h"
 
 /*
     Класс, реализующий таблицу с переключателем страниц.

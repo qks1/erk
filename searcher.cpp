@@ -1,8 +1,4 @@
 #include "searcher.h"
-#include "constants.h"
-#include "helpers.h"
-#include <QtGui>
-#include <QtSql>
 
 inline void Searcher::initialize(){
 
@@ -15,6 +11,10 @@ Searcher::Searcher(QWidget *parent) :
     initialize();
     // В конструкторе класса создаём необходимые объекты
     catalog = new Catalog();
+    if (!catalog->ok){
+        this->ok = false;
+        return;
+    }
     white_table = new Table(this);
     grey_table = new Table(this);
     active_table = white_table;
@@ -30,7 +30,7 @@ Searcher::Searcher(QWidget *parent) :
 
     // наконец, соединяем сигналы со слотами
     connects();
-
+    ok = true;
 }
 
 
@@ -48,11 +48,11 @@ QSplitter *Searcher::split(){
     // формируем разделитель, содержащий каталог и таблицу
     QSplitter* splt = new QSplitter(Qt::Horizontal);
     splt->addWidget(this->catalog);
-    splt->addWidget(this->white_table);
+    splt->addWidget(this->active_table);
 
     // устанавливаем соотношение размеров 1:4
     QList<int> sz;
-    sz << 100 << 400;
+    sz << 110 << 400;
     splt->setSizes(sz);
 
     return splt;

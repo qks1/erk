@@ -8,6 +8,7 @@
 #include "switcher.h"
 #include "catalog.h"
 #include "table.h"
+#include "constants.h"
 
 /*
   Класс поисковика.
@@ -21,6 +22,7 @@ class Searcher : public QWidget
     Q_OBJECT
 public:
     explicit Searcher(QWidget *parent = 0);
+    bool ok;                                // чтобы другие виджеты могли проверить, всё ли нормально
     
 private:
     Table *white_table;                     // таблица "белого экрана"

@@ -1,6 +1,4 @@
 #include "switcher.h"
-#include "constants.h"
-#include <QtGui>
 
 //--------------------------------------------------------------------------//
 //--------------------------- КОНСТРУКТОР-----------------------------------//
@@ -31,13 +29,6 @@ Switcher::Switcher(QWidget *parent) :
 
     // режим по умолчанию - постраничный
     mode = MULTIPAGE_MODE;
-
-    // размеры по умолчанию (что есть что - см. в хедере)
-    // размеры элементов, содержащих текст, устанавливаем относительно размера текста (подгоняем на глазок)
-    button_size = 16;
-    total_label_size = SMALL_FONT_SIZE*4;
-    line_edit_size = SMALL_FONT_SIZE*3;
-    big_button_size = SMALL_FONT_SIZE*7;
 
     // иконки для кнопок переключения страниц
     QPixmap first_icon("images/first.png");
@@ -112,7 +103,15 @@ inline void Switcher::set_background(){
 
 //--------------------------------------------------------------------------//
 
-inline void Switcher::set_sizes(){
+inline void Switcher::set_sizes(){    
+    // размеры по умолчанию (что есть что - см. в хедере)
+    // размеры элементов, содержащих текст, устанавливаем относительно размера текста (подгоняем на глазок)
+    button_size = 16;
+    total_label_size = SMALL_FONT_SIZE*4;
+    line_edit_size = SMALL_FONT_SIZE*3;
+    big_button_size = SMALL_FONT_SIZE*7;
+    total_items_size = SMALL_FONT_SIZE*8;
+
     // у всех элементов одинаковая высота, равная button_size. Ширина же бывает разная.
     // квадратные кнопки переключения страниц:
     first->setFixedSize(button_size, button_size);
@@ -135,8 +134,8 @@ inline void Switcher::set_sizes(){
     show_all->setFixedSize(big_button_size, button_size);
     switch_to_multipages->setFixedSize(big_button_size, button_size);
 
-    // надпись ".. элементов". Установим для неё такую ширину, как для двух вышеупомянутых кнопок.
-    total_items->setFixedSize(big_button_size, button_size);
+    // надпись "Позиций: .."
+    total_items->setFixedSize(total_items_size, button_size);
 }
 
 //--------------------------------------------------------------------------//
@@ -199,7 +198,7 @@ void Switcher::clear_layout(){
         onpage_label->hide();
         show_all->hide();
     }
-    else if(this->mode = SINGLEPAGE_MODE){
+    else if(this->mode == SINGLEPAGE_MODE){
         switcher_layout->removeWidget(total_items);
         switcher_layout->removeWidget(switch_to_multipages);
 
@@ -236,14 +235,15 @@ inline void Switcher::set_layout(){
         switcher_layout->addWidget(show_all);
 
         // устанавливаем размер переключателя, считающийся как сумма размеров всех виджетов.
-        this->setFixedSize(button_size*4+line_edit_size*2+total_label_size+onpage_label->width()+big_button_size, button_size);
+        this->setFixedSize(button_size*4 + line_edit_size*2 + total_label_size + onpage_label->width() + big_button_size,
+                           button_size);
     }
     else if(mode == SINGLEPAGE_MODE){
         switcher_layout->addWidget(total_items);
         switcher_layout->addWidget(switch_to_multipages);
 
         // размер считается аналогично.
-        this->setFixedSize(big_button_size*2, button_size);
+        this->setFixedSize(big_button_size + total_items_size, button_size);
 
     }
 

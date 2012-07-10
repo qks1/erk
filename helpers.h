@@ -3,6 +3,7 @@
 
 #include <QtGui>
 #include <QtSql>
+#include "constants.h"
 
 bool createConnection(QSqlDatabase);
 void critical_error(QString title, QString text);

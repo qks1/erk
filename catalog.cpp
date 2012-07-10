@@ -1,7 +1,4 @@
 #include "catalog.h"
-#include "helpers.h"
-#include "constants.h"
-#include <QtSql>
 
 //--------------------------------------------------------------------------//
 //--------------------------- КОНСТРУКТОР-----------------------------------//
@@ -27,7 +24,9 @@ Catalog::Catalog(QWidget *parent) :
     groups->setHeaderLabel(default_header);
 
     // заполняем каталог
-    addGroups();
+    // если не удалось (т.е. какие-то проблемы с БД), устанавливаем ok=false,
+    // чтобы другие виджеты могли увидеть, что с БД проблемы
+    ok = (addGroups() ? true : false);
 
     // помещаем на место кнопку сброса фильтра
     move_button();
@@ -66,7 +65,7 @@ inline void Catalog::connects(){
 //--------------------------- ФУНКЦИИ --------------------------------------//
 //--------------------------------------------------------------------------//
 
-void Catalog::addGroups(){
+bool Catalog::addGroups(){
     // выбираем список групп из БД
     QSqlQuery query;
     QString strSelect = "SELECT id, name FROM " + GROUPS_TABLE + " ORDER BY name";
@@ -74,7 +73,7 @@ void Catalog::addGroups(){
     // если не удаётся выполнить запрос, выдаём ошибку
     if(!query.exec(strSelect)){
         error("Ошибка", QString("Не удалось получить список групп:\n").append(strSelect));
-        return;
+        return false;
     }
 
     QString groupName;                              // название группы - для отображения в каталоге
@@ -89,18 +88,22 @@ void Catalog::addGroups(){
 
         // формируем элемент дерева
         groupItem = new QTreeWidgetItem(this->groups);
-        groupItem->setText(0, groupName);                       // устанавливаем groupName в качестве текста
-        QStringList data;                                       // для передачи номера в фильтр прикрепляем данные к элементу
-        data << QString::number(groupNum+ENLARGER) << groupName;  // чтобы отличить группу от подгруппы в фильтре, искусственно увеличим хранящийся номер
+        groupItem->setText(0, groupName);                           // устанавливаем groupName в качестве текста
+        QStringList data;                                           // для передачи номера в фильтр прикрепляем данные к элементу
+        data << QString::number(groupNum+ENLARGER) << groupName;    // чтобы отличить группу от подгруппы в фильтре, искусственно увеличим хранящийся номер
         groupItem->setData(0, Qt::UserRole, data);
 
-        addSubgroup(groupItem, groupNum);                       // для каждой группы добавляем список подгрупп
+        if(!addSubgroup(groupItem, groupNum)){                      // для каждой группы добавляем список подгрупп
+            return false;                                           // если одна из попыток завершилась неудачей, прерываем процесс
+        }
     }
+
+    return true;
 }
 
 //--------------------------------------------------------------------------//
 
-void Catalog::addSubgroup(QTreeWidgetItem *groupItem, int groupNum){
+bool Catalog::addSubgroup(QTreeWidgetItem *groupItem, int groupNum){
     // выбираем из БД список подгрупп для группы groupNum
     QSqlQuery query;
     QString strSelect = "SELECT id, name FROM " + SUBGROUPS_TABLE + " WHERE group_id=" + QString::number(groupNum);
@@ -108,7 +111,7 @@ void Catalog::addSubgroup(QTreeWidgetItem *groupItem, int groupNum){
     // если не удаётся выполнить запрос, выдаём ошибку
     if(!query.exec(strSelect)){
         error("Ошибка", QString("Не удалось получить список подгрупп:\n").append(strSelect));
-        return;
+        return false;
     }
 
     // формируем элемент поддерева
@@ -131,6 +134,7 @@ void Catalog::addSubgroup(QTreeWidgetItem *groupItem, int groupNum){
         data << QString::number(subgroupNum) << subgroupName;
         subgroupItem->setData(0, Qt::UserRole, data);
     }
+    return true;
 }
 
 //--------------------------------------------------------------------------//
@@ -187,6 +191,13 @@ void Catalog::clear_header(){
 void Catalog::resizeEvent(QResizeEvent *){
     // при изменении размеров каталога (будь то изменение размеров окна
     // или перемещение разделителя) необходимо корректировать положение кнопки сброса
+    move_button();
+}
+
+//--------------------------------------------------------------------------//
+
+void Catalog::showEvent(QShowEvent *){
+    // при отрисовке каталога на экране корректировать положение кнопки сброса
     move_button();
 }
 

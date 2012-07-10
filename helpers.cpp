@@ -1,15 +1,10 @@
-#include <QtGui>
-#include <QtSql>
 #include "helpers.h"
-#include "constants.h"
-/*
-QString DB_NAME = "erkbase";
-QString DB_USER = "df";
-QString DB_PASSWORD = "j39ljzuzy";
-QString DB_HOST = "localhost";
-*/
-// ФУНКЦИИ ВЫДАЧИ СООБЩЕНИЙ ОБ ОШИБКАХ
-//-------------------------------------------------------------------------------//
+
+
+//--------------------------------------------------------------------------//
+//------------------ ФУНКЦИИ ВЫДАЧИ СООБЩЕНИЙ ОБ ОШИБКАХ -------------------//
+//--------------------------------------------------------------------------//
+
 // критическая ошибка, после которой требуется завершить программу
 void critical_error(QString title, QString text){
     int ret = QMessageBox::critical(0, title, text);
@@ -48,11 +43,9 @@ bool createConnection(QSqlDatabase db){
     db.setPassword(DB_PASSWORD);
     db.setHostName(DB_HOST);
 
-    // инициализируем глобальные переменные из constants.cpp
-
     // если db.open завершается неудачно, выдаём ошибку и выходим из программы
     if(!(db.open()))
-        critical_error("Ошибка", QString("Не удалось подключиться к базе данных:\n").append(db.lastError().text()));
+        error("Ошибка", QString("Не удалось подключиться к базе данных:\n").append(db.lastError().text()));
 
     // если с базой соединились, возвращаем true
     return true;

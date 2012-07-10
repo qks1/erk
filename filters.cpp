@@ -1,5 +1,4 @@
 #include "filters.h"
-#include <QtGui>
 
 // конструктор, в котором присваиваем значения фильтров по умолчанию
 Filters::Filters(){

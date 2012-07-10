@@ -1,9 +1,4 @@
 #include "table.h"
-#include "constants.h"
-#include "helpers.h"
-#include "switcher.h"
-#include <QtGui>
-#include <QtSql>
 
 Table::Table(QWidget *parent) :
     QWidget(parent)
@@ -132,7 +127,7 @@ void Table::change_page(int type){
     // возможные значения type описаны в constants.cpp
     int page;
     switch(type){
-    case 1:
+    case PAGE_FIRST:
         // если нажата кнопка "на первую страницу", устанавливаем current_page = 1 и offset = 0
         current_page = 1;
         offset = 0;

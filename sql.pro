@@ -15,12 +15,15 @@ HEADERS += \
     helpers.h \
     switcher.h \
     catalog.h \
-    table.h
-SOURCES += sql.cpp \
+    table.h \
+    mainwindow.h
+SOURCES += \
     searcher.cpp \
     filters.cpp \
     helpers.cpp \
     switcher.cpp \
     catalog.cpp \
     constants.cpp \
-    table.cpp
+    table.cpp \
+    mainwindow.cpp \
+    main.cpp
