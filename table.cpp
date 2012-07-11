@@ -68,32 +68,26 @@ void Table::fill(QSqlQuery query, QStringList columns, bool reset_page){
     table->clear();
     table->setRowCount(0);
 
-    int rows = 0;
-
     table->setColumnCount(columns.size());
     table->setHorizontalHeaderLabels(columns);
+    // в конце добавим пустую строчку, чтобы при скроллинге до последнего элемента switcher не перекрывал его
+    table->setRowCount(query.size()+1);
 
-    QSqlRecord rec = query.record();
+
+    //QSqlRecord rec = query.record();
     QString val;
-    int i = 0, j;
+    int row = 0, col;
     QTableWidgetItem* tableItem = 0;
 
     while(query.next()){
-        rows++;
-        table->setRowCount(rows);
-        j = 0;
-        foreach(QString tmp, columns){
-            val = query.value(rec.indexOf(tmp)).toString();
+        for(col = 0; col < columns.size(); col++){
+            val = query.value(col).toString();
             tableItem = new QTableWidgetItem(val);
-            table->setItem(i,j,tableItem);
-            j++;
+            table->setItem(row,col,tableItem);
         }
-        i++;
+        row++;
     }
 
-    // в конце добавим пустую строчку, чтобы при скроллинге до последнего элемента switcher не перекрывал его
-    rows++;
-    table->setRowCount(rows);
 
     table->resizeColumnsToContents();
     table->resizeRowsToContents();
