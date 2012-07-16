@@ -3,7 +3,7 @@
 Table::Table(QWidget *parent) :
     QWidget(parent)
 {
-    table = new QTableWidget();
+    table = new QTableView();
     switcher = new Switcher(table);
 
     table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -42,6 +42,7 @@ inline void Table::connects(){
     QObject::connect(this->switcher, SIGNAL(multipage_mode_selected()),
                      this, SLOT(restore_limits()));
 
+
 }
 
 inline void Table::layout(){
@@ -59,36 +60,19 @@ void Table::move_switcher(){
 
 }
 
-void Table::fill(QSqlQuery query, QStringList columns, bool reset_page){
+void Table::fill(QSqlQueryModel *query, QStringList columns, bool reset_page){
     if(reset_page){
         current_page = 1;
         offset = 0;
         begin = 0;
     }
-    table->clear();
-    table->setRowCount(0);
 
-    table->setColumnCount(columns.size());
-    table->setHorizontalHeaderLabels(columns);
-    // в конце добавим пустую строчку, чтобы при скроллинге до последнего элемента switcher не перекрывал его
-    table->setRowCount(query.size()+1);
+    //table->setHorizontalHeaderLabels(columns);
 
+    //query->insertRow(query->rowCount());
+    table->setModel(query);
 
-    //QSqlRecord rec = query.record();
-    QString val;
-    int row = 0, col;
-    QTableWidgetItem* tableItem = 0;
-
-    while(query.next()){
-        for(col = 0; col < columns.size(); col++){
-            val = query.value(col).toString();
-            tableItem = new QTableWidgetItem(val);
-            table->setItem(row,col,tableItem);
-        }
-        row++;
-    }
-
-
+    table->setSortingEnabled(true);
     table->resizeColumnsToContents();
     table->resizeRowsToContents();
 

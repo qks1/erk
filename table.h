@@ -21,10 +21,10 @@ public:
     int get_items_on_page();
 
 
-    void fill(QSqlQuery query, QStringList columns, bool reset_page);       // функция заполнения таблицы
+    void fill(QSqlQueryModel *query, QStringList columns, bool reset_page);       // функция заполнения таблицы
 
 private:
-    QTableWidget *table;                    // таблица
+    QTableView *table;                    // таблица
     QPushButton *qpb;
     inline void layout();                   // расположить элементы
     void move_switcher();

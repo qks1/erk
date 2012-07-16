@@ -90,7 +90,7 @@ QStringList Searcher::get_columns_list(){
 
 void Searcher::fill_table(bool reset_groups){
     QStringList columns = get_columns_list();       // пока так, нуачо
-    QSqlQuery query;
+    QSqlQueryModel *query = new QSqlQueryModel;
     QString strSelect;
 
     if(reset_groups){
@@ -101,11 +101,9 @@ void Searcher::fill_table(bool reset_groups){
     }
     strSelect = apply_filters();
 
-    if(!query.exec(strSelect)){
-        error("Ошибка", QString("Не удалось выполнить запрос:\n").append(strSelect));
-    }
+    query->setQuery(strSelect);
 
-    active_table->fill(query,columns,reset_groups);
+    active_table->fill(query, columns, reset_groups);
 }
 
 void Searcher::set_totals(QString query){
@@ -163,9 +161,10 @@ QString Searcher::apply_filters(){
     else
         where = " WHERE subgroup_id IN (SELECT id FROM " + SUBGROUPS_TABLE + " WHERE group_id=" + QString::number(group-ENLARGER) + ")";
 
-    // сформируем строку запроса для получения кол-ва записей
+    // Для переключателя страниц необходимо подсчитать общее количество записей, удовлетворяющих фильтрам (кроме limits).
+    // В table же мы передаём передаём только записи по количеству limits. Поэтому сформируем запрос для подсчёта общего кол-ва записей,
+    // выполним его и забудем про это дело.
     count = "SELECT count(*) FROM " + TOVMARKS_TABLE + where;
-    // найдём кол-во записей и установим его в table
     set_totals(count);
 
     // порядок сортировки

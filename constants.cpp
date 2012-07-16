@@ -7,12 +7,16 @@ QString DB_USER = "postgres";
 QString DB_PASSWORD = "aurora2174_";
 QString DB_HOST = "192.168.1.101";
 */
-
+/*
 QString DB_NAME = "erkbase";
 QString DB_USER = "erkprog";
 QString DB_PASSWORD = "aurora2174_";
 QString DB_HOST = "localhost";
-
+*/
+QString DB_NAME = "erkbase";
+QString DB_USER = "df";
+QString DB_PASSWORD = "j39ljzuzy";
+QString DB_HOST = "localhost";
 
 // таблицы БД
 QString GROUPS_TABLE = "groups";
