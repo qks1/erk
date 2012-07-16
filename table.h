@@ -45,6 +45,10 @@ private:
 
     void resizeEvent(QResizeEvent *);           // реакция на изменение размеров окна
 
+    QMap<QString, QString> column_names;
+    QString rename_column(QString);
+
+
 
 signals:
     void limits_changed(pair);

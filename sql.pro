@@ -16,7 +16,8 @@ HEADERS += \
     switcher.h \
     catalog.h \
     table.h \
-    mainwindow.h
+    mainwindow.h \
+    input.h
 SOURCES += \
     searcher.cpp \
     filters.cpp \
@@ -26,4 +27,5 @@ SOURCES += \
     constants.cpp \
     table.cpp \
     mainwindow.cpp \
-    main.cpp
+    main.cpp \
+    input.cpp

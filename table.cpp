@@ -19,6 +19,24 @@ Table::Table(QWidget *parent) :
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
 
+    column_names["id"] = "id";
+    column_names["name"] = "Имя";
+    column_names["subgroup"] = "Группа";
+    column_names["price_ret"] = "Цена";
+    column_names["par1_val"] = "1";
+    column_names["par2_val"] = "2";
+    column_names["par3_val"] = "3";
+    column_names["par4_val"] = "4";
+    column_names["par5_val"] = "5";
+    column_names["par6_val"] = "6";
+    column_names["par7_val"] = "7";
+    column_names["par8_val"] = "8";
+    column_names["par9_val"] = "9";
+    column_names["par10_val"] = "10";
+    column_names["par11_val"] = "11";
+    column_names["par12_val"] = "12";
+
+
     move_switcher();
     layout();
     connects();
@@ -43,6 +61,7 @@ inline void Table::connects(){
                      this, SLOT(restore_limits()));
 
 
+
 }
 
 inline void Table::layout(){
@@ -60,6 +79,10 @@ void Table::move_switcher(){
 
 }
 
+QString Table::rename_column(QString str){
+    return column_names[str];
+}
+
 void Table::fill(QSqlQueryModel *query, QStringList columns, bool reset_page){
     if(reset_page){
         current_page = 1;
@@ -67,14 +90,25 @@ void Table::fill(QSqlQueryModel *query, QStringList columns, bool reset_page){
         begin = 0;
     }
 
-    //table->setHorizontalHeaderLabels(columns);
+    QSortFilterProxyModel *temp_model = new QSortFilterProxyModel;
+    temp_model->setSourceModel(query);
+    temp_model->sort(0, Qt::DescendingOrder);
+
+    // переименовываем столбцы
+    int clmns_cnt = temp_model->columnCount();
+    for(int i = 0; i < clmns_cnt; i++){
+        temp_model->setHeaderData(i, Qt::Horizontal, rename_column(temp_model->headerData(i, Qt::Horizontal).toString()));
+    }
 
     //query->insertRow(query->rowCount());
-    table->setModel(query);
+    table->setModel(temp_model);
 
     table->setSortingEnabled(true);
+    table->sortByColumn(0, Qt::AscendingOrder);
     table->resizeColumnsToContents();
     table->resizeRowsToContents();
+
+
 
     update_switcher_values();
 }

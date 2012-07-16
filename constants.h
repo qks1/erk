@@ -13,6 +13,24 @@
 #define MULTIPAGE_MODE 10
 #define SINGLEPAGE_MODE 11
 
+// константы для последнего применённого фильтра
+#define GROUPS_FILTER 100
+#define COLUMNS_FILTER 101
+#define LIMITS_FILTER 102
+#define ID_FILTER 103
+#define BEGIN_TEXT_FILTER 104
+#define PARTS_TEXT_FILTER 105
+
+// константы для режима поиска по id
+#define EQUAL 200
+#define GREATER_OR_EQUAL 201
+
+// константы для режимов поиска (текстовое поле)
+#define ID_MODE 300
+#define BEGIN_MODE 301
+#define PARTS_MODE 302
+#define ERROR_MODE 303
+
 // в поисковике выборка может производиться как по группам, так и по подгруппам.
 // чтобы в фильтре отличить группу от подгруппы, в каталоге (дереве) к номеру каждой группы прибавляется большое число.
 #define ENLARGER 100000

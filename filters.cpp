@@ -35,6 +35,26 @@ void Filters::restore_limits(){
     this->nolimits = false;
 }
 
+void Filters::set_white_id(int id){
+    this->white_id = id;
+}
+
+void Filters::reset_white_id(){
+    this->white_id = 0;
+}
+
+void Filters::set_beginname(QString name){
+    this->beginname = name;
+}
+
+void Filters::reset_beginname(){
+    this->beginname = "";
+}
+
+void Filters::set_white_id_mode(int mode){
+    this->white_id_mode = mode;
+}
+
 
 // вернуть значение group_filter
 int Filters::group_filter(){
@@ -58,5 +78,19 @@ int Filters::begin(){
 
 bool Filters::are_there_limits(){
     return (nolimits ? false : true);
+}
+
+// вернуть "белый" id
+int Filters::white_id_filter(){
+    return this->white_id;
+}
+
+// вернуть шаблон дял поиска с начала
+QString Filters::beginname_filter(){
+    return this->beginname;
+}
+
+int Filters::white_id_mode_filter(){
+    return this->white_id_mode;
 }
 
