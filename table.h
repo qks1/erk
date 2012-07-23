@@ -6,6 +6,7 @@
 #include "helpers.h"
 #include "switcher.h"
 #include "constants.h"
+#include "mytablemodel.h"
 
 /*
     Класс, реализующий таблицу с переключателем страниц.
@@ -19,9 +20,10 @@ public:
 
     void set_totals(int);
     int get_items_on_page();
+    void set_multipage_mode();
 
 
-    void fill(QSqlQueryModel *query, QStringList columns, bool reset_page);       // функция заполнения таблицы
+    void fill(MyTableModel*, QString, Qt::SortOrder, int, bool);       // функция заполнения таблицы
 
 private:
     QTableView *table;                    // таблица
@@ -46,7 +48,12 @@ private:
     void resizeEvent(QResizeEvent *);           // реакция на изменение размеров окна
 
     QMap<QString, QString> column_names;
-    QString rename_column(QString);
+    QMap<QString, QString> params_names;
+    QStringList original_column_names;
+    QMap<QString, QString> get_params_names(int);
+    QString rename_column(QString, int group);
+    QString sort_column;
+    Qt::SortOrder sort_order;
 
 
 
@@ -54,12 +61,14 @@ signals:
     void limits_changed(pair);
     void limits_removed();
     void limits_restored();
+    void sort_order_changed(QString, Qt::SortOrder);
 
 private slots:
     void change_page(int);
     void change_onpage(int);
     void remove_limits();
     void restore_limits();
+    void change_order(int, Qt::SortOrder);
 
 
 public slots:

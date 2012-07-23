@@ -14,7 +14,7 @@ void critical_error(QString title, QString text){
 
 // ошибка, после которой не требуется завершать программу
 void error(QString title, QString text){
-    int ret = QMessageBox::warning(0, title, text);
+    QMessageBox::warning(0, title, text);
 }
 
 // Сообщение с вопросом (да/нет)
@@ -49,4 +49,25 @@ bool createConnection(QSqlDatabase db){
 
     // если с базой соединились, возвращаем true
     return true;
+}
+
+// функция установки основного шрифта приложения
+void set_system_font(QString family, int size){
+    QFont app_font;
+    app_font.setFamily(family);
+    app_font.setPixelSize(size);
+    qApp->setFont(app_font);
+}
+
+// функция замены символов в тексте при поиске
+QString replases(QString text){
+    text.replace("?", "_");
+    text.replace("*", "%");
+    text.replace(",", ".");
+    return text.toUpper();
+}
+
+//
+bool operator ==(SortingOrder left, SortingOrder right){
+    return (left.column == right.column);
 }

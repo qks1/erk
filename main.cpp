@@ -20,11 +20,14 @@ int main(int argc, char **argv){
     // создаём стиль для табвиджета, устанавливающий размер вкладок
     app.setStyleSheet("QTabBar::tab { min-width:50px; max-height:20px}");
 
+    set_system_font(SYSTEM_FONT_FAMILY, SYSTEM_FONT_SIZE);
+
 
     // создаём главное окно
     MainWindow *mw = new MainWindow();
     mw->setWindowState(Qt::WindowMaximized);
     mw->show();
+    //mw->setMaximumSize(mw->width(), mw->height());
 
     QObject::connect(mw, SIGNAL(exit_signal()),
             &app, SLOT(closeAllWindows()));

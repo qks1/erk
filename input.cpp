@@ -1,4 +1,5 @@
 #include "input.h"
+#include <limits>
 
 Input::Input(QWidget *parent) :
     QWidget(parent)
@@ -15,6 +16,9 @@ Input::Input(QWidget *parent) :
     eqge = new QComboBox();
     eqge->addItem(">");
     eqge->addItem("=");
+
+    //QValidator *intvalidator = new QIntValidator();
+
 
     QFont lineFont;
     lineFont.setPixelSize(11);
@@ -49,6 +53,20 @@ inline void Input::connects(){
                      this, SLOT(hide_eqge()));
     QObject::connect(this->parts_mode, SIGNAL(clicked()),
                      this, SLOT(hide_eqge()));
+
+    QObject::connect(this->id_mode, SIGNAL(clicked()),
+                     this, SLOT(set_cursor_to_begin()));
+    QObject::connect(this->begin_mode, SIGNAL(clicked()),
+                     this, SLOT(set_cursor_to_begin()));
+    QObject::connect(this->parts_mode, SIGNAL(clicked()),
+                     this, SLOT(set_cursor_to_begin()));
+
+    QObject::connect(this->id_mode, SIGNAL(clicked()),
+                     this, SLOT(set_validator()));
+    QObject::connect(this->begin_mode, SIGNAL(clicked()),
+                     this, SLOT(remove_validator()));
+    QObject::connect(this->parts_mode, SIGNAL(clicked()),
+                     this, SLOT(remove_validator()));
 
     QObject::connect(this->eqge, SIGNAL(activated(int)),
                      this, SLOT(id_mode_changed_slot(int)));
@@ -131,4 +149,17 @@ void Input::id_mode_changed_slot(int value){
     if(id_mode->isChecked()){
         emit(text_changed_signal(ID_MODE, text->text()));
     }
+}
+
+void Input::set_cursor_to_begin(){
+    text->setFocus(Qt::TabFocusReason);
+}
+
+void Input::set_validator(){
+    QValidator *valid = new QIntValidator(1,std::numeric_limits<int>::max());
+    this->text->setValidator(valid);
+}
+
+void Input::remove_validator(){
+    this->text->setValidator(0);
 }

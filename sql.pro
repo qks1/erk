@@ -17,7 +17,9 @@ HEADERS += \
     catalog.h \
     table.h \
     mainwindow.h \
-    input.h
+    input.h \
+    mytablemodel.h \
+    paramsselector.h
 SOURCES += \
     searcher.cpp \
     filters.cpp \
@@ -28,4 +30,6 @@ SOURCES += \
     table.cpp \
     mainwindow.cpp \
     main.cpp \
-    input.cpp
+    input.cpp \
+    mytablemodel.cpp \
+    paramsselector.cpp

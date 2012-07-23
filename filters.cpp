@@ -55,6 +55,30 @@ void Filters::set_white_id_mode(int mode){
     this->white_id_mode = mode;
 }
 
+void Filters::set_parts(QStringList parts){
+    this->parts = parts;
+}
+
+void Filters::add_white_sort_column(SortingOrder item){
+    int index;
+    // если столбец уже есть в списке, удаляем его и вставляем в начало
+    if((index = this->white_sort_order.indexOf(item)) >= 0){
+        this->white_sort_order.removeAt(index);
+    }
+    this->white_sort_order.push_front(item);
+}
+
+void Filters::set_param(int num, QString str){
+    this->params[num] = str;
+}
+
+void Filters::reset_params(){
+    this->params.clear();
+    for(int i = 0; i < MAX_PARAMS; i++)
+        params << "";
+}
+
+
 
 // вернуть значение group_filter
 int Filters::group_filter(){
@@ -94,3 +118,14 @@ int Filters::white_id_mode_filter(){
     return this->white_id_mode;
 }
 
+QStringList Filters::parts_filter(){
+    return this->parts;
+}
+
+QList<SortingOrder> Filters::white_sort_order_filter(){
+    return this->white_sort_order;
+}
+
+QStringList Filters::params_filter(){
+    return this->params;
+}

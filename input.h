@@ -50,6 +50,9 @@ public slots:
 private slots:
     void hide_eqge();
     void show_eqge();
+    void set_cursor_to_begin();
+    void set_validator();
+    void remove_validator();
 
 };
 

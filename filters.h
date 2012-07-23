@@ -13,6 +13,10 @@
     -- white_id - число, по которому производится отбор по id в белом экране
     -- white_id_mode - >= или ==
     -- beginname - шаблон для поиска с начала
+    -- parts - шаблоны для поиска по фрагментам
+    -- white_sort_order - порядок сортировки в белом экране (список (для устойчивой сортировки),
+                            с указанием имени столбца и порядка сортировки)
+    -- params - список строк с параметрами (выбранными в селекторах)
 
 */
 
@@ -32,6 +36,10 @@ public:
     void set_beginname(QString);
     void reset_beginname();
     void set_white_id_mode(int);
+    void set_parts(QStringList);
+    void add_white_sort_column(SortingOrder);
+    void set_param(int, QString);
+    void reset_params();
 
     // функции, возвращающие значения фильтров:
     int group_filter();
@@ -42,6 +50,9 @@ public:
     int white_id_filter();
     QString beginname_filter();
     int white_id_mode_filter();
+    QStringList parts_filter();
+    QList<SortingOrder> white_sort_order_filter();
+    QStringList params_filter();
 
 // непосредственно значения фильтров - private
 private:
@@ -52,6 +63,9 @@ private:
     int white_id;           // "белый" id
     short white_id_mode;    // режим фильтра по белому id
     QString beginname;      // шаблон для поиска с начала
+    QStringList parts;
+    QList<SortingOrder> white_sort_order;
+    QStringList params;
 
 };
 

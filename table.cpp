@@ -13,11 +13,17 @@ Table::Table(QWidget *parent) :
     begin = 0;
     offset = 0;
 
+
+
     table->verticalHeader()->hide();
     table->horizontalHeader()->setMovable(true);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->verticalHeader()->setDefaultSectionSize(table->verticalHeader()->fontMetrics().height() + 2);
+    table->horizontalHeader()->setHighlightSections(false);
+
+
 
     column_names["id"] = "id";
     column_names["name"] = "Имя";
@@ -62,6 +68,8 @@ inline void Table::connects(){
 
 
 
+
+
 }
 
 inline void Table::layout(){
@@ -79,39 +87,91 @@ void Table::move_switcher(){
 
 }
 
-QString Table::rename_column(QString str){
-    return column_names[str];
+QString Table::rename_column(QString str, int group){
+    QRegExp rx("^(par[0-9]+)_val$");
+    if(group != 0 && str.contains(rx)){
+        //
+        int pos = rx.indexIn(str);
+        return (pos > -1 ? params_names[rx.cap(1)] : "?");
+    }
+    else
+        return column_names[str];
 }
 
-void Table::fill(QSqlQueryModel *query, QStringList columns, bool reset_page){
+QMap<QString, QString> Table::get_params_names(int group){
+    QMap<QString, QString> params;
+    QSqlQuery q;
+    QString query = "SELECT * FROM " + SUBGROUPS_TABLE + " WHERE id=" + QString::number(group);
+    if(!q.exec(query)){
+        error("Ошибка", QString("Не удалось выполнить запрос:\n").append(query));
+        // params в этом случае остаётся пустым, и названия столбцов просто не заполнятся
+    }
+    else {
+        QSqlRecord rec = q.record();
+        q.next();
+        for(int i = 1; i <= MAX_PARAMS; i++){
+            QString field_name = "par" + QString::number(i);
+            params[field_name] = q.value(rec.indexOf(field_name)).toString();
+        }
+    }
+
+    return params;
+}
+
+void Table::fill(MyTableModel *query, QString cur_sort_column, Qt::SortOrder cur_sort_order, int group, bool reset_page){
     if(reset_page){
         current_page = 1;
         offset = 0;
         begin = 0;
     }
 
-    QSortFilterProxyModel *temp_model = new QSortFilterProxyModel;
-    temp_model->setSourceModel(query);
-    temp_model->sort(0, Qt::DescendingOrder);
+    //QSortFilterProxyModel *temp_model = new QSortFilterProxyModel;
+    //temp_model->setSourceModel(query);
+    //temp_model->sort(0, Qt::AscendingOrder);
+
+    this->sort_column = cur_sort_column;
+    this->sort_order = cur_sort_order;
+    qDebug("1");
+    // сохраняем оригинальные имена столбцов, чтобы передавать их поисковику при сортировке
+    original_column_names.clear();
+    for(int i = 0; i < query->columnCount(); i++){
+        original_column_names << query->headerData(i, Qt::Horizontal).toString();
+    }
+    int cur_index = original_column_names.indexOf(cur_sort_column);
+
+    qDebug("2");
 
     // переименовываем столбцы
-    int clmns_cnt = temp_model->columnCount();
-    for(int i = 0; i < clmns_cnt; i++){
-        temp_model->setHeaderData(i, Qt::Horizontal, rename_column(temp_model->headerData(i, Qt::Horizontal).toString()));
+    // если group != 0, т.е. выбрана конкретная подгруппа, столбцы с параметрами надо переименовать параметрами для этой подгруппы.
+    // для этого выбираем их названия из БД и запихиваем в QMap params_names
+    if(group > 0)
+        params_names = get_params_names(group);
+
+    // и теперь для каждого столбца устанавливаем новое название
+    for(int i = 0; i < query->columnCount(); i++){
+        query->setHeaderData(i, Qt::Horizontal, rename_column(query->headerData(i, Qt::Horizontal).toString(), group));
     }
+    qDebug("3");
 
     //query->insertRow(query->rowCount());
-    table->setModel(temp_model);
+    table->setModel(query);
+    qDebug("4");
+
+    // если получен сигнал order_changed, сменить столбец сортировки и порядок
+    QObject::connect(this->table->model(), SIGNAL(order_changed(int, Qt::SortOrder)),
+                     this, SLOT(change_order(int, Qt::SortOrder)));
 
     table->setSortingEnabled(true);
-    table->sortByColumn(0, Qt::AscendingOrder);
-    table->resizeColumnsToContents();
-    table->resizeRowsToContents();
+    qDebug("5");
 
-
+    table->horizontalHeader()->setSortIndicator(table->horizontalHeader()->sortIndicatorSection(), cur_sort_order);
+    //table->sortByColumn(0, cur_sort_order);
+    //table->resizeColumnsToContents();
+    //table->resizeRowsToContents();
 
     update_switcher_values();
 }
+
 
 void Table::set_totals(int items){
     this->total_items = items;
@@ -120,6 +180,11 @@ void Table::set_totals(int items){
 
 int Table::get_items_on_page(){
     return this->items_on_page;
+}
+
+void Table::set_multipage_mode(){
+    this->switcher->switch_to_multipage_mode();
+    update_switcher_values();
 }
 
 void Table::update_switcher_values(){
@@ -145,7 +210,7 @@ void Table::change_page(int type){
         offset = 0;
         begin = 0;
         break;
-    case 2:
+    case PAGE_PREV:
         // если нажата кнопка "на предыдущую страницу", уменьшаем current_page на 1
         // если текущая страница первая, ничего не делаем
         // если текущая страница вторая и offset не нулевой, обнуляем offset, чтобы запрос выполнился корректно и кол-во записей было верным
@@ -160,7 +225,7 @@ void Table::change_page(int type){
             }
         }
         break;
-    case 3:
+    case PAGE_NEXT:
         // если нажата кнопка "на следующую страницу", увеличиваем current_page на 1
         // но если текущая страница последняя, ничего не делаем
         if(current_page != total_pages){
@@ -168,13 +233,13 @@ void Table::change_page(int type){
             begin += items_on_page;
         }
         break;
-    case 4:
+    case PAGE_LAST:
         // если нажата кнопка "на последнюю страницу", устанавливаем current_page = номер_последней_страницы
         current_page = total_pages;
         begin = items_on_page * (total_pages-1);
         offset = 0;
         break;
-    case 5:
+    case PAGE_NUMBER:
         // если введён номер страницы, установить current_page
         // предварительно необходимо проверить, чтобы номер был в отрезке [1, total_pages]
         page = switcher->page_number();
@@ -235,14 +300,21 @@ void Table::restore_limits(){
     emit(limits_restored());
 }
 
+void Table::change_order(int column, Qt::SortOrder order){
+    QString column_name = original_column_names[column];
+    if(!(sort_column == column_name && sort_order == order)){
+        emit(sort_order_changed(column_name, order));
+    }
+}
+
 
 //--------------------------------------------------------------------------//
 //--------------------------- СОБЫТИЯ --------------------------------------//
 //--------------------------------------------------------------------------//
 
 void Table::resizeEvent(QResizeEvent *){
-    // при изменении размеров каталога (будь то изменение размеров окна
-    // или перемещение разделителя) необходимо корректировать положение кнопки сброса
+    // при изменении размеров таблицы (будь то изменение размеров окна
+    // или перемещение разделителя) необходимо корректировать положение переключателя
     move_switcher();
 }
 

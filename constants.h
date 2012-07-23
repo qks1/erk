@@ -20,6 +20,10 @@
 #define ID_FILTER 103
 #define BEGIN_TEXT_FILTER 104
 #define PARTS_TEXT_FILTER 105
+#define NOLIMITS_FILTER 106
+#define SETLIMITS_FILTER 107
+#define SORT_FILTER 108
+#define PARAMS_FILTER 109
 
 // константы для режима поиска по id
 #define EQUAL 200
@@ -49,12 +53,19 @@ extern QString SUBGROUPS_TABLE;
 extern QString TOVMARKS_TABLE;
 
 extern int SMALL_FONT_SIZE;
+extern int SYSTEM_FONT_SIZE;
+extern QString SYSTEM_FONT_FAMILY;
 
 extern int ITEMS_ON_PAGE;
 
 extern int MAX_ITEMS_WITHOUT_WARNING;
 
 extern int TABS_DEFAULT;
+
+extern int MAX_PARAMS;
+
+extern QString DEFAULT_WHITE_SORT_COLUMN;
+extern Qt::SortOrder DEFAULT_WHITE_SORT_ORDER;
 
 
 void init_vars();
