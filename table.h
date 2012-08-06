@@ -23,7 +23,7 @@ public:
     void set_multipage_mode();
 
 
-    void fill(MyTableModel*, QString, Qt::SortOrder, int, bool);       // функция заполнения таблицы
+    void fill(MyTableModel*, QStringList, int, Qt::SortOrder, int, int, bool);       // функция заполнения таблицы
 
 private:
     QTableView *table;                    // таблица
@@ -43,16 +43,13 @@ private:
     // поэтому номер первой записи не всегда будет кратным числу записей на странице.
     // в переменной offset хранится этот самый сдвиг.
     int offset;
+
+    QStringList column_names;
     void update_switcher_values();
 
     void resizeEvent(QResizeEvent *);           // реакция на изменение размеров окна
 
-    QMap<QString, QString> column_names;
-    QMap<QString, QString> params_names;
-    QStringList original_column_names;
-    QMap<QString, QString> get_params_names(int);
-    QString rename_column(QString, int group);
-    QString sort_column;
+    int sort_column;
     Qt::SortOrder sort_order;
 
 
@@ -61,13 +58,17 @@ signals:
     void limits_changed(pair);
     void limits_removed();
     void limits_restored();
-    void sort_order_changed(QString, Qt::SortOrder);
+    void sort_order_changed(int, Qt::SortOrder);
+    void prices_clicked();
 
 private slots:
     void change_page(int);
     void change_onpage(int);
     void remove_limits();
     void restore_limits();
+    void switch_prices(QPoint);
+
+public slots:
     void change_order(int, Qt::SortOrder);
 
 

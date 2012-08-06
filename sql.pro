@@ -33,3 +33,6 @@ SOURCES += \
     input.cpp \
     mytablemodel.cpp \
     paramsselector.cpp
+
+RESOURCES += \
+    images.qrc

@@ -24,6 +24,7 @@
 #define SETLIMITS_FILTER 107
 #define SORT_FILTER 108
 #define PARAMS_FILTER 109
+#define PRICES_FILTER 110
 
 // константы для режима поиска по id
 #define EQUAL 200
@@ -34,6 +35,11 @@
 #define BEGIN_MODE 301
 #define PARTS_MODE 302
 #define ERROR_MODE 303
+
+// режимы фильтра по ценам
+#define ALL_PRICES 400
+#define POSITIVE_PRICES 401
+#define ZERO_PRICES 402
 
 // в поисковике выборка может производиться как по группам, так и по подгруппам.
 // чтобы в фильтре отличить группу от подгруппы, в каталоге (дереве) к номеру каждой группы прибавляется большое число.
@@ -67,6 +73,9 @@ extern int MAX_PARAMS;
 extern QString DEFAULT_WHITE_SORT_COLUMN;
 extern Qt::SortOrder DEFAULT_WHITE_SORT_ORDER;
 
+extern QStringList ALL_WHITE_COLUMNS;
+extern QStringList WHITE_TABLE_COLUMNS;
+extern QStringList GREY_TABLE_COLUMNS;
 
 void init_vars();
 

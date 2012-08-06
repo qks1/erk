@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="switcher_first">images/first.png</file>
+        <file alias="switcher_last">images/last.png</file>
+        <file alias="switcher_next">images/next.png</file>
+        <file alias="switcher_prev">images/prev.png</file>
+    </qresource>
+</RCC>

@@ -13,8 +13,6 @@ Table::Table(QWidget *parent) :
     begin = 0;
     offset = 0;
 
-
-
     table->verticalHeader()->hide();
     table->horizontalHeader()->setMovable(true);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -22,31 +20,12 @@ Table::Table(QWidget *parent) :
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
     table->verticalHeader()->setDefaultSectionSize(table->verticalHeader()->fontMetrics().height() + 2);
     table->horizontalHeader()->setHighlightSections(false);
-
-
-
-    column_names["id"] = "id";
-    column_names["name"] = "Имя";
-    column_names["subgroup"] = "Группа";
-    column_names["price_ret"] = "Цена";
-    column_names["par1_val"] = "1";
-    column_names["par2_val"] = "2";
-    column_names["par3_val"] = "3";
-    column_names["par4_val"] = "4";
-    column_names["par5_val"] = "5";
-    column_names["par6_val"] = "6";
-    column_names["par7_val"] = "7";
-    column_names["par8_val"] = "8";
-    column_names["par9_val"] = "9";
-    column_names["par10_val"] = "10";
-    column_names["par11_val"] = "11";
-    column_names["par12_val"] = "12";
-
+    table->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
+    table->setAlternatingRowColors(true);
 
     move_switcher();
     layout();
     connects();
-
 }
 
 inline void Table::connects(){
@@ -66,6 +45,8 @@ inline void Table::connects(){
     QObject::connect(this->switcher, SIGNAL(multipage_mode_selected()),
                      this, SLOT(restore_limits()));
 
+    QObject::connect(this->table->horizontalHeader(), SIGNAL(customContextMenuRequested(QPoint)),
+                     this, SLOT(switch_prices(QPoint)));
 
 
 
@@ -87,88 +68,39 @@ void Table::move_switcher(){
 
 }
 
-QString Table::rename_column(QString str, int group){
-    QRegExp rx("^(par[0-9]+)_val$");
-    if(group != 0 && str.contains(rx)){
-        //
-        int pos = rx.indexIn(str);
-        return (pos > -1 ? params_names[rx.cap(1)] : "?");
-    }
-    else
-        return column_names[str];
-}
+void Table::fill(MyTableModel *query,
+                 QStringList names,
+                 int cur_sort_column,
+                 Qt::SortOrder cur_sort_order,
+                 int prices_filter,
+                 int group,
+                 bool reset_page)
+{
+    this->column_names = names;
 
-QMap<QString, QString> Table::get_params_names(int group){
-    QMap<QString, QString> params;
-    QSqlQuery q;
-    QString query = "SELECT * FROM " + SUBGROUPS_TABLE + " WHERE id=" + QString::number(group);
-    if(!q.exec(query)){
-        error("Ошибка", QString("Не удалось выполнить запрос:\n").append(query));
-        // params в этом случае остаётся пустым, и названия столбцов просто не заполнятся
-    }
-    else {
-        QSqlRecord rec = q.record();
-        q.next();
-        for(int i = 1; i <= MAX_PARAMS; i++){
-            QString field_name = "par" + QString::number(i);
-            params[field_name] = q.value(rec.indexOf(field_name)).toString();
-        }
-    }
-
-    return params;
-}
-
-void Table::fill(MyTableModel *query, QString cur_sort_column, Qt::SortOrder cur_sort_order, int group, bool reset_page){
     if(reset_page){
         current_page = 1;
         offset = 0;
         begin = 0;
     }
-
     //QSortFilterProxyModel *temp_model = new QSortFilterProxyModel;
     //temp_model->setSourceModel(query);
     //temp_model->sort(0, Qt::AscendingOrder);
 
     this->sort_column = cur_sort_column;
     this->sort_order = cur_sort_order;
-    qDebug("1");
-    // сохраняем оригинальные имена столбцов, чтобы передавать их поисковику при сортировке
-    original_column_names.clear();
-    for(int i = 0; i < query->columnCount(); i++){
-        original_column_names << query->headerData(i, Qt::Horizontal).toString();
-    }
-    int cur_index = original_column_names.indexOf(cur_sort_column);
-
-    qDebug("2");
-
-    // переименовываем столбцы
-    // если group != 0, т.е. выбрана конкретная подгруппа, столбцы с параметрами надо переименовать параметрами для этой подгруппы.
-    // для этого выбираем их названия из БД и запихиваем в QMap params_names
-    if(group > 0)
-        params_names = get_params_names(group);
-
-    // и теперь для каждого столбца устанавливаем новое название
-    for(int i = 0; i < query->columnCount(); i++){
-        query->setHeaderData(i, Qt::Horizontal, rename_column(query->headerData(i, Qt::Horizontal).toString(), group));
-    }
-    qDebug("3");
 
     //query->insertRow(query->rowCount());
     table->setModel(query);
-    qDebug("4");
 
     // если получен сигнал order_changed, сменить столбец сортировки и порядок
     QObject::connect(this->table->model(), SIGNAL(order_changed(int, Qt::SortOrder)),
                      this, SLOT(change_order(int, Qt::SortOrder)));
 
+
+    table->sortByColumn(sort_column, sort_order);
     table->setSortingEnabled(true);
-    qDebug("5");
-
     table->horizontalHeader()->setSortIndicator(table->horizontalHeader()->sortIndicatorSection(), cur_sort_order);
-    //table->sortByColumn(0, cur_sort_order);
-    //table->resizeColumnsToContents();
-    //table->resizeRowsToContents();
-
     update_switcher_values();
 }
 
@@ -301,10 +233,15 @@ void Table::restore_limits(){
 }
 
 void Table::change_order(int column, Qt::SortOrder order){
-    QString column_name = original_column_names[column];
-    if(!(sort_column == column_name && sort_order == order)){
-        emit(sort_order_changed(column_name, order));
+    if(!(sort_column == column && sort_order == order)){
+        emit(sort_order_changed(column, order));
     }
+}
+
+void Table::switch_prices(QPoint pos){
+    // проверяем, был ли щелчок произвежён по столбцу с розничной ценой
+    if(this->table->horizontalHeader()->logicalIndexAt(pos) == this->column_names.indexOf("price_ret"))
+        emit(prices_clicked());
 }
 
 

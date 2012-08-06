@@ -19,18 +19,25 @@ Searcher::Searcher(QWidget *parent) :
         param = new ParamsSelector(i);
         selectors << param;
     }
-    int max_params = 0;
+    params_reset = new QPushButton("X");
+    max_params = 0;
     filters = new Filters();
     pair limits = {0, this->white_table->get_items_on_page()};
     filters->set_limits(limits);
     filters->reset_white_id();
     filters->reset_beginname();
     filters->set_group_filter(0);
+    filters->set_columns_filter(WHITE_TABLE_COLUMNS);
+    filters->set_prices(ALL_PRICES);
     SortingOrder order = {DEFAULT_WHITE_SORT_COLUMN, DEFAULT_WHITE_SORT_ORDER};
     filters->add_white_sort_column(order);
     filters->reset_params();
     last_applied_filter = GROUPS_FILTER;
+    single_group = -1;
+    single_group_without_limits = -1;
 
+    // сопоставляем имена столбцов в таблице именам столбцов в базе
+    fill_column_names();
 
     // заполняем таблицу, пока без фильтров
     fill_table(false, false);
@@ -45,36 +52,64 @@ Searcher::Searcher(QWidget *parent) :
 
 
 inline void Searcher::set_layout(){
-    // горизонтальный layout, содержащий выпадающие списки параметров и текстовое поле
-    QHBoxLayout *hlt = new QHBoxLayout;
-    hlt->setSpacing(0);
-    hlt->setMargin(0);
-    for(int i = 0; i < MAX_PARAMS; i++){
-        hlt->addWidget(selectors.at(i));
-        selectors.at(i)->setMinimumWidth(60);
-        //QRect rect(0,0,50,20);
-        //selectors.at(i)->setGeometry(rect);
+    // виджет, содержащий кнопки и текстовое поле
+    QWidget *top_panel = new QWidget(this);
+    // виджет, содержащий выпадающие списки параметров
+    QWidget *selectors_panel = new QWidget(this);
+    // на эти два виджета будут наложены горизонтальные лайауты
 
+    // устанавливаем размеры элементов
+    int input_width = 300;      // ширина текстового поля
+    int button_size = 25;       // ширина кнопки сброса
+    int spacing = 5;            // отступ до кнопки сброса
+
+    // поправка на ширину боковой панели в бубунте. Осторожно, костыль.
+    int panel_width = 0;
+#ifdef Q_OS_LINUX
+    panel_width = 100;
+#endif
+    // да и это тоже костыль. Ширина селектора при максимизированном окне.
+    int selector_width = (qApp->desktop()->width() - button_size - panel_width - spacing)/MAX_PARAMS;
+
+    // лайаут для виджета с кнопками и текстовым полем
+    QHBoxLayout *top_lt = new QHBoxLayout();
+    top_lt->setMargin(0);
+    top_lt->setSpacing(0);
+    // добавляем кнопки, которые пока не созданы, лол
+    // блаблабла
+    // добавляем текстовое поле
+    top_lt->addWidget(input);
+    input->setFixedSize(input_width, 70);
+    top_panel->setLayout(top_lt);
+    top_panel->setFixedHeight(input->height());
+
+    // лайаут для виджета с селекторами
+    QHBoxLayout *wlt = new QHBoxLayout;
+    wlt->setSpacing(0);
+    wlt->setMargin(0);
+    for(int i = 0; i < MAX_PARAMS; i++){
+        selectors.at(i)->setFixedWidth(selector_width);
+        selectors.at(i)->setGeometry(selector_width*i,0,selector_width,selectors.at(i)->height());
+        selectors.at(i)->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        wlt->addWidget(selectors.at(i));
     }
-    hlt->addWidget(input);
-    //hlt->addStretch(2);
-    //input->setGeometry(this->width()-320, 0, 320, 70);
-    input->setFixedSize(320, 70);
-    //hlt->setSizeConstraint(QLayout::SetMaximumSize);
+    wlt->addSpacing(spacing);
+    wlt->addWidget(params_reset);
+    params_reset->setFixedSize(button_size, button_size);
+    selectors_panel->setLayout(wlt);
+    selectors_panel->setMinimumWidth(50*MAX_PARAMS);
+    selectors_panel->setFixedHeight(selectors.at(0)->height());
 
     // формируем разделитель, содержащий каталог и таблицу
-    splitter = split();
-
-    // собственно, размещение
-    QHBoxLayout* layout = new QHBoxLayout;
-    layout->addWidget(splitter);
+    QSplitter *splitter = split();
 
     // главный layout
     QVBoxLayout *mainlt= new QVBoxLayout;
-    mainlt->addLayout(hlt);
-    mainlt->addLayout(layout);
-    grey_table->hide();
+    mainlt->addWidget(top_panel);
+    mainlt->addWidget(selectors_panel);
+    mainlt->addWidget(splitter);
 
+    grey_table->hide();
 
     this->setLayout(mainlt);
 }
@@ -93,6 +128,24 @@ QSplitter *Searcher::split(){
     return splt;
 }
 
+inline void Searcher::fill_column_names(){
+    column_names["id"] = "id";
+    column_names["name"] = "Имя";
+    column_names["subgroup"] = "Группа";
+    column_names["price_ret"] = "Цена";
+    column_names["par1_val"] = "1";
+    column_names["par2_val"] = "2";
+    column_names["par3_val"] = "3";
+    column_names["par4_val"] = "4";
+    column_names["par5_val"] = "5";
+    column_names["par6_val"] = "6";
+    column_names["par7_val"] = "7";
+    column_names["par8_val"] = "8";
+    column_names["par9_val"] = "9";
+    column_names["par10_val"] = "10";
+    column_names["par11_val"] = "11";
+    column_names["par12_val"] = "12";
+}
 
 inline void Searcher::connects(){
     // соединяем сигналы со слотами
@@ -122,36 +175,117 @@ inline void Searcher::connects(){
                      this, SLOT(reset_text_filters()));
 
     // при получении сигнала об изменении столбца и порядка сортировки - менять соответствующие фильтры
-    QObject::connect(this->active_table, SIGNAL(sort_order_changed(QString, Qt::SortOrder)),
-                     this, SLOT(change_sort_order(QString, Qt::SortOrder)));
+    QObject::connect(this->active_table, SIGNAL(sort_order_changed(int, Qt::SortOrder)),
+                     this, SLOT(change_sort_order(int, Qt::SortOrder)));
 
-    // при получении сигнала о выборе элемента из селектора - устанавливать params_filter
     for(int i = 0; i < selectors.size(); i++){
+        // при получении сигнала о выборе элемента из селектора - устанавливать params_filter
         QObject::connect(this->selectors.at(i), SIGNAL(item_selected(QString, int)),
                          this, SLOT(set_param_filter(QString, int)));
+
+        // при получении сигнала о нажатии на кнопку - производить сортировку
+        QObject::connect(this->selectors.at(i), SIGNAL(button_clicked(int)),
+                         this, SLOT(button_sort(int)));
     }
 
-}
+    QObject::connect(this->params_reset, SIGNAL(clicked()),
+                     this, SLOT(reset_params_filter()));
+
+    QObject::connect(this->active_table, SIGNAL(prices_clicked()),
+                     this, SLOT(switch_prices_filter()));
 
 
-QStringList Searcher::get_columns_list(){
-    QStringList lst;
-    lst << "t.id" << "t.name" << "s.name as subgroup" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val";
-    this->filters->set_columns_filter(lst);
-    return filters->columns_filter();
+
 }
+
+QString Searcher::rename_column(QString str, int group){
+    QRegExp rx("^(par[0-9]+)_val$");
+    if(group > 0 && str.contains(rx)){
+        //
+        int pos = rx.indexIn(str);
+        return (pos > -1 ? params_names[rx.cap(1)] : "?");
+    }
+    else
+        return column_names[str];
+}
+
+QMap<QString, QString> Searcher::get_params_names(int group){
+    QMap<QString, QString> params;
+    QSqlQuery q;
+    QString query = "SELECT * FROM " + SUBGROUPS_TABLE + " WHERE id=" + QString::number(group);
+    if(!q.exec(query)){
+        error("Ошибка", QString("Не удалось выполнить запрос:\n").append(query));
+        // params в этом случае остаётся пустым, и названия столбцов просто не заполнятся
+    }
+    else {
+        QSqlRecord rec = q.record();
+        q.next();
+        for(int i = 1; i <= MAX_PARAMS; i++){
+            QString field_name = "par" + QString::number(i);
+            params[field_name] = q.value(rec.indexOf(field_name)).toString();
+        }
+    }
+
+    return params;
+}
+
+//-----------------------------------------------------------------//
+
+void Searcher::fill_boxes(){
+    int i;
+    if(last_applied_filter != SORT_FILTER && last_applied_filter != LIMITS_FILTER
+            && last_applied_filter != PRICES_FILTER){
+        max_params = 0;
+        // надо найти ПОСЛЕДНИЙ список ненулевого размера
+        for(i = MAX_PARAMS-1; i >= 0; i--){
+            if(params_lists.at(i).count() > 0){
+                max_params = i;
+                break;
+            }
+        }
+        for(i = 0; i <= max_params; i++){
+            selectors.at(i)->clear_items();
+            // в начале списка добавляем пустой айтем
+            selectors.at(i)->add_item("");
+            selectors.at(i)->add_items(params_lists.at(i));
+            if(params_lists.at(i).count() == 1)
+                selectors.at(i)->set_selected(1);
+            selectors.at(i)->setEnabled(params_lists.at(i).count() == 0 ? false : true);
+        }
+        for(; i < MAX_PARAMS; i++)
+            selectors.at(i)->setEnabled(false);
+    }
+}
+
+void Searcher::set_button_labels(){
+    // устанавливаем названия кнопок над селекторами.
+    // Собственно, они уже хранятся в params_names, хорошо бы ещё прибавить количество
+    // если single_group_without_limits > 0, то кнопки будут называться
+    // именами параметров для этой подгруппы, иначе - номерами.
+    QString str;
+    int cnt;
+    for(int i = 0; i < MAX_PARAMS; i++){
+        str = (single_group_without_limits > 0 ? params_names["par" + QString::number(i+1)] : QString::number(i+1));
+        cnt = selectors.at(i)->count();
+        selectors.at(i)->set_button_label(str, cnt > 0 ? cnt-1 : cnt);
+    }
+}
+
+//-----------------------------------------------------------------//
 
 void Searcher::fill_table(bool reset_groups = false, bool delete_last_symbol = false){
-    QStringList columns = get_columns_list();
-    MyTableModel *query = new MyTableModel;
+    MyTableModel *query = new MyTableModel();
     QString strSelect;
-    int group_filter = this->filters->group_filter();
 
     if(delete_last_symbol &&
             (last_applied_filter == ID_FILTER || last_applied_filter == BEGIN_TEXT_FILTER || last_applied_filter == PARTS_TEXT_FILTER)){
-            input->delete_last_symbol();
-            return;
+        input->delete_last_symbol();
+        return;
     }
+
+    // сбрасываем текущее значение single_group
+    this->single_group = -1;
+    this->single_group_without_limits = -1;
 
     if(reset_groups){
         pair limits = this->filters->limits_filter();
@@ -168,60 +302,62 @@ void Searcher::fill_table(bool reset_groups = false, bool delete_last_symbol = f
         filters->restore_limits();
         active_table->set_multipage_mode();
     }
-
     strSelect = apply_filters();
-    qDebug() << strSelect;
+    //qDebug() << strSelect;
+
 
     if(strSelect == "FAIL"){
-        // если последний фильтр - текстовый, удаляем последний символ из текстового поля
+        // если последний фильтр - текстовый, удаляем последний символ из текстового поля, таблица после этого перезаполнится
         if(last_applied_filter == ID_FILTER || last_applied_filter == BEGIN_TEXT_FILTER || last_applied_filter == PARTS_TEXT_FILTER){
             input->delete_last_symbol();
         }
     }
     else{
+        // фильтры применены успешно. Начинаем заполнять поисковик данными.
         // заполняем комбобоксы с параметрами
-        if(last_applied_filter != SORT_FILTER){
-            for(int i = 0; i < MAX_PARAMS; i++)
-                selectors.at(i)->hide();
-            // пока грубо из через жопу, потом разберёмся
-            max_params = 0;
-            // надо найти ПОСЛЕДНИЙ список ненулевого размера
-            for(int i = MAX_PARAMS-1; i >= 0; i--){
-                if(params_lists.size() > 0){
-                    max_params = i;
-                    break;
-                }
-            }
-            for(int i = 0; i <= max_params; i++){
-                QString item;
-                selectors.at(i)->clear_items();
-                // в начале списка добавляем пустой айтем
-                selectors.at(i)->add_item("");
-                foreach(item, params_lists.at(i)){
-                    selectors.at(i)->add_item(item);
-                }
-                if(params_lists.at(i).size() == 1)
-                    selectors.at(i)->set_selected(1);
-                selectors.at(i)->show();
-            }
-        }
-
+        //fill_boxes();
+        // применяем sql-запрос
         query->setQuery(strSelect);
-        QString sort_column;
+        // сохраняем оригинальные имена столбцов, чтобы узнавать потом индексы
+        original_column_names.clear();
+        for(int i = 0; i < query->columnCount(); i++)
+            original_column_names << query->headerData(i, Qt::Horizontal).toString();
+
+        // переименовываем столбцы
+        // если single_group > 0, т.е. выбрана конкретная подгруппа,
+        // столбцы с параметрами надо переименовать параметрами для этой подгруппы.
+        // для этого выбираем их названия из БД и запихиваем в params_names
+        if(single_group > 0)
+            params_names = get_params_names(single_group);
+        else params_names.clear();
+        // и теперь для каждого столбца устанавливаем новое название
+        for(int i = 0; i < query->columnCount(); i++)
+            query->setHeaderData(i, Qt::Horizontal, rename_column(query->headerData(i, Qt::Horizontal).toString(), single_group));
+
+        // если установлен фильтр по цене, надо соответствующим образом раскрасить заголовок
+        if(this->filters->prices_filter() == POSITIVE_PRICES)
+            query->setHeaderData(original_column_names.indexOf("price_ret"), Qt::Horizontal, QColor(0,192,0), Qt::BackgroundRole);
+        else if(this->filters->prices_filter() == ZERO_PRICES)
+            query->setHeaderData(original_column_names.indexOf("price_ret"), Qt::Horizontal, Qt::red, Qt::BackgroundRole);
+
+
+        // устанавливаем названия кнопок над селекторами
+        set_button_labels();
+
+        // сохраняем столбец и порядок сортировки
+        int sort_column;
         Qt::SortOrder sort_order;
         if(!(this->filters->white_sort_order_filter().isEmpty())){
             SortingOrder s = this->filters->white_sort_order_filter().first();
-            sort_column = s.column;
+            sort_column = original_column_names.indexOf(s.column);
             sort_order = s.order;
         }
         else {
-            sort_column = DEFAULT_WHITE_SORT_COLUMN;
+            sort_column = original_column_names.indexOf(DEFAULT_WHITE_SORT_COLUMN);
             sort_order = DEFAULT_WHITE_SORT_ORDER;
             error("Внимание!", "Установлен порядок сортировки по умолчанию");
         }
-        if(group_filter <= 0 || group_filter >= ENLARGER)
-            group_filter = 0;
-        active_table->fill(query, sort_column, sort_order, group_filter, reset_groups);
+        active_table->fill(query, original_column_names, sort_column, sort_order, this->filters->prices_filter(), single_group, reset_groups);
     }
 }
 
@@ -329,16 +465,40 @@ void Searcher::set_text_filter(int type, QString text){
     fill_table();
 }
 
-void Searcher::change_sort_order(QString column_name, Qt::SortOrder order){
+void Searcher::change_sort_order(int column, Qt::SortOrder order){
+    QString column_name = original_column_names[column];
     SortingOrder s = {column_name, order};
     this->filters->add_white_sort_column(s);
     last_applied_filter = SORT_FILTER;
     fill_table();
 }
 
+void Searcher::button_sort(int num){
+    int column_index = original_column_names.indexOf("par" + QString::number(num+1) + "_val");
+    int current_sort_index = original_column_names.indexOf(this->filters->white_sort_order_filter().first().column);
+    Qt::SortOrder order;
+    if(column_index == current_sort_index)
+        order = (this->filters->white_sort_order_filter().first().order == Qt::AscendingOrder ? Qt::DescendingOrder : Qt::AscendingOrder);
+    else
+        order = Qt::AscendingOrder;
+    change_sort_order(column_index, order);
+}
+
 void Searcher::set_param_filter(QString param, int num){
     this->filters->set_param(num, param);
     last_applied_filter = PARAMS_FILTER;
+    fill_table();
+}
+
+void Searcher::reset_params_filter(){
+    this->filters->reset_params();
+    last_applied_filter = PARAMS_FILTER;
+    fill_table();
+}
+
+void Searcher::switch_prices_filter(){
+    this->filters->switch_prices();
+    last_applied_filter = PRICES_FILTER;
     fill_table();
 }
 
@@ -428,6 +588,8 @@ QString Searcher::sorting_order_to_string(QList<SortingOrder> order){
     return str.join(", ");
 }
 
+
+
 void Searcher::resizeEvent(QResizeEvent *){
     //input->setGeometry(this->width()-320, 0, 320, 70);
 }
@@ -442,8 +604,45 @@ QStringList Searcher::sql_to_list(QSqlQuery query){
     return list;
 }
 
+void Searcher::get_params_list(QString tables, QString where){
+    QString query_str, par_name;
+    QStringList list;
+    QSqlQueryModel* query = 0;
+    int count;
+    // сформируем списки параметров деталей
+    // для этого в классе есть лист двумерный QStringList, куда и будем их складывать
+    if(last_applied_filter != SORT_FILTER && last_applied_filter != LIMITS_FILTER
+            && last_applied_filter != PRICES_FILTER){
+        for(int i = 0; i < MAX_PARAMS; i++){
+            query = new QSqlQueryModel();
+            par_name = "t.par" + QString::number(i+1) + "_val";
+            list.clear();
+            selectors.at(i)->clear_items();
+            query_str = "(SELECT '') UNION (SELECT " + par_name + tables + where + " AND " + par_name + "!= '')  ORDER BY 1";
+            query->setQuery(query_str);
+            qDebug() << query_str;
+            count = query->rowCount();
+            qDebug() << QString::number(count);
+            if(count == 1){
+                // если список пуст, делаем комбобокс неактивным
+                selectors.at(i)->setEnabled(false);
+            }
+            else{
+                //qDebug() << QString::number(count);
+                selectors.at(i)->items->setModel(query);
+                selectors.at(i)->items->setModelColumn(0);
+                if(count == 2)
+                    selectors.at(i)->set_selected(1);
+                selectors.at(i)->setEnabled(true);
+            }
+        }
+    }
+    delete query;
+}
+
 QString Searcher::apply_filters(){
-    QString query, tables, where, order, limits = "", count;
+    QSqlDatabase::database().transaction();
+    QString query, tables, where, order, limits = "", count, final;
     int group = this->filters->group_filter();
     QStringList columns = this->filters->columns_filter();
     int begin = this->filters->begin();
@@ -453,6 +652,7 @@ QString Searcher::apply_filters(){
     QString beginname = this->filters->beginname_filter();
     QStringList parts = this->filters->parts_filter();
     QStringList params = this->filters->params_filter();
+    int prices = this->filters->prices_filter();
     int total;
     bool condition = false;                 // определяет, начали ли мы формировать условие WHERE, т.е. нужно ли вставлять AND
 
@@ -513,7 +713,17 @@ QString Searcher::apply_filters(){
         }
     }
 
-
+    // применим фильтр по ценам
+    if(prices == POSITIVE_PRICES){
+        where += (condition ? " AND (" : " WHERE (");
+        where += " t.price_ret > 0)";
+        condition = true;
+    }
+    else if(prices == ZERO_PRICES){
+        where += (condition ? " AND (" : " WHERE (");
+        where += " t.price_ret = 0)";
+        condition = true;
+    }
     // Для переключателя страниц необходимо подсчитать общее количество записей, удовлетворяющих фильтрам (кроме limits).
     // В table же мы передаём передаём только записи по количеству limits. Поэтому сформируем запрос для подсчёта общего кол-ва записей,
     // выполним его и забудем про это дело.
@@ -532,30 +742,40 @@ QString Searcher::apply_filters(){
 
     // порядок сортировки
     order = " ORDER BY " + sorting_order_to_string(this->filters->white_sort_order_filter());
-    //qDebug() << order;
 
     // лимиты
     if(this->filters->are_there_limits()){
         limits = " OFFSET " + QString::number(begin) + " LIMIT " + QString::number(limit);
     }
-
+    qDebug("params...");
     // сформируем списки параметров деталей
-    // для этого в классе исть лист двумерный QStringList, куда и будем их складывать
-    if(last_applied_filter != SORT_FILTER){
-        params_lists.clear();
-        for(int i = 1; i <= MAX_PARAMS; i++){
-            QSqlQuery select_param;
-            query = "SELECT DISTINCT t.par" + QString::number(i) + "_val" + tables + where + " AND t.par" + QString::number(i) + "_val != ''" + " ORDER BY t.par" + QString::number(i) + "_val";
-            //qDebug() << query;
-            if(!select_param.exec(query)){
-                error("Ошибка при выборе параметров", "Не удалось выполнить запрос:\n" + query);
-                break;
-            }
-            else
-                params_lists << sql_to_list(select_param);
+    get_params_list(tables, where);
+
+    // если все детали, удовлетворяющие запросу, принадлежат только одной подгруппе, её номер надо установить в single_group
+    // то же, но без учёта лимитов - в single_group_without_limits. Потом объяснить, что к чему!
+    // а вообще это не дело, впилить потом в куда-то
+    qDebug("groups1...");
+    QSqlQuery select_groups;
+    query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + ALL_WHITE_COLUMNS.join(",") + tables + where + ") AS t";
+    if(!select_groups.exec(query)){
+        error("Ошибка при выборе групп 1", "Не удалось выполнить запрос:\n" + query);
+    }
+    select_groups.next();
+    single_group_without_limits = (select_groups.size() == 1 ? select_groups.value(0).toInt() : -1);
+    if(single_group_without_limits != -1)
+        single_group = single_group_without_limits;
+    else{
+        qDebug("groups2...");
+        query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + ALL_WHITE_COLUMNS.join(",") + tables + where + limits + ") AS t";
+        if(!select_groups.exec(query)){
+            error("Ошибка при выборе групп 2", "Не удалось выполнить запрос:\n" + query);
         }
+        select_groups.next();
+        single_group = (select_groups.size() == 1 ? select_groups.value(0).toInt() : -1);
     }
     // теперь сформируем строку, которую надо вернуть функции заполнения таблицы
-    query = "SELECT " + columns.join(",") + tables + where + order + limits;
-    return query;
+    final = "SELECT " + columns.join(",") + tables + where + order + limits;
+    qDebug("ok");
+    while(!QSqlDatabase::database().commit());
+    return final;
 }

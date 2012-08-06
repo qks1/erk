@@ -7,18 +7,18 @@ QString DB_USER = "postgres";
 QString DB_PASSWORD = "aurora2174_";
 QString DB_HOST = "192.168.1.101";
 */
-/*
+
 QString DB_NAME = "erkbase";
 QString DB_USER = "erkprog";
 QString DB_PASSWORD = "aurora2174_";
 QString DB_HOST = "localhost";
-*/
 
+/*
 QString DB_NAME = "erkbase";
 QString DB_USER = "df";
 QString DB_PASSWORD = "j39ljzuzy";
 QString DB_HOST = "localhost";
-
+*/
 // таблицы БД
 QString GROUPS_TABLE = "groups";
 QString SUBGROUPS_TABLE = "subgroups_ex";
@@ -26,7 +26,7 @@ QString TOVMARKS_TABLE = "tovmarks_ex";
 
 // основной шрифт
 int SYSTEM_FONT_SIZE = 12;
-QString SYSTEM_FONT_FAMILY = "Arial";
+QString SYSTEM_FONT_FAMILY = "Ubuntu";
 
 // мелкий шрифт (для переключателя страниц)
 int SMALL_FONT_SIZE = SYSTEM_FONT_SIZE-2;
@@ -48,3 +48,12 @@ QString DEFAULT_WHITE_SORT_COLUMN = "id";
 
 // порядок сортиорвки в белом экране по умолчанию
 Qt::SortOrder DEFAULT_WHITE_SORT_ORDER = Qt::AscendingOrder;
+
+QStringList ALL_WHITE_COLUMNS;
+QStringList WHITE_TABLE_COLUMNS;
+
+void init_vars(){
+    ALL_WHITE_COLUMNS << "t.id" << "t.subgroup_id" << "t.name" << "s.name as subgroup" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
+    WHITE_TABLE_COLUMNS << "t.id" << "t.name" << "s.name as subgroup" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
+
+}

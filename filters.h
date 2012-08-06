@@ -17,6 +17,7 @@
     -- white_sort_order - порядок сортировки в белом экране (список (для устойчивой сортировки),
                             с указанием имени столбца и порядка сортировки)
     -- params - список строк с параметрами (выбранными в селекторах)
+    -- price - какие цены отбираем (нулевые, ненулевые, все)
 
 */
 
@@ -40,6 +41,8 @@ public:
     void add_white_sort_column(SortingOrder);
     void set_param(int, QString);
     void reset_params();
+    void switch_prices();
+    void set_prices(int);
 
     // функции, возвращающие значения фильтров:
     int group_filter();
@@ -53,6 +56,7 @@ public:
     QStringList parts_filter();
     QList<SortingOrder> white_sort_order_filter();
     QStringList params_filter();
+    int prices_filter();
 
 // непосредственно значения фильтров - private
 private:
@@ -66,6 +70,7 @@ private:
     QStringList parts;
     QList<SortingOrder> white_sort_order;
     QStringList params;
+    int prices;
 
 };
 

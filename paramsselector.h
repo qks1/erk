@@ -21,12 +21,17 @@ public:
     ParamsSelector(int number, QWidget *parent = 0);
     int number;
 
-    void set_button_label(QString);
+    void set_button_label(QString, int);
     void add_item(QString);
+    void add_items(QStringList);
     void clear_items();
     void set_selected(int);
+    int count();
+    void setEnabled(bool);
+    void setModel(QSqlQueryModel*);
+    void setModelColumn(int);
 
-private:
+//private:
     QPushButton *button;
     QComboBox *items;
 
@@ -35,9 +40,11 @@ private:
 
 signals:
     void item_selected(QString, int);
+    void button_clicked(int);
 
 private slots:
     void select_item(QString);
+    void click_button();
 
 };
 

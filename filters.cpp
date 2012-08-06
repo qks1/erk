@@ -60,12 +60,21 @@ void Filters::set_parts(QStringList parts){
 }
 
 void Filters::add_white_sort_column(SortingOrder item){
-    int index;
-    // если столбец уже есть в списке, удаляем его и вставляем в начало
-    if((index = this->white_sort_order.indexOf(item)) >= 0){
-        this->white_sort_order.removeAt(index);
+    int index = this->white_sort_order.indexOf(item);
+    // если столбец первый в списке, то инвертируем порядок сортировки во всех столбцах
+    if(index == 0){
+        for(int i = 0; i < white_sort_order.size(); i++){
+            qDebug() << white_sort_order.at(i).column;
+            white_sort_order[i].order = (white_sort_order[i].order == Qt::AscendingOrder ? Qt::DescendingOrder : Qt::AscendingOrder);
+        }
     }
-    this->white_sort_order.push_front(item);
+    else{
+        // если столбец уже есть в списке и он не первый, удаляем его и вставляем в начало
+        if(index >= 1){
+            this->white_sort_order.removeAt(index);
+        }
+        this->white_sort_order.push_front(item);
+    }
 }
 
 void Filters::set_param(int num, QString str){
@@ -76,6 +85,19 @@ void Filters::reset_params(){
     this->params.clear();
     for(int i = 0; i < MAX_PARAMS; i++)
         params << "";
+}
+
+void Filters::switch_prices(){
+    if(this->prices == ALL_PRICES)
+        this->prices = POSITIVE_PRICES;
+    else if(this->prices == POSITIVE_PRICES)
+        this->prices = ZERO_PRICES;
+    else if(this->prices == ZERO_PRICES)
+        this->prices = ALL_PRICES;
+}
+
+void Filters::set_prices(int p){
+    this->prices = p;
 }
 
 
@@ -128,4 +150,8 @@ QList<SortingOrder> Filters::white_sort_order_filter(){
 
 QStringList Filters::params_filter(){
     return this->params;
+}
+
+int Filters::prices_filter(){
+    return this->prices;
 }
