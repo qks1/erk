@@ -21,11 +21,12 @@ QString DB_HOST = "localhost";
 */
 // таблицы БД
 QString GROUPS_TABLE = "groups";
-QString SUBGROUPS_TABLE = "subgroups_ex";
-QString TOVMARKS_TABLE = "tovmarks_ex";
+QString SUBGROUPS_TABLE = "subgroups";
+QString TOVMARKS_TABLE = "trademarks";
+QString GREY_TABLE = "greytable";
 
 // основной шрифт
-int SYSTEM_FONT_SIZE = 12;
+int SYSTEM_FONT_SIZE = 11;
 QString SYSTEM_FONT_FAMILY = "Ubuntu";
 
 // мелкий шрифт (для переключателя страниц)
@@ -43,6 +44,9 @@ int TABS_DEFAULT = 1;
 // сколько параметров может быть у детали
 int MAX_PARAMS = 12;
 
+// ширина столбца по умолчанию
+int DEFAULT_COLUMN_WIDTH = 70;
+
 // столбец для сортировки в белом экране по умолчанию
 QString DEFAULT_WHITE_SORT_COLUMN = "id";
 
@@ -53,7 +57,8 @@ QStringList ALL_WHITE_COLUMNS;
 QStringList WHITE_TABLE_COLUMNS;
 
 void init_vars(){
-    ALL_WHITE_COLUMNS << "t.id" << "t.subgroup_id" << "t.name" << "s.name as subgroup" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
-    WHITE_TABLE_COLUMNS << "t.id" << "t.name" << "s.name as subgroup" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
-
+    ALL_WHITE_COLUMNS << "t.id" << "t.subgroup_id" << "t.name" << "s.name as subgroup" << "t.quantity" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
+    WHITE_TABLE_COLUMNS << "t.id" << "t.name" << "s.name as subgroup" << "t.quantity" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
+    QCoreApplication::setOrganizationName("erk");
+    QCoreApplication::setApplicationName("base");
 }

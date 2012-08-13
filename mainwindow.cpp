@@ -15,6 +15,13 @@ MainWindow::MainWindow()
     this->setCentralWidget(search_tabs);
 }
 
+MainWindow::~MainWindow(){
+}
+
+void MainWindow::closeEvent(QCloseEvent *){
+    searcher->close_func();
+}
+
 QTabWidget* MainWindow::create_search_widget(){
     // создаём tabWidget с поисковиками
     QTabWidget *search_tabs = new QTabWidget;
@@ -24,8 +31,9 @@ QTabWidget* MainWindow::create_search_widget(){
 
     // на каждый таб создадим свой Searcher
     // кол-во вкладок по умолчанию устанавливается в constants.cpp
-    Searcher *searcher = 0;
+    searcher = 0;
     for(int i = 0; i < TABS_DEFAULT; i++){
+        //searcher = new Searcher();
         searcher = new Searcher();
         if(!searcher->ok)
             // если возникли проблемы с созданием поисковика, прерываем процесс

@@ -11,6 +11,7 @@ public:
     explicit MyTableModel(QObject *parent = 0);
 
     void sort(int column, Qt::SortOrder order);
+    QVariant data(const QModelIndex &index, int role) const;
     
 signals:
     void order_changed(int, Qt::SortOrder);

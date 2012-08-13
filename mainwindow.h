@@ -13,15 +13,19 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow();
+    ~MainWindow();
 
 
 private:
     QTabWidget *search_tabs;
+    Searcher *searcher;
     QAction *quit_action;
 
     QTabWidget* create_search_widget();
     void create_actions();
     void create_menu();
+
+    void closeEvent(QCloseEvent *);
 
 
 signals:
