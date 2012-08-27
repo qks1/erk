@@ -19,7 +19,13 @@ HEADERS += constants.h \
            searcher/input.h \
            searcher/paramsselector.h \
            searcher/searcher.h \
-           searcher/table.h
+           searcher/greytable.h \
+           basetable.h \
+           searcher/whitetable.h \
+           searcher/whitesearcher.h \
+           detailcard.h \
+           customcombobox.h \
+           searcher/greysearcher.h
 SOURCES += constants.cpp \
            helpers.cpp \
            main.cpp \
@@ -31,5 +37,11 @@ SOURCES += constants.cpp \
            searcher/input.cpp \
            searcher/paramsselector.cpp \
            searcher/searcher.cpp \
-           searcher/table.cpp
+           searcher/greytable.cpp \
+    basetable.cpp \
+    searcher/whitetable.cpp \
+    searcher/whitesearcher.cpp \
+    detailcard.cpp \
+    customcombobox.cpp \
+    searcher/greysearcher.cpp
 RESOURCES += images.qrc

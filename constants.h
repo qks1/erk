@@ -26,6 +26,19 @@
 #define PARAMS_FILTER 109
 #define PRICES_FILTER 110
 #define QUANTITY_FILTER 111
+#define GREY_ID_FILTER 112
+#define CLOSE_GREY_FILTER 113
+#define GREY_LIMITS_FILTER 114
+#define GREY_NOLIMITS_FILTER 115
+#define GREY_SETLIMITS_FILTER 116
+#define GREY_SORT_FILTER 117
+#define GREY_TEXT_ID_FILTER 118
+#define GREY_BEGIN_TEXT_FILTER 119
+#define GREY_PARTS_TEXT_FILTER 120
+#define GREY_PLACE_FILTER 121
+#define GREY_YEARS_FILTER 122
+#define GREY_INSP_FILTER 123
+#define GREY_ADD_FILTER 124
 
 // константы для режима поиска по id
 #define EQUAL 200
@@ -45,6 +58,14 @@
 // режимы фильтра по количеству
 #define ALL_QUANTITIES 500
 #define POSITIVE_QUANTITIES 501
+
+// режимы поисковика
+#define WHITE_MODE 600
+#define GREY_MODE 601
+
+// режимы фильтра по годам в сером экране
+#define ONE_YEAR_MODE 700
+#define MULTI_YEAR_MODE 701
 
 // в поисковике выборка может производиться как по группам, так и по подгруппам.
 // чтобы в фильтре отличить группу от подгруппы, в каталоге (дереве) к номеру каждой группы прибавляется большое число.
@@ -83,7 +104,17 @@ extern Qt::SortOrder DEFAULT_WHITE_SORT_ORDER;
 
 extern QStringList ALL_WHITE_COLUMNS;
 extern QStringList WHITE_TABLE_COLUMNS;
+extern QStringList ALL_GREY_COLUMNS;
 extern QStringList GREY_TABLE_COLUMNS;
+
+extern QMap<QString,QString> WHITE_COLUMNS_NAMES;
+extern QMap<QString,QString> GREY_COLUMNS_NAMES;
+
+extern QString ANY_ITEM_TEXT;
+extern QString NOPLACE_TEXT;
+extern QString NOPAR_TEXT;
+extern QString NOYEAR_TEXT;
+extern QString NOINFO_TEXT;
 
 void init_vars();
 

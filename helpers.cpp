@@ -67,6 +67,21 @@ QString replases(QString text){
     return text.toUpper();
 }
 
+QString sorting_order_to_string(QList<SortingOrder> order){
+    QStringList str;
+    foreach(SortingOrder s, order)
+        str << s.column + (s.order == Qt::AscendingOrder ? " ASC" : " DESC");
+    return str.join(", ");
+}
+
+int find_index(QAbstractItemModel *model, QString str){
+    for(int i=0; i < model->rowCount(); i++){
+        if(model->data(model->index(i,0)).toString() == str)
+            return i;
+    }
+    return -1;
+}
+
 //
 bool operator ==(SortingOrder left, SortingOrder right){
     return (left.column == right.column);

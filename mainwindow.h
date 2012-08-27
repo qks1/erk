@@ -40,4 +40,17 @@ public slots:
 
 };
 
+class CustomTabWidget : public QTabWidget{
+    Q_OBJECT
+public:
+    explicit CustomTabWidget(QWidget *parent = 0);
+
+private:
+    int max;
+
+public slots:
+    void close_tab(int index);
+    void add_tab();
+};
+
 #endif // MAINWINDOW_H
