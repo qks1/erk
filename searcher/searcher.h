@@ -19,8 +19,12 @@ class Searcher : public QWidget
     Q_OBJECT
 public:
     explicit Searcher(QWidget *parent = 0);
-    void close_func();
-    
+    void resize_all();
+    void restore_white_width(int index, int width);
+    void restore_grey_width(int index, int width);
+    void restore_white_order();
+    void restore_grey_order();
+
 private:
     QStackedWidget *stack;
     WhiteSearcher *white_searcher;
@@ -36,11 +40,12 @@ private:
     int size_of_select(QString);
     int size_of_select(QStringList);
     QStringList valid_strings(QStringList);
-    //WhiteSearcher *ws =
 
 signals:
     void fill(QSqlQuery, QStringList);
     void clear_text_signal();
+    void section_resized(int, int, int);
+    void section_moved(int);
 
 private slots:
     void refresh_grey();
@@ -81,6 +86,11 @@ private slots:
     void change_grey_defect(QString);
     void change_grey_category(QString);
     void reset_add_boxes();
+    void grey_reset_slot();
+    void white_section_resized(int, int);
+    void grey_section_resized(int, int);
+    void white_section_moved();
+    void grey_section_moved();
 
 public slots:
 

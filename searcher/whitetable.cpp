@@ -4,28 +4,25 @@ WhiteTable::WhiteTable(QWidget *parent) :
     BaseTable(parent)
 {
     create_new_table();
-    settings = new QSettings("erk", "base");
+    settings_section = "WHITE_COLUMNS";
 
     table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    filled = false;
 
     connects();
 
     // восстанавливаем состояние таблицы (столбцы и их ширина)
-    //restore_state();
+    restore_state();
 }
 
 inline void WhiteTable::connects(){
     QObject::connect(this->table->horizontalHeader(), SIGNAL(customContextMenuRequested(QPoint)), SLOT(header_right_click(QPoint)));
     QObject::connect(this->table, SIGNAL(customContextMenuRequested(QPoint)), SLOT(table_right_click(QPoint)));
-    QObject::connect(this->table->horizontalHeader(), SIGNAL(sectionResized(int,int,int)), SLOT(column_width_changed(int,int,int)));
-    QObject::connect(this->table->horizontalHeader(), SIGNAL(sectionMoved(int,int,int)), SLOT(column_moved(int,int,int)));
     QObject::connect(this->table, SIGNAL(doubleClicked(QModelIndex)), SIGNAL(double_click(QModelIndex)));
 }
 
 
-void WhiteTable::fill(MyTableModel *query,
+void WhiteTable::fill(WhiteTableModel *query,
                  QStringList names,
                  int cur_sort_column,
                  Qt::SortOrder cur_sort_order,
@@ -60,49 +57,8 @@ void WhiteTable::fill(MyTableModel *query,
     if(!filled) filled = true;
     restore_state();
 }
-
-void WhiteTable::save_state(){
-    // сохраняем состояние (столбцы и их ширина)
-    if(!filled) return;
-    for(int i = 0; i < table->model()->columnCount(); i++){
-        settings->beginGroup("WHITE_COLUMNS");
-        // записываем в настройки ширину столбца, называя ключ оригинальным именем этого столбца
-        // оригинальное имя хранится в column_names в столбце по номеру логического индекса в модели,
-        // который не меняется никогда, в отличие от визуального
-        settings->setValue(column_names[table->horizontalHeader()->logicalIndex(i)], table->columnWidth(table->horizontalHeader()->logicalIndex(i)));
-        // записываем в настройки соответствие визуального индекса и логического,
-        // чтобы потом восстановить порядок.
-        // Визуальный индекс тождественен счётчику i, логический же зашит в модели.
-        settings->setValue(QString(column_names[table->horizontalHeader()->logicalIndex(i)]).append("_index"), i);
-        settings->endGroup();
-    }
-}
-
-void WhiteTable::restore_state(){
-    if(!filled) return;
-    QString name;
-    int index;
-    for(int i = 0; i < table->model()->columnCount(); i++){
-        settings->beginGroup("WHITE_COLUMNS");
-        // Восстанавливаем ширину столбца и его визуальный индекс.
-        // Ширина хранится в настройках по ключу, названному оригинальным именем столбца,
-        // поэтому надо восстановить оригинальное имя.
-        name = column_names[i];
-        table->setColumnWidth(i, settings->value(name, DEFAULT_COLUMN_WIDTH).toInt());
-        // Визуальный индекс хранится по ключу, названному оригинальным именем столбца
-        // с суффиксом "_index". Восстанавливаем индекс из настроек и двигаем столбец.
-        index = settings->value(QString(name).append("_index"), i).toInt();
-        table->horizontalHeader()->moveSection(table->horizontalHeader()->visualIndex(i), index);
-        settings->endGroup();
-    }
-}
-
 QVariant WhiteTable::data(QModelIndex i, int column){
     return table->model()->data(table->model()->index(i.row(), column));
-}
-
-void WhiteTable::close_func(){
-    save_state();
 }
 
 //--------------------------------------------------------------------------//
@@ -130,16 +86,6 @@ void WhiteTable::table_right_click(QPoint pos){
     emit(right_click(table->model()->data(table->model()->index(row_index, this->column_names.indexOf("id"))).toInt()));
 }
 
-void WhiteTable::column_width_changed(int,int,int){
-    save_state();
-}
-
-void WhiteTable::column_moved(int, int, int){
-    save_state();
-}
-
-
-
 
 //--------------------------------------------------------------------------//
 //--------------------------- СОБЫТИЯ --------------------------------------//
@@ -147,4 +93,21 @@ void WhiteTable::column_moved(int, int, int){
 
 
 //--------------------------------------------------------------------------//
+
+WhiteTableModel::WhiteTableModel(QWidget *parent) : MyTableModel(parent){
+}
+
+QVariant WhiteTableModel::data(const QModelIndex &index, int role) const{
+    //if(role == Qt::DisplayRole && index.column() == 1)
+        //return "";
+    if(role == Qt::DecorationRole){
+        if(index.column() == 1 && MyTableModel::data(index, Qt::DisplayRole).toInt() > 0)
+            return QPixmap("images/photo.jpg").scaled(15,15);
+    }
+    if(role == Qt::DisplayRole && index.column() == 1)
+        return "";
+
+
+    return MyTableModel::data(index, role);
+}
 

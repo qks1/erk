@@ -4,6 +4,14 @@
 //--------------------------- КОНСТРУКТОР-----------------------------------//
 //--------------------------------------------------------------------------//
 
+MyHeaderView::MyHeaderView(Qt::Orientation orientation, QWidget *parent) : QHeaderView(orientation, parent){
+}
+
+void MyHeaderView::mouseReleaseEvent(QMouseEvent *e){
+    emit mouse_release();
+    QHeaderView::mouseReleaseEvent(e);
+}
+
 BaseTable::BaseTable(QWidget *parent) :
     QWidget(parent)
 {   
@@ -16,6 +24,12 @@ void BaseTable::create_new_table(){
     current_page = 1;
     begin = 0;
     offset = 0;
+    filled = false;
+    settings = new QSettings("erk", "base");
+    hh = new MyHeaderView(Qt::Horizontal);
+    table->setHorizontalHeader(hh);
+    last_resized_index = 0;
+    last_resized_width = 0;
 
     // настройки таблицы, общие для всех классов таблиц в программе
     custom_table();
@@ -26,11 +40,14 @@ void BaseTable::create_new_table(){
     // располагаем-с
     layout();
     move_switcher();
+
 }
 
 //--------------------------------------------------------------------------//
 
 inline void BaseTable::base_connects(){
+    QObject::connect(table->horizontalHeader(), SIGNAL(mouse_release()), SLOT(section_resized_slot()));
+    //QObject::connect(table->horizontalHeader(), SIGNAL(mouse_release()), SLOT(save_order()));
     // если получен сигнал о смене номера страницы, сменить значение current_page и послать сигнал поисковику
     QObject::connect(this->switcher, SIGNAL(page_changed(int)),
                      this, SLOT(change_page(int)));
@@ -46,7 +63,15 @@ inline void BaseTable::base_connects(){
     // если получен сигнал multipage_mode_selected, установить лимит записей
     QObject::connect(this->switcher, SIGNAL(multipage_mode_selected()),
                      this, SLOT(restore_limits()));
+
+    QObject::connect(this->table->horizontalHeader(), SIGNAL(sectionResized(int,int,int)), SLOT(column_width_changed(int,int,int)));
+    QObject::connect(this->table->horizontalHeader(), SIGNAL(sectionMoved(int,int,int)), SLOT(column_moved(int,int,int)));
 }
+
+void BaseTable::section_resized_slot(){
+    emit section_resized(this->last_resized_index, this->last_resized_width);
+}
+
 
 //--------------------------------------------------------------------------//
 
@@ -100,6 +125,63 @@ void BaseTable::move_switcher(){
                           switcher->height());
 }
 
+void BaseTable::save_order(){
+    if(!filled) return;
+    settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
+    for(int i = 0; i < table->model()->columnCount(); i++){
+        settings->setValue(QString("index[%1]").arg(i), table->horizontalHeader()->visualIndex(i));
+    }
+    settings->endGroup();
+    settings->sync();
+    emit section_moved();
+}
+
+void BaseTable::save_state(){
+    // сохраняем состояние (столбцы и их ширина)
+    if(!filled) return;
+    settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
+    for(int i = 0; i < table->model()->columnCount(); i++){
+        // записываем в настройки ширину столбца, называя ключ оригинальным именем этого столбца
+        // оригинальное имя хранится в column_names в столбце по номеру логического индекса в модели,
+        // который не меняется никогда, в отличие от визуального
+        settings->setValue(column_names[table->horizontalHeader()->logicalIndex(i)], table->columnWidth(table->horizontalHeader()->logicalIndex(i)));
+        // записываем в настройки соответствие визуального индекса и логического,
+        // чтобы потом восстановить порядок.
+        // Визуальный индекс тождественен счётчику i, логический же зашит в модели.
+        settings->setValue(QString(column_names[table->horizontalHeader()->logicalIndex(i)]).append("_index"), i);
+    }
+    settings->endGroup();
+    //emit section_resized();
+}
+
+void BaseTable::restore_width(int index, int width){
+    if(index >= 0 && index < table->model()->columnCount())
+        table->horizontalHeader()->resizeSection(index, width);
+}
+
+void BaseTable::restore_order(){
+    if(!filled) return;
+    int index;
+    settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
+    for(int i = 0; i < table->model()->columnCount(); i++){
+        index = settings->value(QString("index[%1]").arg(i), i).toInt();
+        //if(table->horizontalHeader()->visualIndex(i) != i)
+          //  qDebug() << QString("logical: %1, visual: %2").arg(table->horizontalHeader()->visualIndex(i)).arg(i);
+        table->horizontalHeader()->moveSection(table->horizontalHeader()->visualIndex(i), index);
+    }
+    settings->endGroup();
+}
+
+void BaseTable::restore_state(){
+    if(!filled) return;
+    for(int i = 0; i < table->model()->columnCount(); i++){
+        settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
+        table->setColumnWidth(i, settings->value(QString("width[%1]").arg(i), DEFAULT_COLUMN_WIDTH).toInt());
+        settings->endGroup();
+    }
+    restore_order();
+}
+
 //--------------------------------------------------------------------------//
 // Действия следующих функций отражены в их названиях и пояснения не требуют.
 
@@ -130,6 +212,15 @@ void BaseTable::update_switcher_values(){
     this->switcher->set_items_on_page(this->items_on_page);
     this->switcher->set_total_items_label(this->total_items);
     move_switcher();
+}
+
+void BaseTable::column_width_changed(int index, int old_width, int new_width){
+    last_resized_index = index;
+    last_resized_width = new_width;
+}
+
+void BaseTable::column_moved(int, int, int){
+    this->save_order();
 }
 
 

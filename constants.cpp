@@ -1,24 +1,7 @@
 #include "constants.h"
 
-// параметры соединения с БД
-/*
-QString DB_NAME = "postgres";
-QString DB_USER = "postgres";
-QString DB_PASSWORD = "aurora2174_";
-QString DB_HOST = "192.168.1.101";
-*/
+QSqlDatabase base;
 
-QString DB_NAME = "erkbase";
-QString DB_USER = "erkprog";
-QString DB_PASSWORD = "aurora2174_";
-QString DB_HOST = "localhost";
-
-/*
-QString DB_NAME = "erkbase";
-QString DB_USER = "df";
-QString DB_PASSWORD = "j39ljzuzy";
-QString DB_HOST = "localhost";
-*/
 // таблицы БД
 QString GROUPS_TABLE = "groups";
 QString SUBGROUPS_TABLE = "subgroups";
@@ -27,7 +10,7 @@ QString GREY_TABLE = "greytable";
 
 // основной шрифт
 int SYSTEM_FONT_SIZE = 11;
-QString SYSTEM_FONT_FAMILY = "Ubuntu";
+QString SYSTEM_FONT_FAMILY = "Tahoma";
 
 // мелкий шрифт (для переключателя страниц)
 int SMALL_FONT_SIZE = SYSTEM_FONT_SIZE-2;
@@ -39,7 +22,7 @@ int ITEMS_ON_PAGE = 50;
 int MAX_ITEMS_WITHOUT_WARNING = 300;
 
 // сколько вкладок поисковика создаётся по умолчанию
-int TABS_DEFAULT = 1;
+int TABS_DEFAULT = 3;
 
 // сколько параметров может быть у детали
 int MAX_PARAMS = 12;
@@ -67,10 +50,17 @@ QString NOPLACE_TEXT;
 QString NOPAR_TEXT;
 QString NOYEAR_TEXT;
 QString NOINFO_TEXT;
+QString USERNAME;
+QString PHOTOS_PATH;
+
+int GLOBAL_MODE;
 
 void init_vars(){
-    ALL_WHITE_COLUMNS << "t.id" << "t.subgroup_id" << "t.name" << "s.name as subgroup" << "t.quantity" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
-    WHITE_TABLE_COLUMNS << "t.id" << "t.name" << "s.name as subgroup" << "t.quantity" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
+    GLOBAL_MODE = 0;
+
+    QSettings settings("erk", "base");
+    ALL_WHITE_COLUMNS << "t.id" << "t.photo" << "t.subgroup_id" << "t.name" << "s.name as subgroup" << "t.quantity" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
+    WHITE_TABLE_COLUMNS << "t.id" << "t.photo" << "t.name" << "s.name as subgroup" << "t.quantity" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
     ALL_GREY_COLUMNS << "g.id" << "g.trademark_id" << "t.name" << "t.pattern" << "g.quantity" << "g.year" << "g.place_id" << "g.price_ret" << "p.storage" << "p.rack" << "p.board" << "p.box" << "i.insp_name" << "g.add_info" << "g.defect" << "g.category_id" << "c.category_name";
     GREY_TABLE_COLUMNS << "g.id" << "t.name" << "g.quantity" << "g.year" << "g.price_ret" << "p.storage" << "p.rack" << "p.board" << "p.box" << "i.insp_name" << "g.add_info" << "g.defect" << "c.category_name";
     QCoreApplication::setOrganizationName("erk");
@@ -93,6 +83,7 @@ void init_vars(){
     WHITE_COLUMNS_NAMES["par10_val"] = "10";
     WHITE_COLUMNS_NAMES["par11_val"] = "11";
     WHITE_COLUMNS_NAMES["par12_val"] = "12";
+    WHITE_COLUMNS_NAMES["photo"] = "";
 
     GREY_COLUMNS_NAMES["id"] = "id";
     GREY_COLUMNS_NAMES["quantity"] = "Кол-во";
@@ -118,4 +109,8 @@ void init_vars(){
     // пустые фильтры по доп. параметрам
     NOINFO_TEXT = "NOINFO";
 
+    USERNAME = "admin";
+    PHOTOS_PATH = settings.value(QString("%1/PHOTOS_PATH").arg(USERNAME), "\\\\192.168.1.101\\config\\BMP\\").toString();
+    if(settings.value(QString("%1/PHOTOS_PATH").arg(USERNAME)).toString() != PHOTOS_PATH)
+        settings.setValue(QString("%1/PHOTOS_PATH").arg(USERNAME), PHOTOS_PATH);
 }

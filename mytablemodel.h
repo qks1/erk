@@ -3,6 +3,7 @@
 
 #include <QtGui>
 #include <QtSql>
+#include "constants.h"
 
 class MyTableModel : public QSqlQueryModel
 {

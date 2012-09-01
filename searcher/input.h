@@ -12,7 +12,7 @@ public:
 
     void delete_last_symbol();
     int id_combobox_value();
-
+    void set_input_width(int);
 
 
 private:

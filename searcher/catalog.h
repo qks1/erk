@@ -17,6 +17,7 @@ class Catalog : public QWidget
 public:
     explicit Catalog(QWidget *parent = 0);
     bool ok;                                    // чтобы другие виджеты могли проверить, всё ли нормально
+    void resize_all();
 
 private:
     QTreeWidget *groups;                        // древовидный каталог групп

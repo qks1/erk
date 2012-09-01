@@ -2,6 +2,7 @@
 #define CONSTANTS_H
 
 #include <QtGui>
+#include <QtSql>
 
 // константы для переключателя страниц
 #define PAGE_FIRST 1
@@ -67,6 +68,10 @@
 #define ONE_YEAR_MODE 700
 #define MULTI_YEAR_MODE 701
 
+// режимы для функции save_width
+#define SEARCHER_WHITE_MODE 800
+#define SEARCHER_GREY_MODE 801
+
 // в поисковике выборка может производиться как по группам, так и по подгруппам.
 // чтобы в фильтре отличить группу от подгруппы, в каталоге (дереве) к номеру каждой группы прибавляется большое число.
 #define ENLARGER 100000
@@ -75,10 +80,7 @@
 // Их назначение и значения - в constants.cpp
 // В последствии все эти переменные будут храниться в QSettings
 
-extern QString DB_NAME;
-extern QString DB_USER;
-extern QString DB_PASSWORD;
-extern QString DB_HOST;
+extern QSqlDatabase base;
 
 extern QString GROUPS_TABLE;
 extern QString SUBGROUPS_TABLE;
@@ -115,6 +117,11 @@ extern QString NOPLACE_TEXT;
 extern QString NOPAR_TEXT;
 extern QString NOYEAR_TEXT;
 extern QString NOINFO_TEXT;
+
+extern QString USERNAME;
+extern QString PHOTOS_PATH;
+
+extern int GLOBAL_MODE;
 
 void init_vars();
 

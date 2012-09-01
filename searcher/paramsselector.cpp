@@ -7,7 +7,7 @@ ParamsSelector::ParamsSelector(int number, QWidget *parent) :
     this->items = new CustomComboBox;
     this->number = number;
 
-    this->items->setEditable(true);
+    //this->items->setEditable(true);
     this->items->setAutoCompletion(true);
     this->items->setInsertPolicy(QComboBox::NoInsert);
 

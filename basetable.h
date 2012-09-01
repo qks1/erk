@@ -13,6 +13,18 @@
     Реализует таблицу с переключателем и функции для переключателя.
 */
 
+class MyHeaderView : public QHeaderView
+{
+    Q_OBJECT
+public:
+    MyHeaderView(Qt::Orientation orientation = Qt::Horizontal, QWidget *parent = 0);
+
+private:
+    void mouseReleaseEvent(QMouseEvent *e);
+signals:
+    void mouse_release();
+};
+
 class BaseTable : public QWidget
 {
     Q_OBJECT
@@ -22,10 +34,21 @@ public:
     void set_totals(int);
     int get_items_on_page();
     void set_multipage_mode();
+    void restore_width(int index, int width);
+    void restore_order();
+    int last_resized_index;
+    int last_resized_width;
+    //int last_old_visual_index;
+    //int last_new_visual_index;
 
 protected:
     QTableView *table;                    // таблица
-    Switcher *switcher;                     // переключатель страниц
+    Switcher *switcher;                   // переключатель страниц
+    QString settings_section;
+    QStringList column_names;
+    QSettings *settings;
+    MyHeaderView *hh;
+    bool filled;
     void create_new_table();
     // ПЕРЕМЕННЫЕ ДЛЯ ПЕРЕКЛЮЧАТЕЛЯ:
     int current_page;                       // текущая страница
@@ -39,6 +62,8 @@ protected:
     int offset;
     void update_switcher_values();
     void resizeEvent(QResizeEvent *);           // реакция на изменение размеров окна
+    void restore_state();
+    void save_width();
 
 
 private:
@@ -53,16 +78,23 @@ signals:
     void limits_changed(pair);
     void limits_removed();
     void limits_restored();
+    void section_resized(int, int);
+    void section_moved();
 
 protected slots:
     void change_page(int);
     void change_onpage(int);
     void remove_limits();
     void restore_limits();
+    void column_width_changed(int,int,int);
+    void column_moved(int,int,int);
+
 
 
 private slots:
-
+    void save_state();
+    void save_order();
+    void section_resized_slot();
 
 public slots:
     

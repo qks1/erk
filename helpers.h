@@ -15,8 +15,8 @@ struct SortingOrder{
     Qt::SortOrder order;
 };
 
-bool createConnection(QSqlDatabase);
-void set_system_font(QString family, int size);
+bool create_connection(QSqlDatabase);
+void set_system_font();
 void critical_error(QString title, QString text);
 void error(QString title, QString text);
 QString sorting_order_to_string(QList<SortingOrder>);

@@ -24,11 +24,7 @@ public:
 
 private:
     inline void connects();
-    void save_state();
-    void restore_state();
 
-    bool filled;                                // флаг, заполнена ли таблица
-    QStringList column_names;
     int sort_column;
     Qt::SortOrder sort_order;
     QSettings *settings;
@@ -44,8 +40,6 @@ signals:
 
 private slots:
     void table_right_click(QPoint);
-    void column_width_changed(int,int,int);
-    void column_moved(int,int,int);
 
 public slots:
     void change_order(int, Qt::SortOrder);

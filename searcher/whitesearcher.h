@@ -25,10 +25,12 @@ public:
     explicit WhiteSearcher(QWidget *parent = 0);
     void fill_table(Filters*, bool, bool);              // заполнение таблицы
     void clear_text();
-    void close_func();
     int input_id_combobox_value();
     int get_original_index(QString);
     QString get_original_name(int);
+    void resize_all();
+    void restore_width(int index, int width);
+    void restore_order();
 
 
 private:
@@ -80,6 +82,8 @@ signals:
     void prices_clicked();
     void quantity_clicked();
     void create_grey(int);
+    void section_resized(int, int);
+    void section_moved();
 
 private slots:
     void detail_info(int);

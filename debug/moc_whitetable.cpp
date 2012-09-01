@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'whitetable.h'
 **
-** Created: Mon 27. Aug 07:18:25 2012
+** Created: Thu 30. Aug 22:17:58 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.2)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -17,13 +17,74 @@
 #endif
 
 QT_BEGIN_MOC_NAMESPACE
+static const uint qt_meta_data_WhiteTableModel[] = {
+
+ // content:
+       6,       // revision
+       0,       // classname
+       0,    0, // classinfo
+       0,    0, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       0,       // signalCount
+
+       0        // eod
+};
+
+static const char qt_meta_stringdata_WhiteTableModel[] = {
+    "WhiteTableModel\0"
+};
+
+void WhiteTableModel::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    Q_UNUSED(_o);
+    Q_UNUSED(_id);
+    Q_UNUSED(_c);
+    Q_UNUSED(_a);
+}
+
+const QMetaObjectExtraData WhiteTableModel::staticMetaObjectExtraData = {
+    0,  qt_static_metacall 
+};
+
+const QMetaObject WhiteTableModel::staticMetaObject = {
+    { &MyTableModel::staticMetaObject, qt_meta_stringdata_WhiteTableModel,
+      qt_meta_data_WhiteTableModel, &staticMetaObjectExtraData }
+};
+
+#ifdef Q_NO_DATA_RELOCATION
+const QMetaObject &WhiteTableModel::getStaticMetaObject() { return staticMetaObject; }
+#endif //Q_NO_DATA_RELOCATION
+
+const QMetaObject *WhiteTableModel::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
+}
+
+void *WhiteTableModel::qt_metacast(const char *_clname)
+{
+    if (!_clname) return 0;
+    if (!strcmp(_clname, qt_meta_stringdata_WhiteTableModel))
+        return static_cast<void*>(const_cast< WhiteTableModel*>(this));
+    return MyTableModel::qt_metacast(_clname);
+}
+
+int WhiteTableModel::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = MyTableModel::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    return _id;
+}
 static const uint qt_meta_data_WhiteTable[] = {
 
  // content:
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      10,   14, // methods
+       8,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -40,9 +101,7 @@ static const uint qt_meta_data_WhiteTable[] = {
  // slots: signature, parameters, type, tag, flags
      131,   11,   11,   11, 0x08,
      158,   11,   11,   11, 0x08,
-     187,  184,   11,   11, 0x08,
-     221,  184,   11,   11, 0x08,
-     247,   12,   11,   11, 0x0a,
+     184,   12,   11,   11, 0x0a,
 
        0        // eod
 };
@@ -52,9 +111,7 @@ static const char qt_meta_stringdata_WhiteTable[] = {
     "prices_clicked()\0quantity_clicked()\0"
     "right_click(int)\0double_click(QModelIndex)\0"
     "header_right_click(QPoint)\0"
-    "table_right_click(QPoint)\0,,\0"
-    "column_width_changed(int,int,int)\0"
-    "column_moved(int,int,int)\0"
+    "table_right_click(QPoint)\0"
     "change_order(int,Qt::SortOrder)\0"
 };
 
@@ -71,9 +128,7 @@ void WhiteTable::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         case 4: _t->double_click((*reinterpret_cast< QModelIndex(*)>(_a[1]))); break;
         case 5: _t->header_right_click((*reinterpret_cast< QPoint(*)>(_a[1]))); break;
         case 6: _t->table_right_click((*reinterpret_cast< QPoint(*)>(_a[1]))); break;
-        case 7: _t->column_width_changed((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
-        case 8: _t->column_moved((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
-        case 9: _t->change_order((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< Qt::SortOrder(*)>(_a[2]))); break;
+        case 7: _t->change_order((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< Qt::SortOrder(*)>(_a[2]))); break;
         default: ;
         }
     }
@@ -111,9 +166,9 @@ int WhiteTable::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 10)
+        if (_id < 8)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 10;
+        _id -= 8;
     }
     return _id;
 }

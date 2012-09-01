@@ -17,6 +17,8 @@ void CustomComboBox::mousePressEvent(QMouseEvent *e){
 void CustomComboBox::focusInEvent(QFocusEvent *e){
     //if(this->currentText() == ANY_ITEM_TEXT)
         //this->clearEditText();
+    emit fill_boxes_signal();
+    QComboBox::focusInEvent(e);
 }
 
 void CustomComboBox::closeEvent(QCloseEvent *){

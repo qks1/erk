@@ -17,12 +17,30 @@ public:
 private:
     int id;
     QWidget *parent;
+    void save_state();
+    void restore_state();
+    QSettings *settings;
+    QTableView *table;
+    QStringList column_names;
     
 
 signals:
     
-public slots:
+private slots:
+    void column_width_changed(int,int,int);
+    void column_moved(int,int,int);
     
+};
+
+class CardDialog : public QDialog
+{
+    Q_OBJECT
+public:
+    explicit CardDialog(QWidget *parent = 0);
+
+private:
+    QSettings *settings;
+    void closeEvent(QCloseEvent *);
 };
 
 #endif // DETAILCARD_H

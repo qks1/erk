@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'basetable.h'
 **
-** Created: Mon Aug 27 10:59:46 2012
+** Created: Tue Aug 28 15:41:40 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_BaseTable[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       7,   14, // methods
+       9,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -40,6 +40,8 @@ static const uint qt_meta_data_BaseTable[] = {
       84,   10,   10,   10, 0x09,
      103,   10,   10,   10, 0x09,
      119,   10,   10,   10, 0x09,
+     139,  136,   10,   10, 0x09,
+     173,  136,   10,   10, 0x09,
 
        0        // eod
 };
@@ -48,7 +50,9 @@ static const char qt_meta_stringdata_BaseTable[] = {
     "BaseTable\0\0limits_changed(pair)\0"
     "limits_removed()\0limits_restored()\0"
     "change_page(int)\0change_onpage(int)\0"
-    "remove_limits()\0restore_limits()\0"
+    "remove_limits()\0restore_limits()\0,,\0"
+    "column_width_changed(int,int,int)\0"
+    "column_moved(int,int,int)\0"
 };
 
 void BaseTable::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -64,6 +68,8 @@ void BaseTable::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, v
         case 4: _t->change_onpage((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 5: _t->remove_limits(); break;
         case 6: _t->restore_limits(); break;
+        case 7: _t->column_width_changed((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
+        case 8: _t->column_moved((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
         default: ;
         }
     }
@@ -101,9 +107,9 @@ int BaseTable::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 7)
+        if (_id < 9)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 7;
+        _id -= 9;
     }
     return _id;
 }

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'greytable.h'
 **
-** Created: Mon 27. Aug 07:18:23 2012
+** Created: Thu 30. Aug 22:17:56 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.2)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_GreyTable[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       9,   14, // methods
+       7,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -39,9 +39,7 @@ static const uint qt_meta_data_GreyTable[] = {
 
  // slots: signature, parameters, type, tag, flags
      130,   10,   10,   10, 0x08,
-     159,  156,   10,   10, 0x08,
-     193,  156,   10,   10, 0x08,
-     219,   11,   10,   10, 0x0a,
+     156,   11,   10,   10, 0x0a,
 
        0        // eod
 };
@@ -50,9 +48,7 @@ static const char qt_meta_stringdata_GreyTable[] = {
     "GreyTable\0\0,\0sort_order_changed(int,Qt::SortOrder)\0"
     "prices_clicked()\0quantity_clicked()\0"
     "right_click(int)\0double_click(QModelIndex)\0"
-    "table_right_click(QPoint)\0,,\0"
-    "column_width_changed(int,int,int)\0"
-    "column_moved(int,int,int)\0"
+    "table_right_click(QPoint)\0"
     "change_order(int,Qt::SortOrder)\0"
 };
 
@@ -68,9 +64,7 @@ void GreyTable::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, v
         case 3: _t->right_click((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 4: _t->double_click((*reinterpret_cast< QModelIndex(*)>(_a[1]))); break;
         case 5: _t->table_right_click((*reinterpret_cast< QPoint(*)>(_a[1]))); break;
-        case 6: _t->column_width_changed((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
-        case 7: _t->column_moved((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2])),(*reinterpret_cast< int(*)>(_a[3]))); break;
-        case 8: _t->change_order((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< Qt::SortOrder(*)>(_a[2]))); break;
+        case 6: _t->change_order((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< Qt::SortOrder(*)>(_a[2]))); break;
         default: ;
         }
     }
@@ -108,9 +102,9 @@ int GreyTable::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 9)
+        if (_id < 7)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 9;
+        _id -= 7;
     }
     return _id;
 }

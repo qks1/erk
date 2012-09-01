@@ -4,6 +4,7 @@ Searcher::Searcher(QWidget *parent) :
     QWidget(parent)
 {
     white_searcher = new WhiteSearcher();
+    grey_searcher = 0;
     filters = new Filters();
     filters_default();
     white_searcher->fill_table(filters, false, false);
@@ -21,6 +22,39 @@ inline void Searcher::set_layout(){
     this->setLayout(hlt);
 }
 
+void Searcher::resize_all(){
+
+}
+
+void Searcher::white_section_moved(){
+    emit section_moved(SEARCHER_WHITE_MODE);
+}
+
+void Searcher::grey_section_moved(){
+    emit section_moved(SEARCHER_GREY_MODE);
+}
+
+void Searcher::restore_white_width(int index, int width){
+    if(white_searcher != 0)
+        white_searcher->restore_width(index, width);
+}
+
+void Searcher::restore_grey_width(int index, int width){
+    if(grey_searcher != 0)
+        grey_searcher->restore_width(index, width);
+}
+
+void Searcher::restore_white_order(){
+    if(white_searcher != 0)
+        white_searcher->restore_order();
+}
+
+void Searcher::restore_grey_order(){
+    if(grey_searcher != 0)
+        grey_searcher->restore_order();
+}
+
+
 inline void Searcher::filters_default(){
     // заполняем фильтры по умолчанию
     pair limits = {0, ITEMS_ON_PAGE};
@@ -35,21 +69,14 @@ inline void Searcher::filters_default(){
     filters->add_white_sort_column(order);
     filters->reset_params();
 
-    filters->set_grey_limits(limits);
-    filters->restore_grey_limits();
-    SortingOrder grey_order = {"id", Qt::AscendingOrder};
-    filters->add_grey_sort_column(grey_order);
-    grey_filters_default();
-    filters->clear_grey_insp();
-    filters->clear_grey_add_info();
-    filters->clear_grey_defect();
-    filters->clear_grey_category();
-
     filters->set_mode(WHITE_MODE);
     filters->set_last_filter(GROUPS_FILTER);
+    grey_filters_default();
+
 }
 
 inline void Searcher::grey_filters_default(){
+    pair limits = {0, ITEMS_ON_PAGE};
     filters->reset_grey_beginname();
     filters->reset_grey_text_id();
     filters->reset_grey_id();
@@ -60,6 +87,14 @@ inline void Searcher::grey_filters_default(){
     filters->set_grey_one_year("");
     filters->set_grey_from_year("");
     filters->set_grey_to_year("");
+    filters->set_grey_limits(limits);
+    filters->restore_grey_limits();
+    SortingOrder grey_order = {"id", Qt::AscendingOrder};
+    filters->add_grey_sort_column(grey_order);
+    filters->clear_grey_insp();
+    filters->clear_grey_add_info();
+    filters->clear_grey_defect();
+    filters->clear_grey_category();
 }
 
 inline void Searcher::connects(){
@@ -78,6 +113,8 @@ inline void Searcher::connects(){
     QObject::connect(this->white_searcher, SIGNAL(quantity_clicked()), SLOT(switch_quantity_filter()));
     QObject::connect(this->white_searcher, SIGNAL(last_filter_changed(int)), SLOT(set_last_filter(int)));
     QObject::connect(this->white_searcher, SIGNAL(create_grey(int)), SLOT(open_grey(int)));
+    QObject::connect(this->white_searcher, SIGNAL(section_resized(int, int)), SLOT(white_section_resized(int, int)));
+    QObject::connect(this->white_searcher, SIGNAL(section_moved()), SLOT(white_section_moved()));
 }
 
 inline void Searcher::grey_connects(){
@@ -105,10 +142,17 @@ inline void Searcher::grey_connects(){
     QObject::connect(this->grey_searcher, SIGNAL(change_defect_signal(QString)), SLOT(change_grey_defect(QString)));
     QObject::connect(this->grey_searcher, SIGNAL(change_category_signal(QString)), SLOT(change_grey_category(QString)));
     QObject::connect(this->grey_searcher, SIGNAL(reset_add_boxes_signal()), SLOT(reset_add_boxes()));
+    QObject::connect(this->grey_searcher, SIGNAL(total_reset_signal()), SLOT(grey_reset_slot()));
+    QObject::connect(this->grey_searcher, SIGNAL(section_resized(int, int)), SLOT(grey_section_resized(int, int)));
+    QObject::connect(this->grey_searcher, SIGNAL(section_moved()), SLOT(grey_section_moved()));
 }
 
-void Searcher::close_func(){
-    this->white_searcher->close_func();
+void Searcher::white_section_resized(int index, int width){
+    emit section_resized(SEARCHER_WHITE_MODE, index, width);
+}
+
+void Searcher::grey_section_resized(int index, int width){
+    emit section_resized(SEARCHER_GREY_MODE, index, width);
 }
 
 void Searcher::reset_white_text_filters(){
@@ -220,6 +264,12 @@ void Searcher::reset_grey_years(){
     filters->set_grey_one_year("");
     filters->set_grey_from_year("");
     filters->set_grey_to_year("");
+    if(filters->mode() == GREY_MODE)
+        grey_searcher->fill_table(this->filters, false);
+}
+
+void Searcher::grey_reset_slot(){
+    grey_filters_default();
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
 }
@@ -458,7 +508,7 @@ void Searcher::change_grey_insp(QString s){
     if(s == ANY_ITEM_TEXT)
         reset_grey_insp();
     else{
-        QSqlQuery q("SELECT id FROM inspections WHERE insp_name = '" + s + "'");
+        QSqlQuery q("SELECT id FROM inspections WHERE insp_name = '" + s + "'", base);
         if(q.lastError().isValid()){
             error("Ошибка при установке приёмки", q.lastError().text());
             return;
@@ -479,7 +529,7 @@ void Searcher::change_grey_category(QString s){
     if(s == ANY_ITEM_TEXT)
         filters->clear_grey_category();
     else{
-        QSqlQuery q("SELECT id FROM categories WHERE category_name = '" + s + "'");
+        QSqlQuery q("SELECT id FROM categories WHERE category_name = '" + s + "'", base);
         if(q.lastError().isValid()){
             error("Ошибка при установке категории", q.lastError().text());
             return;
@@ -518,6 +568,7 @@ void Searcher::close_grey(QModelIndex i){
     set_last_filter(CLOSE_GREY_FILTER);
     stack->setCurrentWidget(white_searcher);
     stack->removeWidget(grey_searcher);
+    grey_searcher = 0;
     filters->set_mode(WHITE_MODE);
 }
 
@@ -607,7 +658,7 @@ int Searcher::size_of_select(QStringList lst){
     // Вспомогательная функция для valid_strings,
     // склеивающая список фрагментов в строку для sql-запроса
     // и определяющая размер выборки по этому запросу.
-    QSqlQuery query;
+    QSqlQuery query(base);
     query.exec("SELECT * FROM " + TOVMARKS_TABLE + " WHERE pattern LIKE '%" + lst.join("%") + "%'");
     return query.size();
 }

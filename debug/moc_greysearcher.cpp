@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'greysearcher.h'
 **
-** Created: Mon 27. Aug 08:50:17 2012
+** Created: Thu 30. Aug 22:17:55 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.2)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,12 +23,12 @@ static const uint qt_meta_data_GreySearcher[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      42,   14, // methods
+      48,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-      25,       // signalCount
+      28,       // signalCount
 
  // signals: signature, parameters, type, tag, flags
       14,   13,   13,   13, 0x05,
@@ -56,25 +56,31 @@ static const uint qt_meta_data_GreySearcher[] = {
      585,   13,   13,   13, 0x05,
      615,   13,   13,   13, 0x05,
      647,   13,   13,   13, 0x05,
+     672,   13,   13,   13, 0x05,
+     693,  119,   13,   13, 0x05,
+     718,   13,   13,   13, 0x05,
 
  // slots: signature, parameters, type, tag, flags
-     679,  119,   13,   13, 0x08,
-     710,   13,   13,   13, 0x08,
-     728,   13,   13,   13, 0x08,
-     746,   13,   13,   13, 0x08,
-     760,   13,   13,   13, 0x08,
-     786,   13,   13,   13, 0x08,
-     813,   13,   13,   13, 0x08,
-     838,   13,   13,   13, 0x08,
-     858,   13,   13,   13, 0x08,
-     879,   13,   13,   13, 0x08,
-     898,   13,   13,   13, 0x08,
-     918,   13,   13,   13, 0x08,
-     935,   13,   13,   13, 0x08,
+     734,  119,   13,   13, 0x08,
+     765,   13,   13,   13, 0x08,
+     783,   13,   13,   13, 0x08,
+     801,   13,   13,   13, 0x08,
+     815,   13,   13,   13, 0x08,
+     841,   13,   13,   13, 0x08,
+     868,   13,   13,   13, 0x08,
+     893,   13,   13,   13, 0x08,
+     913,   13,   13,   13, 0x08,
+     934,   13,   13,   13, 0x08,
      953,   13,   13,   13, 0x08,
-     970,   13,   13,   13, 0x08,
-     989,   13,   13,   13, 0x08,
-    1007,   13,   13,   13, 0x08,
+     973,   13,   13,   13, 0x08,
+     990,   13,   13,   13, 0x08,
+    1008,   13,   13,   13, 0x08,
+    1025,   13,   13,   13, 0x08,
+    1044,   13,   13,   13, 0x08,
+    1062,   13,   13,   13, 0x08,
+    1082,   13,   13,   13, 0x08,
+    1100,   13,   13,   13, 0x08,
+    1120,   13,   13,   13, 0x08,
 
        0        // eod
 };
@@ -97,7 +103,8 @@ static const char qt_meta_stringdata_GreySearcher[] = {
     "reset_insp_signal()\0change_add_info_signal(QString)\0"
     "change_defect_signal(QString)\0"
     "change_category_signal(QString)\0"
-    "reset_add_boxes_signal_signal()\0"
+    "reset_add_boxes_signal()\0total_reset_signal()\0"
+    "section_resized(int,int)\0section_moved()\0"
     "text_changed_slot(int,QString)\0"
     "show_second_box()\0hide_second_box()\0"
     "change_mode()\0one_year_changed(QString)\0"
@@ -107,7 +114,8 @@ static const char qt_meta_stringdata_GreySearcher[] = {
     "fill_storages_box()\0fill_racks_box()\0"
     "fill_boards_box()\0fill_boxes_box()\0"
     "reset_boxes_slot()\0change_add_mode()\0"
-    "fill_add_info_box()\0"
+    "fill_add_info_box()\0fill_defect_box()\0"
+    "fill_category_box()\0total_reset_slot()\0"
 };
 
 void GreySearcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -140,24 +148,30 @@ void GreySearcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id
         case 21: _t->change_add_info_signal((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 22: _t->change_defect_signal((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 23: _t->change_category_signal((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 24: _t->reset_add_boxes_signal_signal(); break;
-        case 25: _t->text_changed_slot((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< QString(*)>(_a[2]))); break;
-        case 26: _t->show_second_box(); break;
-        case 27: _t->hide_second_box(); break;
-        case 28: _t->change_mode(); break;
-        case 29: _t->one_year_changed((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 30: _t->from_year_changed((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 31: _t->to_year_changed((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 32: _t->fill_one_year_box(); break;
-        case 33: _t->fill_from_year_box(); break;
-        case 34: _t->fill_to_year_box(); break;
-        case 35: _t->fill_storages_box(); break;
-        case 36: _t->fill_racks_box(); break;
-        case 37: _t->fill_boards_box(); break;
-        case 38: _t->fill_boxes_box(); break;
-        case 39: _t->reset_boxes_slot(); break;
-        case 40: _t->change_add_mode(); break;
-        case 41: _t->fill_add_info_box(); break;
+        case 24: _t->reset_add_boxes_signal(); break;
+        case 25: _t->total_reset_signal(); break;
+        case 26: _t->section_resized((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 27: _t->section_moved(); break;
+        case 28: _t->text_changed_slot((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< QString(*)>(_a[2]))); break;
+        case 29: _t->show_second_box(); break;
+        case 30: _t->hide_second_box(); break;
+        case 31: _t->change_mode(); break;
+        case 32: _t->one_year_changed((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 33: _t->from_year_changed((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 34: _t->to_year_changed((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 35: _t->fill_one_year_box(); break;
+        case 36: _t->fill_from_year_box(); break;
+        case 37: _t->fill_to_year_box(); break;
+        case 38: _t->fill_storages_box(); break;
+        case 39: _t->fill_racks_box(); break;
+        case 40: _t->fill_boards_box(); break;
+        case 41: _t->fill_boxes_box(); break;
+        case 42: _t->reset_boxes_slot(); break;
+        case 43: _t->change_add_mode(); break;
+        case 44: _t->fill_add_info_box(); break;
+        case 45: _t->fill_defect_box(); break;
+        case 46: _t->fill_category_box(); break;
+        case 47: _t->total_reset_slot(); break;
         default: ;
         }
     }
@@ -195,9 +209,9 @@ int GreySearcher::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 42)
+        if (_id < 48)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 42;
+        _id -= 48;
     }
     return _id;
 }
@@ -364,9 +378,28 @@ void GreySearcher::change_category_signal(QString _t1)
 }
 
 // SIGNAL 24
-void GreySearcher::reset_add_boxes_signal_signal()
+void GreySearcher::reset_add_boxes_signal()
 {
     QMetaObject::activate(this, &staticMetaObject, 24, 0);
+}
+
+// SIGNAL 25
+void GreySearcher::total_reset_signal()
+{
+    QMetaObject::activate(this, &staticMetaObject, 25, 0);
+}
+
+// SIGNAL 26
+void GreySearcher::section_resized(int _t1, int _t2)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
+    QMetaObject::activate(this, &staticMetaObject, 26, _a);
+}
+
+// SIGNAL 27
+void GreySearcher::section_moved()
+{
+    QMetaObject::activate(this, &staticMetaObject, 27, 0);
 }
 static const uint qt_meta_data_TableModelForYears[] = {
 

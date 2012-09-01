@@ -67,7 +67,7 @@ inline void Catalog::connects(){
 
 bool Catalog::addGroups(){
     // выбираем список групп из БД
-    QSqlQuery query;
+    QSqlQuery query(base);
     QString strSelect = "SELECT id, name FROM " + GROUPS_TABLE + " ORDER BY name";
 
     // если не удаётся выполнить запрос, выдаём ошибку
@@ -105,7 +105,7 @@ bool Catalog::addGroups(){
 
 bool Catalog::addSubgroup(QTreeWidgetItem *groupItem, int groupNum){
     // выбираем из БД список подгрупп для группы groupNum
-    QSqlQuery query;
+    QSqlQuery query(base);
     QString strSelect = "SELECT id, name FROM " + SUBGROUPS_TABLE + " WHERE group_id=" + QString::number(groupNum);
 
     // если не удаётся выполнить запрос, выдаём ошибку
@@ -154,6 +154,12 @@ void Catalog::move_button(){
 
     // наконец, устанавливаем геометрию кнопки
     reset_groups->setGeometry(wdth, 0, size, size);
+}
+
+//--------------------------------------------------------------------------//
+
+void Catalog::resize_all(){
+    move_button();
 }
 
 //--------------------------------------------------------------------------//

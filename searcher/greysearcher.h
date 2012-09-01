@@ -30,10 +30,11 @@ public:
     QString get_original_name(int);
     int input_id_combobox_value();
     void clear_text();
-
+    void restore_width(int index, int width);
+    void restore_order();
 
 private:
-    GreyTable *greytable;
+    GreyTable *grey_table;
     Input *input;
     CustomComboBox *storages;
     CustomComboBox *racks;
@@ -63,6 +64,7 @@ private:
     QPushButton *new_button;
     QPushButton *edit_button;
     QPushButton *del_button;
+    QPushButton *reset_button;
 
     QStringList original_columns_names;
     QString tables_str;//, where_id_str, where_text_str, where_places_str, where_years_str, where_insp_str;
@@ -119,6 +121,9 @@ signals:
     void change_defect_signal(QString);
     void change_category_signal(QString);
     void reset_add_boxes_signal();
+    void total_reset_signal();
+    void section_resized(int, int);
+    void section_moved();
 
 
 
@@ -142,6 +147,7 @@ private slots:
     void fill_add_info_box();
     void fill_defect_box();
     void fill_category_box();
+    void total_reset_slot();
 
 public slots:
     

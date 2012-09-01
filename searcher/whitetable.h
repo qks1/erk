@@ -14,23 +14,25 @@
     Унаследован от базового класса таблицы.
 */
 
+class WhiteTableModel : public MyTableModel{
+    Q_OBJECT
+public:
+    explicit WhiteTableModel(QWidget *parent = 0);
+
+    QVariant data(const QModelIndex &index, int role) const;
+};
+
 class WhiteTable : public BaseTable
 {
     Q_OBJECT
 public:
     explicit WhiteTable(QWidget *parent = 0);
 
-    void fill(MyTableModel*, QStringList, int, Qt::SortOrder, bool);       // функция заполнения таблицы
+    void fill(WhiteTableModel*, QStringList, int, Qt::SortOrder, bool);       // функция заполнения таблицы
     QVariant data (QModelIndex, int);
-    void close_func();                  // функция, вызываемая при закрытии таблицы.
 
 private:
     inline void connects();
-    void save_state();
-    void restore_state();
-
-    bool filled;                                // флаг, заполнена ли таблица
-    QStringList column_names;
     int sort_column;
     Qt::SortOrder sort_order;
     QSettings *settings;
@@ -47,8 +49,6 @@ signals:
 private slots:
     void header_right_click(QPoint);
     void table_right_click(QPoint);
-    void column_width_changed(int,int,int);
-    void column_moved(int,int,int);
 
 public slots:
     void change_order(int, Qt::SortOrder);
@@ -57,5 +57,7 @@ public slots:
 public slots:
 
 };
+
+
 
 #endif // WHITETABLE_H

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'searcher.h'
 **
-** Created: Mon Aug 27 12:04:36 2012
+** Created: Tue Aug 28 16:31:35 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,7 +23,7 @@ static const uint qt_meta_data_Searcher[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      40,   14, // methods
+      41,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -73,6 +73,7 @@ static const uint qt_meta_data_Searcher[] = {
      927,    9,    9,    9, 0x08,
      955,    9,    9,    9, 0x08,
      985,    9,    9,    9, 0x08,
+    1003,    9,    9,    9, 0x08,
 
        0        // eod
 };
@@ -105,7 +106,7 @@ static const char qt_meta_stringdata_Searcher[] = {
     "reset_grey_insp()\0change_grey_add_info(QString)\0"
     "change_grey_defect(QString)\0"
     "change_grey_category(QString)\0"
-    "reset_add_boxes()\0"
+    "reset_add_boxes()\0grey_reset_slot()\0"
 };
 
 void Searcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -154,6 +155,7 @@ void Searcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 37: _t->change_grey_defect((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 38: _t->change_grey_category((*reinterpret_cast< QString(*)>(_a[1]))); break;
         case 39: _t->reset_add_boxes(); break;
+        case 40: _t->grey_reset_slot(); break;
         default: ;
         }
     }
@@ -191,9 +193,9 @@ int Searcher::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 40)
+        if (_id < 41)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 40;
+        _id -= 41;
     }
     return _id;
 }

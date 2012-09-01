@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'whitesearcher.h'
 **
-** Created: Mon 27. Aug 07:18:26 2012
+** Created: Thu 30. Aug 22:17:57 2012
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.2)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -23,12 +23,12 @@ static const uint qt_meta_data_WhiteSearcher[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      19,   14, // methods
+      21,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-      15,       // signalCount
+      17,       // signalCount
 
  // signals: signature, parameters, type, tag, flags
       17,   15,   14,   14, 0x05,
@@ -46,12 +46,14 @@ static const uint qt_meta_data_WhiteSearcher[] = {
      308,   14,   14,   14, 0x05,
      325,   14,   14,   14, 0x05,
      344,   14,   14,   14, 0x05,
+     361,   15,   14,   14, 0x05,
+     386,   14,   14,   14, 0x05,
 
  // slots: signature, parameters, type, tag, flags
-     361,   14,   14,   14, 0x08,
-     378,   14,   14,   14, 0x08,
-     396,   14,   14,   14, 0x08,
-     419,   15,   14,   14, 0x08,
+     402,   14,   14,   14, 0x08,
+     419,   14,   14,   14, 0x08,
+     437,   14,   14,   14, 0x08,
+     460,   15,   14,   14, 0x08,
 
        0        // eod
 };
@@ -66,7 +68,8 @@ static const char qt_meta_stringdata_WhiteSearcher[] = {
     "item_selected(QString,int)\0"
     "button_clicked(int)\0params_reset_clicked()\0"
     "prices_clicked()\0quantity_clicked()\0"
-    "create_grey(int)\0detail_info(int)\0"
+    "create_grey(int)\0section_resized(int,int)\0"
+    "section_moved()\0detail_info(int)\0"
     "fill_boxes_slot()\0open_grey(QModelIndex)\0"
     "text_changed_slot(int,QString)\0"
 };
@@ -92,10 +95,12 @@ void WhiteSearcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _i
         case 12: _t->prices_clicked(); break;
         case 13: _t->quantity_clicked(); break;
         case 14: _t->create_grey((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 15: _t->detail_info((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 16: _t->fill_boxes_slot(); break;
-        case 17: _t->open_grey((*reinterpret_cast< QModelIndex(*)>(_a[1]))); break;
-        case 18: _t->text_changed_slot((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< QString(*)>(_a[2]))); break;
+        case 15: _t->section_resized((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 16: _t->section_moved(); break;
+        case 17: _t->detail_info((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 18: _t->fill_boxes_slot(); break;
+        case 19: _t->open_grey((*reinterpret_cast< QModelIndex(*)>(_a[1]))); break;
+        case 20: _t->text_changed_slot((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< QString(*)>(_a[2]))); break;
         default: ;
         }
     }
@@ -133,9 +138,9 @@ int WhiteSearcher::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 19)
+        if (_id < 21)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 19;
+        _id -= 21;
     }
     return _id;
 }
@@ -237,5 +242,18 @@ void WhiteSearcher::create_grey(int _t1)
 {
     void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
     QMetaObject::activate(this, &staticMetaObject, 14, _a);
+}
+
+// SIGNAL 15
+void WhiteSearcher::section_resized(int _t1, int _t2)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)), const_cast<void*>(reinterpret_cast<const void*>(&_t2)) };
+    QMetaObject::activate(this, &staticMetaObject, 15, _a);
+}
+
+// SIGNAL 16
+void WhiteSearcher::section_moved()
+{
+    QMetaObject::activate(this, &staticMetaObject, 16, 0);
 }
 QT_END_MOC_NAMESPACE

@@ -89,6 +89,10 @@ inline void Input::set_layout(){
     this->setLayout(layout);
 }
 
+void Input::set_input_width(int w){
+    text->setFixedWidth(w);
+}
+
 int Input::id_combobox_value(){
     return this->eqge->currentIndex();
 }

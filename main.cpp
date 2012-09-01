@@ -10,24 +10,21 @@ int main(int argc, char **argv){
 
     // устанавливаем кодировку строк
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("utf-8"));
+    init_vars();
 
     // создаём объект базы данных и соединяемся с ним
-    QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
-    // это будет соединение по умолчанию, поэтому имя не указываем
-	if(!createConnection(db))
-        // если createConnection вернула false, чего быть не может, но мало ли, то завершаем программу
-        return -1;
+    base = QSqlDatabase::addDatabase("QPSQL", "base");
+    bool success = create_connection(base);
 
     // создаём стиль для табвиджета, устанавливающий размер вкладок
     app.setStyleSheet("QTabBar::tab { min-width:50px; max-height:20px}");
 
-    set_system_font(SYSTEM_FONT_FAMILY, SYSTEM_FONT_SIZE);
+    set_system_font();
 
-    init_vars();
 
 
     // создаём главное окно
-    MainWindow *mw = new MainWindow();
+    MainWindow *mw = new MainWindow(success);
     mw->setWindowState(Qt::WindowMaximized);
     mw->show();
     //mw->setMaximumSize(mw->width(), mw->height());

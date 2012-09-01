@@ -3,7 +3,7 @@
 GreySearcher::GreySearcher(QWidget *parent) :
     QWidget(parent)
 {
-    greytable = new GreyTable(this);
+    grey_table = new GreyTable(this);
     input = new Input(this);
     storages = new CustomComboBox(this);
     racks = new CustomComboBox(this);
@@ -38,6 +38,7 @@ GreySearcher::GreySearcher(QWidget *parent) :
     new_button = new QPushButton();
     edit_button = new QPushButton();
     del_button = new QPushButton();
+    reset_button = new QPushButton();
 
     filled = false;
     years_box_filled = false;
@@ -49,15 +50,15 @@ GreySearcher::GreySearcher(QWidget *parent) :
 }
 
 void GreySearcher::connects(){
-    QObject::connect(this->greytable, SIGNAL(double_click(QModelIndex)), SIGNAL(close_grey(QModelIndex)));
+    QObject::connect(this->grey_table, SIGNAL(double_click(QModelIndex)), SIGNAL(close_grey(QModelIndex)));
     // смена пределов
-    QObject::connect(this->greytable, SIGNAL(limits_changed(pair)), SIGNAL(limits_changed(pair)));
+    QObject::connect(this->grey_table, SIGNAL(limits_changed(pair)), SIGNAL(limits_changed(pair)));
     // снятие лимита
-    QObject::connect(this->greytable, SIGNAL(limits_removed()), SIGNAL(limits_removed()));
+    QObject::connect(this->grey_table, SIGNAL(limits_removed()), SIGNAL(limits_removed()));
     // установка лимита
-    QObject::connect(this->greytable, SIGNAL(limits_restored()), SIGNAL(limits_restored()));
+    QObject::connect(this->grey_table, SIGNAL(limits_restored()), SIGNAL(limits_restored()));
     // изменение порядка сортировки
-    QObject::connect(this->greytable, SIGNAL(sort_order_changed(int,Qt::SortOrder)), SIGNAL(sort_order_changed(int,Qt::SortOrder)));
+    QObject::connect(this->grey_table, SIGNAL(sort_order_changed(int,Qt::SortOrder)), SIGNAL(sort_order_changed(int,Qt::SortOrder)));
     // изменение текста
     QObject::connect(this->input, SIGNAL(text_changed_signal(int,QString)), SLOT(text_changed_slot(int,QString)));
     // очистка текста
@@ -94,6 +95,10 @@ void GreySearcher::connects(){
     QObject::connect(this->defect_box, SIGNAL(activated(QString)), SIGNAL(change_defect_signal(QString)));
     QObject::connect(this->category_box, SIGNAL(activated(QString)), SIGNAL(change_category_signal(QString)));
     QObject::connect(this->reset_add_boxes, SIGNAL(clicked()), SIGNAL(reset_add_boxes_signal()));
+    QObject::connect(this->reset_button, SIGNAL(clicked()), SLOT(total_reset_slot()));
+    //
+    QObject::connect(this->grey_table, SIGNAL(section_resized(int, int)), SIGNAL(section_resized(int, int)));
+    QObject::connect(this->grey_table, SIGNAL(section_moved()), SIGNAL(section_moved()));
 }
 
 QVBoxLayout* GreySearcher::create_box_layout(QComboBox *box, QString label_str, int width){
@@ -126,12 +131,16 @@ void GreySearcher::set_layout(){
     new_button->setFixedSize(action_button_size, action_button_size);
     edit_button->setFixedSize(action_button_size, action_button_size);
     del_button->setFixedSize(action_button_size, action_button_size);
+    reset_button->setFixedSize(action_button_size, action_button_size);
+    reset_button->setIcon(QPixmap("images/reset.png"));
+    reset_button->setToolTip("Сброс");
     QHBoxLayout *btn_lt = new QHBoxLayout();
     btn_lt->addWidget(new_button);
     btn_lt->addWidget(edit_button);
     btn_lt->addWidget(del_button);
+    btn_lt->addWidget(reset_button);
     QWidget *btn_wgt = new QWidget(this);
-    btn_wgt->setFixedWidth((action_button_size+2)*3);
+    btn_wgt->setFixedWidth((action_button_size+2)*4);
     btn_wgt->setLayout(btn_lt);
     top_lt->addWidget(btn_wgt);
     top_lt->addStretch(1);
@@ -236,6 +245,7 @@ void GreySearcher::set_layout(){
     bottom_lt->addSpacing(spacing);
     bottom_lt->addWidget(reset_insp_button);
     bottom_lt->addSpacing(spacing);
+    bottom_lt->addStretch(1);
     bottom_lt->addWidget(add_wgt);
     //top_lt->addWidget(add_wgt);
     //params_reset->setFixedSize(button_size, button_size);
@@ -247,10 +257,19 @@ void GreySearcher::set_layout(){
     QVBoxLayout *vbl = new QVBoxLayout();
     vbl->addWidget(top_panel);
     vbl->addWidget(bottom_panel);
-    vbl->addWidget(greytable);
+    vbl->addWidget(grey_table);
     this->setLayout(vbl);
     hide_second_box();
     show_add_info_box();
+}
+
+void GreySearcher::restore_width(int index, int width){
+    if(grey_table != 0)
+        this->grey_table->restore_width(index, width);
+}
+
+void GreySearcher::restore_order(){
+    this->grey_table->restore_order();
 }
 
 void GreySearcher::clear_where_strs(){
@@ -334,7 +353,7 @@ void GreySearcher::text_changed_slot(int type, QString text){
 }
 
 int GreySearcher::set_totals(QString query){
-    QSqlQuery sql;
+    QSqlQuery sql(base);
     int total;
     if(!sql.exec(query)){
         error("Ошибка", QString("Не удалось выполнить запрос:\n").append(query));
@@ -418,7 +437,7 @@ bool GreySearcher::fill_places_box(int mode){
         }
     }
     query_str += " ORDER BY 1)";
-    query->setQuery(query_str);
+    query->setQuery(query_str, base);
     if(query->lastError().isValid()){
         error("Ошибка при заполнении комбобокса " + which, query->lastError().text());
         box->setEnabled(false);
@@ -479,7 +498,7 @@ void GreySearcher::fill_add_info_box(){
     QString cur = filters->grey_add_info_filter();
 
     query_str = "(SELECT '" + ANY_ITEM_TEXT + "') UNION (SELECT DISTINCT g.add_info " + tables_str + glue_where("add_info") + ") ORDER BY 1";
-    model->setQuery(query_str);
+    model->setQuery(query_str, base);
     if(model->lastError().isValid()){
         error("Ошибка при заполнении доп. параметров 1", model->lastError().text());
         add_info_box->setEnabled(false);
@@ -510,7 +529,7 @@ void GreySearcher::fill_defect_box(){
     QString cur = filters->grey_defect_filter();
 
     query_str = "(SELECT '" + ANY_ITEM_TEXT + "') UNION (SELECT DISTINCT g.defect " + tables_str + glue_where("defect") + ") ORDER BY 1";
-    model->setQuery(query_str);
+    model->setQuery(query_str, base);
     if(model->lastError().isValid()){
         error("Ошибка при заполнении доп. параметров 2", model->lastError().text());
         defect_box->setEnabled(false);
@@ -541,7 +560,7 @@ void GreySearcher::fill_category_box(){
     QString cur = filters->grey_string_category_filter();
 
     query_str = "(SELECT '" + ANY_ITEM_TEXT + "') UNION (SELECT DISTINCT c.category_name " + tables_str + glue_where("category") + ") ORDER BY 1";
-    model->setQuery(query_str);
+    model->setQuery(query_str, base);
     if(model->lastError().isValid()){
         error("Ошибка при заполнении категорий", model->lastError().text());
         category_box->setEnabled(false);
@@ -593,7 +612,7 @@ bool GreySearcher::fill_year_box(int mode){
     else if(mode == 3)
         query_str += (filters->grey_from_year_filter().toInt() > 0 ? " AND (year >= " + filters->grey_from_year_filter() + ")" : "");
     query_str += ") ORDER BY 1";
-    model->setQuery(query_str);
+    model->setQuery(query_str, base);
     if(model->lastError().isValid()){
         error("Ошибка при заполнении комбобокса " + QString::number(mode), model->lastError().text());
         box->setEnabled(false);
@@ -629,7 +648,7 @@ void GreySearcher::fill_to_year_box(){
 void GreySearcher::fill_insp_box(){
     QSqlQueryModel *model = new QSqlQueryModel();
     QString query_str = QString("(SELECT '") + ANY_ITEM_TEXT + "') UNION (SELECT DISTINCT insp_name FROM inspections ORDER BY 1)";
-    model->setQuery(query_str);
+    model->setQuery(query_str, base);
     if(model->lastError().isValid()){
         error("Ошибка при получении яписка приёмок", model->lastError().text());
         return;
@@ -666,6 +685,11 @@ void GreySearcher::clear_boxes(){
     boards->setEnabled(false);
     boxes->setEnabled(false);
     where_strings["places"] = "";
+}
+
+void GreySearcher::total_reset_slot(){
+    clear_boxes();
+    emit total_reset_signal();
 }
 
 void GreySearcher::set_years_filters(){
@@ -716,7 +740,7 @@ bool GreySearcher::set_place_filter(int mode){
 
     if(cur == NOPLACE_TEXT){
         // TRY
-        QSqlQuery *q = new QSqlQuery("(SELECT '" + ANY_ITEM_TEXT + "') UNION (SELECT DISTINCT p." + which + tables_str + glue_where("places") + " ORDER BY 1)");
+        QSqlQuery *q = new QSqlQuery("(SELECT '" + ANY_ITEM_TEXT + "') UNION (SELECT DISTINCT p." + which + tables_str + glue_where("places") + " ORDER BY 1)", base);
              if(q->lastError().isValid()){
             error("Ошибка", q->lastError().text());
             return false;
@@ -820,7 +844,7 @@ void GreySearcher::fill_table(Filters *f, bool delete_last_symbol){
     bool reset_page = false;
     if(filters->last_applied_filter() != GREY_LIMITS_FILTER){
         reset_page = true;
-        pair l = {0, greytable->get_items_on_page()};
+        pair l = {0, grey_table->get_items_on_page()};
         filters->set_grey_limits(l);
     }
 
@@ -835,12 +859,12 @@ void GreySearcher::fill_table(Filters *f, bool delete_last_symbol){
             input->delete_last_symbol();
     }
     else{
-        model->setQuery(query_str);
+        model->setQuery(query_str, base);
         if(model->rowCount() == 0){
             QString empty = "SELECT '' as ", tmp;
             empty += GREY_TABLE_COLUMNS.join(", '' as ");
             qDebug() << empty;
-            model->setQuery(empty);
+            model->setQuery(empty, base);
         }
         original_columns_names.clear();
         for(int i = 0; i < model->columnCount(); i++)
@@ -862,7 +886,7 @@ void GreySearcher::fill_table(Filters *f, bool delete_last_symbol){
             error("Внимание!", "Установлен порядок сортировки по умолчанию");
         }
 
-        greytable->fill(model, original_columns_names, sort_column, sort_order, reset_page);
+        grey_table->fill(model, original_columns_names, sort_column, sort_order, reset_page);
     }
 }
 
@@ -871,7 +895,7 @@ QString GreySearcher::apply_filters(){
     QString query, base, columns, order, limits, count, where;
     int total;
     int begin = filters->grey_begin();
-    int limit = this->greytable->get_items_on_page();
+    int limit = this->grey_table->get_items_on_page();
     short mode = filters->grey_id_mode_filter();
     QStringList parts = filters->grey_parts_filter();
     base = "SELECT ";
@@ -955,7 +979,7 @@ QString GreySearcher::apply_filters(){
         }
     }
     else
-        greytable->set_totals(total);
+        grey_table->set_totals(total);
 
     // порядок сортировки
     order = " ORDER BY " + sorting_order_to_string(filters->grey_sort_order_filter());

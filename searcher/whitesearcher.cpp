@@ -59,6 +59,9 @@ inline void WhiteSearcher::white_connects(){
     QObject::connect(this->white_table, SIGNAL(right_click(int)), SLOT(detail_info(int)));
     // открыть серый экран
     QObject::connect(this->white_table, SIGNAL(double_click(QModelIndex)), SLOT(open_grey(QModelIndex)));
+    //
+    QObject::connect(this->white_table, SIGNAL(section_resized(int, int)), SIGNAL(section_resized(int, int)));
+    QObject::connect(this->white_table, SIGNAL(section_moved()), SIGNAL(section_moved()));
 }
 
 inline void WhiteSearcher::set_layout(){
@@ -100,7 +103,7 @@ inline void WhiteSearcher::set_layout(){
     for(int i = 0; i < MAX_PARAMS; i++){
         selectors.at(i)->setFixedWidth(selector_width);
         selectors.at(i)->setGeometry(selector_width*i,0,selector_width,selectors.at(i)->height());
-        selectors.at(i)->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        //selectors.at(i)->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         wlt->addWidget(selectors.at(i));
     }
     wlt->addSpacing(spacing);
@@ -122,6 +125,10 @@ inline void WhiteSearcher::set_layout(){
     this->setLayout(mainlt);
 }
 
+void WhiteSearcher::resize_all(){
+    catalog->resize_all();
+}
+
 QSplitter* WhiteSearcher::split(){
     // формируем разделитель, содержащий каталог и таблицу
     QSplitter* splitter = new QSplitter(Qt::Horizontal);
@@ -139,7 +146,7 @@ QSplitter* WhiteSearcher::split(){
 QMap<QString, QString> WhiteSearcher::get_params_names(int group){
     // получить список названий параметров для данной подгруппы
     QMap<QString, QString> params;
-    QSqlQuery q;
+    QSqlQuery q(base);
     QString query = "SELECT * FROM " + SUBGROUPS_TABLE + " WHERE id=" + QString::number(group);
     if(!q.exec(query)){
         error("Ошибка", QString("Не удалось выполнить запрос:\n").append(query));
@@ -199,7 +206,7 @@ void WhiteSearcher::set_button_labels(QSqlQuery query){
 }
 
 void WhiteSearcher::set_text_button_labels(){
-    /*QSqlQuery q;
+    /*QSqlQuery q(base);
     int cnt;
     for(int i = 0; i < MAX_PARAMS; i++){
         q.exec("SELECT DISTINCT t.par" + QString::number(i+1) + "_val " + tables_string + where_string);
@@ -223,7 +230,7 @@ void WhiteSearcher::clear_button_labels(){
 }
 
 int WhiteSearcher::set_totals(QString query){
-    QSqlQuery sql;
+    QSqlQuery sql(base);
     int total;
     if(!sql.exec(query)){
         error("Ошибка", QString("Не удалось выполнить запрос:\n").append(query));
@@ -233,6 +240,14 @@ int WhiteSearcher::set_totals(QString query){
         total = sql.value(0).toInt();
     }
     return total;
+}
+
+void WhiteSearcher::restore_width(int index, int width){
+    this->white_table->restore_width(index, width);
+}
+
+void WhiteSearcher::restore_order(){
+    this->white_table->restore_order();
 }
 
 
@@ -248,7 +263,7 @@ void WhiteSearcher::get_params_list(){
         list.clear();
         selectors.at(i)->clear_items();
         query_str = "(SELECT '') UNION (SELECT " + par_name + tables_string + where_string + " AND " + par_name + "!= '')  ORDER BY 1";
-        query->setQuery(query_str);
+        query->setQuery(query_str, base);
         //qDebug() << query_str;
         selectors.at(i)->setModel(query);
         selectors.at(i)->setEnabled(!(selectors.at(i)->count() <= 1 && selectors.at(i)->item(0) == ""));
@@ -256,7 +271,7 @@ void WhiteSearcher::get_params_list(){
             selectors.at(i)->set_selected(1);
     }
     delete query;
-    set_button_labels();
+    set_text_button_labels();
 }
 
 void WhiteSearcher::detail_info(int id){
@@ -297,17 +312,13 @@ void WhiteSearcher::text_changed_slot(int type, QString text){
 }
 
 void WhiteSearcher::open_grey(QModelIndex i){
-    //QMessageBox::warning(this, "qq", white_table->data(i, 1).toString());
+    //QMessageBox::warning(this, "qq", white_table->data(i, 0).toString());
     int id = white_table->data(i, 0).toInt();
     emit(create_grey(id));
 }
 
-void WhiteSearcher::close_func(){
-    this->white_table->close_func();
-}
-
 void WhiteSearcher::fill_table(Filters *filters, bool reset_groups = false, bool delete_last_symbol = false){
-    MyTableModel *query = new MyTableModel();
+    WhiteTableModel *query = new WhiteTableModel();
     QString strSelect;
 
     if(delete_last_symbol &&
@@ -355,7 +366,7 @@ void WhiteSearcher::fill_table(Filters *filters, bool reset_groups = false, bool
     else{
         // фильтры применены успешно. Начинаем заполнять поисковик данными.
         // применяем sql-запрос
-        query->setQuery(strSelect);
+        query->setQuery(strSelect, base);
         // сохраняем оригинальные имена столбцов, чтобы узнавать потом индексы
         original_column_names.clear();
         for(int i = 0; i < query->columnCount(); i++)
@@ -407,7 +418,7 @@ void WhiteSearcher::fill_table(Filters *filters, bool reset_groups = false, bool
 }
 
 QString WhiteSearcher::apply_filters(Filters *filters){
-    QSqlDatabase::database().transaction();
+    base.transaction();
     QString query, tables, where, groupby, order, limits = "", count, final;
     int group = filters->group_filter();
     QStringList columns = filters->columns_filter();
@@ -510,7 +521,6 @@ QString WhiteSearcher::apply_filters(Filters *filters){
     else{
         white_table->set_totals(total);
     }
-
     // порядок сортировки
     order = " ORDER BY " + sorting_order_to_string(filters->white_sort_order_filter());
 
@@ -527,8 +537,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
     // если все детали, удовлетворяющие запросу, принадлежат только одной подгруппе, её номер надо установить в single_group
     // то же, но без учёта лимитов - в single_group_without_limits. Потом объяснить, что к чему!
     // а вообще это не дело, впилить потом в куда-то
-    //qDebug("done.");
-    QSqlQuery select_groups;
+    QSqlQuery select_groups(base);
     query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + ALL_WHITE_COLUMNS.join(",") + tables + where + ") AS t";
     if(!select_groups.exec(query)){
         error("Ошибка при выборе групп 1", "Не удалось выполнить запрос:\n" + query);
@@ -539,16 +548,14 @@ QString WhiteSearcher::apply_filters(Filters *filters){
         single_group = single_group_without_limits;
     else{
         query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + ALL_WHITE_COLUMNS.join(",") + tables + where + limits + ") AS t";
-        if(!select_groups.exec(query)){
+        if(!select_groups.exec(query))
             error("Ошибка при выборе групп 2", "Не удалось выполнить запрос:\n" + query);
-        }
         select_groups.next();
         single_group = (select_groups.size() == 1 ? select_groups.value(0).toInt() : -1);
     }
-
     // теперь сформируем строку, которую надо вернуть функции заполнения таблицы
     final = "SELECT " + columns.join(",") + tables + where + groupby + order + limits;
-    while(!QSqlDatabase::database().commit());
+    while(!base.commit());
     return final;
 }
 
