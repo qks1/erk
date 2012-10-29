@@ -4,5 +4,21 @@
         <file alias="switcher_last">images/last.png</file>
         <file alias="switcher_next">images/next.png</file>
         <file alias="switcher_prev">images/prev.png</file>
+        <file alias="new">images/new.png</file>
+        <file alias="back">images/back.png</file>
+        <file alias="camera">images/camera.png</file>
+        <file alias="delete">images/delete.png</file>
+        <file alias="edit">images/edit.png</file>
+        <file alias="photo">images/photo.jpg</file>
+        <file alias="reset">images/reset.png</file>
+        <file alias="settings">images/settings.png</file>
+        <file alias="prices">images/prices.png</file>
+        <file alias="discounts">images/discount.png</file>
+        <file>images/nophoto.png</file>
+        <file alias="check">images/срусло.png</file>
+        <file alias="down">images/downarrow.png</file>
+        <file alias="minus">images/minus.png</file>
+        <file alias="plus">images/plus.png</file>
+        <file alias="pen">images/pen.png</file>
     </qresource>
 </RCC>

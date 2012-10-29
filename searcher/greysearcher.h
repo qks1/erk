@@ -19,6 +19,7 @@
 #include "filters.h"
 #include "constants.h"
 #include "customcombobox.h"
+#include "helpers.h"
 
 class GreySearcher : public QWidget
 {
@@ -32,6 +33,8 @@ public:
     void clear_text();
     void restore_width(int index, int width);
     void restore_order();
+    int open_columns_list();
+    void hide_show_columns();
 
 private:
     GreyTable *grey_table;
@@ -67,7 +70,7 @@ private:
     QPushButton *reset_button;
 
     QStringList original_columns_names;
-    QString tables_str;//, where_id_str, where_text_str, where_places_str, where_years_str, where_insp_str;
+    QString tables_str;
     QMap<QString, QString> where_strings;
     Filters *filters;
     bool filled;
@@ -94,6 +97,7 @@ private:
     QString glue_where(QStringList *ex = 0);
     QString glue_where(QString);
     QString apply_filters();
+
     
 signals:
     void close_grey(QModelIndex);
@@ -148,6 +152,10 @@ private slots:
     void fill_defect_box();
     void fill_category_box();
     void total_reset_slot();
+    void storages_slot(QString);
+    void racks_slot(QString);
+    void boards_slot(QString);
+    void boxes_slot(QString);
 
 public slots:
     

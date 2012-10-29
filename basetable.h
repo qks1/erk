@@ -5,6 +5,7 @@
 #include "helpers.h"
 #include "switcher.h"
 #include "constants.h"
+#include "helpers.h"
 
 /*
     Класс, реализующий таблицу с переключателем страниц.
@@ -30,16 +31,27 @@ class BaseTable : public QWidget
     Q_OBJECT
 public:
     explicit BaseTable(QWidget *parent = 0);
+    ~BaseTable();
     
     void set_totals(int);
     int get_items_on_page();
     void set_multipage_mode();
     void restore_width(int index, int width);
+    void restore_columns_width();
     void restore_order();
+    void hide_show_columns();
+    int open_columns_list();
+    void resize_all();
+    QString current_name(QString);
     int last_resized_index;
     int last_resized_width;
+    QVariant table_data(int column);
+    QVariant table_data(QString name);
+    int current_row();
+    void set_current_row(int);
     //int last_old_visual_index;
     //int last_new_visual_index;
+
 
 protected:
     QTableView *table;                    // таблица
@@ -48,6 +60,9 @@ protected:
     QStringList column_names;
     QSettings *settings;
     MyHeaderView *hh;
+    QDialog *clist;
+    QListWidget *list;
+    QMap<QString,QString> original_names;
     bool filled;
     void create_new_table();
     // ПЕРЕМЕННЫЕ ДЛЯ ПЕРЕКЛЮЧАТЕЛЯ:
@@ -69,6 +84,7 @@ protected:
 private:
     inline void layout();                 // расположить элементы
     void move_switcher();
+    void resize_row();
 
     inline void custom_table();
     inline void base_connects();
@@ -92,9 +108,10 @@ protected slots:
 
 
 private slots:
-    void save_state();
     void save_order();
     void section_resized_slot();
+    void accept_clist();
+    void reject_clist();
 
 public slots:
     

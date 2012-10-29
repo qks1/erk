@@ -3,6 +3,7 @@
 
 #include <QtGui>
 #include "constants.h"
+#include "helpers.h"
 
 class Input : public QWidget
 {

@@ -31,10 +31,10 @@ Switcher::Switcher(QWidget *parent) :
     mode = MULTIPAGE_MODE;
 
     // иконки для кнопок переключения страниц
-    QPixmap first_icon("images/first.png");
-    QPixmap prev_icon("images/prev.png");
-    QPixmap next_icon("images/next.png");
-    QPixmap last_icon("images/last.png");
+    QPixmap first_icon(":/switcher_first");
+    QPixmap prev_icon(":/switcher_prev");
+    QPixmap next_icon(":/switcher_next");
+    QPixmap last_icon(":/switcher_last");
 
     // устанавливаем их
     first->setIcon(first_icon);

@@ -6,8 +6,9 @@ Filters::Filters(){
 }
 
 // установить значение group_filter, переданное в параметре
-void Filters::set_group_filter(int g){
+void Filters::set_group_filter(int g, QString name){
     this->group = g;
+    this->group_name = name;
 }
 
 // очистить columns_filter
@@ -104,14 +105,18 @@ void Filters::add_grey_sort_column(SortingOrder item){
     }
 }
 
-void Filters::set_param(int num, QString str){
-    this->params[num] = str;
+void Filters::set_param(int index, QString str){
+    this->params[index] = str;
+}
+
+void Filters::reset_param(int index){
+    this->params[index] = ANY_ITEM_TEXT;
 }
 
 void Filters::reset_params(){
     this->params.clear();
     for(int i = 0; i < MAX_PARAMS; i++)
-        params << "";
+        params << ANY_ITEM_TEXT;
 }
 
 void Filters::switch_prices(){
@@ -285,6 +290,10 @@ void Filters::clear_grey_category(){
 // вернуть значение group_filter
 int Filters::group_filter(){
     return this->group;
+}
+
+QString Filters::group_name_filter(){
+    return this->group_name;
 }
 
 // вернуть значение columns_filter

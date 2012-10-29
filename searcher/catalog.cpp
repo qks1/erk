@@ -49,8 +49,8 @@ inline void Catalog::connects(){
                      this, SLOT(change_group(QTreeWidgetItem*, int)));
 
     // при нажатии кнопки сброса фильтра по группам - сбросить его
-    QObject::connect(this->reset_groups, SIGNAL(clicked()),
-                     this, SLOT(clear_group()));
+    //QObject::connect(this->reset_groups, SIGNAL(clicked()), SLOT(clear_group()));
+    QObject::connect(this->reset_groups, SIGNAL(clicked()), SIGNAL(hide_catalog()));
 
     // при выборе группы из каталога - установить заголовок каталога
     QObject::connect(this->groups, SIGNAL(itemActivated(QTreeWidgetItem*, int)),
@@ -66,75 +66,7 @@ inline void Catalog::connects(){
 //--------------------------------------------------------------------------//
 
 bool Catalog::addGroups(){
-    // выбираем список групп из БД
-    QSqlQuery query(base);
-    QString strSelect = "SELECT id, name FROM " + GROUPS_TABLE + " ORDER BY name";
-
-    // если не удаётся выполнить запрос, выдаём ошибку
-    if(!query.exec(strSelect)){
-        error("Ошибка", QString("Не удалось получить список групп:\n").append(strSelect));
-        return false;
-    }
-
-    QString groupName;                              // название группы - для отображения в каталоге
-    int groupNum;                                   // номер группы - для использования в фильтре
-    QTreeWidgetItem* groupItem = 0;                 // элемент дерева
-
-    // начинаем разбирать результат запроса
-    QSqlRecord rec = query.record();
-    while(query.next()){
-        groupName = query.value(rec.indexOf("name")).toString();
-        groupNum = query.value(rec.indexOf("id")).toInt();
-
-        // формируем элемент дерева
-        groupItem = new QTreeWidgetItem(this->groups);
-        groupItem->setText(0, groupName);                           // устанавливаем groupName в качестве текста
-        QStringList data;                                           // для передачи номера в фильтр прикрепляем данные к элементу
-        data << QString::number(groupNum+ENLARGER) << groupName;    // чтобы отличить группу от подгруппы в фильтре, искусственно увеличим хранящийся номер
-        groupItem->setData(0, Qt::UserRole, data);
-
-        if(!addSubgroup(groupItem, groupNum)){                      // для каждой группы добавляем список подгрупп
-            return false;                                           // если одна из попыток завершилась неудачей, прерываем процесс
-        }
-    }
-
-    return true;
-}
-
-//--------------------------------------------------------------------------//
-
-bool Catalog::addSubgroup(QTreeWidgetItem *groupItem, int groupNum){
-    // выбираем из БД список подгрупп для группы groupNum
-    QSqlQuery query(base);
-    QString strSelect = "SELECT id, name FROM " + SUBGROUPS_TABLE + " WHERE group_id=" + QString::number(groupNum);
-
-    // если не удаётся выполнить запрос, выдаём ошибку
-    if(!query.exec(strSelect)){
-        error("Ошибка", QString("Не удалось получить список подгрупп:\n").append(strSelect));
-        return false;
-    }
-
-    // формируем элемент поддерева
-    QString subgroupName;               // отображаемый текст
-    int subgroupNum;                    // номер подгруппы для передачи в фильтр
-    QTreeWidgetItem *subgroupItem = 0;  // элемент поддерева
-
-    // начинаем разбирать результат запроса
-    QSqlRecord rec = query.record();
-    while(query.next()){
-        subgroupName = query.value(rec.indexOf("name")).toString();
-        subgroupNum = query.value(rec.indexOf("id")).toInt();
-
-        // для элемента поддерева устанавливаем в качестве предка соответствующий элемент дерева
-        subgroupItem = new QTreeWidgetItem(groupItem);
-
-        // устанавливаем текст и данные для элемента поддерева
-        subgroupItem->setText(0, subgroupName);
-        QStringList data;
-        data << QString::number(subgroupNum) << subgroupName;
-        subgroupItem->setData(0, Qt::UserRole, data);
-    }
-    return true;
+    return add_groups(this->groups);
 }
 
 //--------------------------------------------------------------------------//
@@ -167,14 +99,14 @@ void Catalog::resize_all(){
 void Catalog::change_group(QTreeWidgetItem *qtwi, int column){
     // слот, выполняющийся при выборе элемента из каталога
     // получаем номер группы из данных, хранящихся в этом элементе
-    int group = qtwi->data(column, Qt::UserRole).toStringList().at(0).toInt();
+    QStringList data = qtwi->data(column, Qt::UserRole).toStringList();
     // испускаем сигнал, который принимает Searcher
-    emit group_changed(group);
+    emit group_changed(data.at(0).toInt(), data.at(1));
 }
 
 void Catalog::clear_group(){
     // испускаем сигнал, который принимает Searcher
-    emit group_changed(0);
+    emit group_changed(0, "");
 }
 
 void Catalog::change_header(QTreeWidgetItem *qtwi, int column){

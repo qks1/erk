@@ -21,11 +21,8 @@ int ITEMS_ON_PAGE = 50;
 // начиная со скольких элементов спрашивать подвтерждение пользователя при выводе их на одной странице
 int MAX_ITEMS_WITHOUT_WARNING = 300;
 
-// сколько вкладок поисковика создаётся по умолчанию
-int TABS_DEFAULT = 3;
-
 // сколько параметров может быть у детали
-int MAX_PARAMS = 12;
+const int MAX_PARAMS = 12;
 
 // ширина столбца по умолчанию
 int DEFAULT_COLUMN_WIDTH = 70;
@@ -52,65 +49,13 @@ QString NOYEAR_TEXT;
 QString NOINFO_TEXT;
 QString USERNAME;
 QString PHOTOS_PATH;
+QString SETTINGS_PATH;
+QString DEFAULT_WEIGHT_UNIT;
+QString DEFAULT_UNIT;
+Usergroups::Group USERGROUP;
+int USER_ID;
 
 int GLOBAL_MODE;
-
-void init_vars(){
-    GLOBAL_MODE = 0;
-
-    QSettings settings("erk", "base");
-    ALL_WHITE_COLUMNS << "t.id" << "t.photo" << "t.subgroup_id" << "t.name" << "s.name as subgroup" << "t.quantity" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
-    WHITE_TABLE_COLUMNS << "t.id" << "t.photo" << "t.name" << "s.name as subgroup" << "t.quantity" << "t.price_ret" << "t.par1_val" << "t.par2_val" << "t.par3_val" << "t.par4_val"<< "t.par5_val" << "t.par6_val" << "t.par7_val" << "t.par8_val" << "t.par9_val" << "t.par10_val" << "t.par11_val" << "t.par12_val";
-    ALL_GREY_COLUMNS << "g.id" << "g.trademark_id" << "t.name" << "t.pattern" << "g.quantity" << "g.year" << "g.place_id" << "g.price_ret" << "p.storage" << "p.rack" << "p.board" << "p.box" << "i.insp_name" << "g.add_info" << "g.defect" << "g.category_id" << "c.category_name";
-    GREY_TABLE_COLUMNS << "g.id" << "t.name" << "g.quantity" << "g.year" << "g.price_ret" << "p.storage" << "p.rack" << "p.board" << "p.box" << "i.insp_name" << "g.add_info" << "g.defect" << "c.category_name";
-    QCoreApplication::setOrganizationName("erk");
-    QCoreApplication::setApplicationName("base");
-
-    WHITE_COLUMNS_NAMES["id"] = "id";
-    WHITE_COLUMNS_NAMES["name"] = "Имя";
-    WHITE_COLUMNS_NAMES["subgroup"] = "Группа";
-    WHITE_COLUMNS_NAMES["quantity"] = "Кол-во";
-    WHITE_COLUMNS_NAMES["price_ret"] = "Цена";
-    WHITE_COLUMNS_NAMES["par1_val"] = "1";
-    WHITE_COLUMNS_NAMES["par2_val"] = "2";
-    WHITE_COLUMNS_NAMES["par3_val"] = "3";
-    WHITE_COLUMNS_NAMES["par4_val"] = "4";
-    WHITE_COLUMNS_NAMES["par5_val"] = "5";
-    WHITE_COLUMNS_NAMES["par6_val"] = "6";
-    WHITE_COLUMNS_NAMES["par7_val"] = "7";
-    WHITE_COLUMNS_NAMES["par8_val"] = "8";
-    WHITE_COLUMNS_NAMES["par9_val"] = "9";
-    WHITE_COLUMNS_NAMES["par10_val"] = "10";
-    WHITE_COLUMNS_NAMES["par11_val"] = "11";
-    WHITE_COLUMNS_NAMES["par12_val"] = "12";
-    WHITE_COLUMNS_NAMES["photo"] = "";
-
-    GREY_COLUMNS_NAMES["id"] = "id";
-    GREY_COLUMNS_NAMES["quantity"] = "Кол-во";
-    GREY_COLUMNS_NAMES["year"] = "Год";
-    GREY_COLUMNS_NAMES["name"] = "Имя";
-    GREY_COLUMNS_NAMES["storage"] = "Склад";
-    GREY_COLUMNS_NAMES["rack"] = "Стеллаж";
-    GREY_COLUMNS_NAMES["board"] = "Полка";
-    GREY_COLUMNS_NAMES["box"] = "Ящик";
-    GREY_COLUMNS_NAMES["insp_name"] = "Приёмка";
-    GREY_COLUMNS_NAMES["add_info"] = "Доп.пар.1";
-    GREY_COLUMNS_NAMES["defect"] = "Доп.пар.2";
-    GREY_COLUMNS_NAMES["category_name"] = "Категория";
-    GREY_COLUMNS_NAMES["price_ret"] = "Цена";
-    // текст для пункта "любой" в комбобоксе
-    ANY_ITEM_TEXT = "<любой>";
-    // чем заполняются пустые фильтры по местам
-    NOPLACE_TEXT = "NOPLACE";
-    // пустые фильтры по доп. параметрам
-    NOPAR_TEXT = "NOPAR";
-    // отсутствие года
-    NOYEAR_TEXT = "бг";
-    // пустые фильтры по доп. параметрам
-    NOINFO_TEXT = "NOINFO";
-
-    USERNAME = "admin";
-    PHOTOS_PATH = settings.value(QString("%1/PHOTOS_PATH").arg(USERNAME), "\\\\192.168.1.101\\config\\BMP\\").toString();
-    if(settings.value(QString("%1/PHOTOS_PATH").arg(USERNAME)).toString() != PHOTOS_PATH)
-        settings.setValue(QString("%1/PHOTOS_PATH").arg(USERNAME), PHOTOS_PATH);
-}
+bool is_connect;
+QStackedWidget *mwidget;
+CustomTabWidget *search_tabs;

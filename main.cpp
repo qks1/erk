@@ -1,16 +1,20 @@
 #include <QtGui>
 #include <QtSql>
-#include "searcher.h"
 #include "helpers.h"
 #include "constants.h"
 #include "mainwindow.h"
+#include "authorisewindow.h"
+
+void create_mainwindow(){
+
+}
 
 int main(int argc, char **argv){
     QApplication app(argc,argv);
 
     // устанавливаем кодировку строк
     QTextCodec::setCodecForCStrings(QTextCodec::codecForName("utf-8"));
-    init_vars();
+    //init_vars();
 
     // создаём объект базы данных и соединяемся с ним
     base = QSqlDatabase::addDatabase("QPSQL", "base");
@@ -21,17 +25,9 @@ int main(int argc, char **argv){
 
     set_system_font();
 
-
-
-    // создаём главное окно
-    MainWindow *mw = new MainWindow(success);
-    mw->setWindowState(Qt::WindowMaximized);
-    mw->show();
-    //mw->setMaximumSize(mw->width(), mw->height());
-
-    QObject::connect(mw, SIGNAL(exit_signal()),
-            &app, SLOT(closeAllWindows()));
-
+    AuthoriseWindow auth(success);
+    QObject::connect(&auth, SIGNAL(close_signal()), &app, SLOT(closeAllWindows()));
+    auth.exec();
 
     // запускаем приложение
 	return app.exec();

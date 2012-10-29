@@ -27,7 +27,7 @@ private:
 
     // функции добавления групп и подгрупп в каталог
     bool addGroups();
-    bool addSubgroup(QTreeWidgetItem *groupItem, int groupNum);
+    //bool addSubgroup(QTreeWidgetItem *groupItem, int groupNum);
 
     inline void connects();                     // функция соединения сигналов и слотов
 
@@ -35,7 +35,9 @@ private:
     void showEvent(QShowEvent *);               // реакция на появление каталога на экране
     
 signals:
-    void group_changed(int);                    // испускается при изменении выбранной группы
+    void group_changed(int, QString);           // испускается при изменении выбранной группы
+    void hide_catalog();                        // испускается при нажатии на кнопку "скрыть каталог"
+    void show_catalog();                        // испускается при нажатии на кнопку "показать каталог"
 
 private slots:
     void change_group(QTreeWidgetItem*, int);   // передать в поисковик номер группы

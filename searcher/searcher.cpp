@@ -3,11 +3,13 @@
 Searcher::Searcher(QWidget *parent) :
     QWidget(parent)
 {
-    white_searcher = new WhiteSearcher();
+    white_searcher = new WhiteSearcher(this);
     grey_searcher = 0;
     filters = new Filters();
     filters_default();
     white_searcher->fill_table(filters, false, false);
+    success = white_searcher->success;
+    GLOBAL_MODE = SEARCHER_WHITE_MODE;
     set_layout();
     connects();
 }
@@ -23,7 +25,11 @@ inline void Searcher::set_layout(){
 }
 
 void Searcher::resize_all(){
+    white_searcher->resize_all();
+}
 
+void Searcher::set_date(){
+    this->white_searcher->set_date();
 }
 
 void Searcher::white_section_moved(){
@@ -54,6 +60,28 @@ void Searcher::restore_grey_order(){
         grey_searcher->restore_order();
 }
 
+int Searcher::open_white_columns_list(){
+    if(white_searcher != 0)
+        return white_searcher->open_columns_list();
+    return -1;
+}
+
+int Searcher::open_grey_columns_list(){
+    if(grey_searcher != 0)
+        return grey_searcher->open_columns_list();
+    return -1;
+}
+
+void Searcher::hide_show_white_columns(){
+    if(white_searcher != 0)
+        white_searcher->hide_show_columns();
+}
+
+void Searcher::hide_show_grey_columns(){
+    if(grey_searcher != 0)
+        grey_searcher->hide_show_columns();
+}
+
 
 inline void Searcher::filters_default(){
     // заполняем фильтры по умолчанию
@@ -61,7 +89,7 @@ inline void Searcher::filters_default(){
     filters->set_limits(limits);
     filters->reset_white_id();
     filters->reset_beginname();
-    filters->set_group_filter(0);
+    filters->set_group_filter(0, "");
     filters->set_columns_filter(WHITE_TABLE_COLUMNS);
     filters->set_prices(ALL_PRICES);
     filters->set_quantity(ALL_QUANTITIES);
@@ -99,7 +127,7 @@ inline void Searcher::grey_filters_default(){
 
 inline void Searcher::connects(){
     // сигналы от белого поисковика
-    QObject::connect(this->white_searcher, SIGNAL(group_changed(int)), SLOT(set_group_filter(int)));
+    QObject::connect(this->white_searcher, SIGNAL(group_changed(int, QString)), SLOT(set_group_filter(int, QString)));
     QObject::connect(this->white_searcher, SIGNAL(limits_changed(pair)), SLOT(set_limits_filter(pair)));
     QObject::connect(this->white_searcher, SIGNAL(limits_removed()), SLOT(set_nolimits()));
     QObject::connect(this->white_searcher, SIGNAL(limits_restored()), SLOT(set_limits()));
@@ -115,6 +143,10 @@ inline void Searcher::connects(){
     QObject::connect(this->white_searcher, SIGNAL(create_grey(int)), SLOT(open_grey(int)));
     QObject::connect(this->white_searcher, SIGNAL(section_resized(int, int)), SLOT(white_section_resized(int, int)));
     QObject::connect(this->white_searcher, SIGNAL(section_moved()), SLOT(white_section_moved()));
+    QObject::connect(this->white_searcher, SIGNAL(reset_param_signal(int)), SLOT(reset_param_filter(int)));
+    QObject::connect(this->white_searcher, SIGNAL(open_settings()), SIGNAL(open_settings()));
+    QObject::connect(this->white_searcher, SIGNAL(catalog_hides()), SIGNAL(catalog_hides()));
+    QObject::connect(this->white_searcher, SIGNAL(catalog_shows()), SIGNAL(catalog_shows()));
 }
 
 inline void Searcher::grey_connects(){
@@ -147,6 +179,18 @@ inline void Searcher::grey_connects(){
     QObject::connect(this->grey_searcher, SIGNAL(section_moved()), SLOT(grey_section_moved()));
 }
 
+void Searcher::show_white_catalog(){
+    white_searcher->show_catalog();
+}
+
+void Searcher::hide_white_catalog(){
+    white_searcher->hide_catalog();
+}
+
+int Searcher::mode(){
+    return filters->mode();
+}
+
 void Searcher::white_section_resized(int index, int width){
     emit section_resized(SEARCHER_WHITE_MODE, index, width);
 }
@@ -177,10 +221,10 @@ void Searcher::reset_text_filters(int mode){
     }
 }
 
-void Searcher::set_group_filter(int group){
+void Searcher::set_group_filter(int group, QString name){
     this->filters->reset_params();
     this->reset_text_filters(WHITE_MODE);
-    this->filters->set_group_filter(group);
+    this->filters->set_group_filter(group, name);
     filters->set_last_filter(GROUPS_FILTER);
     if(filters->mode() == WHITE_MODE)
         white_searcher->fill_table(this->filters, true, false);
@@ -188,7 +232,7 @@ void Searcher::set_group_filter(int group){
 
 void Searcher::reset_group_filter(){
         this->filters->reset_params();
-        this->filters->set_group_filter(0);
+    this->filters->set_group_filter(0, "");
         this->filters->set_last_filter(GROUPS_FILTER);
         if(filters->mode() == WHITE_MODE)
             white_searcher->fill_table(this->filters, true, false);
@@ -277,7 +321,7 @@ void Searcher::grey_reset_slot(){
 void Searcher::set_text_filter(int mode, int type, QString text){
     if(mode == WHITE_MODE){
         // сбрасываем фильтр по группам
-        this->filters->set_group_filter(0);
+        this->filters->set_group_filter(0, "");
         // и по параметрам
         this->filters->reset_params();
         // и текущее значение текстового фильтра - тоже, если ранее текстовое поле было очищено
@@ -401,6 +445,12 @@ void Searcher::set_param_filter(QString param, int num){
 void Searcher::reset_params_filter(){
     this->filters->reset_params();
     filters->set_last_filter(PARAMS_FILTER);
+    if(filters->mode() == WHITE_MODE)
+        white_searcher->fill_table(this->filters, false, false);
+}
+
+void Searcher::reset_param_filter(int index){
+    this->filters->reset_param(index);
     if(filters->mode() == WHITE_MODE)
         white_searcher->fill_table(this->filters, false, false);
 }
@@ -561,6 +611,7 @@ void Searcher::open_grey(int id){
     stack->addWidget(grey_searcher);
     stack->setCurrentWidget(grey_searcher);
     filters->set_mode(GREY_MODE);
+    GLOBAL_MODE = SEARCHER_GREY_MODE;
     grey_connects();
 }
 
@@ -570,6 +621,7 @@ void Searcher::close_grey(QModelIndex i){
     stack->removeWidget(grey_searcher);
     grey_searcher = 0;
     filters->set_mode(WHITE_MODE);
+    GLOBAL_MODE = SEARCHER_WHITE_MODE;
 }
 
 void Searcher::refresh_grey(){

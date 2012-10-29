@@ -19,7 +19,13 @@ class WhiteTableModel : public MyTableModel{
 public:
     explicit WhiteTableModel(QWidget *parent = 0);
 
+    QDate retail_change_date;
+    void set_date();
+
     QVariant data(const QModelIndex &index, int role) const;
+    QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
+    void sort(int column, Qt::SortOrder order);
+
 };
 
 class WhiteTable : public BaseTable
@@ -27,15 +33,18 @@ class WhiteTable : public BaseTable
     Q_OBJECT
 public:
     explicit WhiteTable(QWidget *parent = 0);
+    ~WhiteTable();
 
     void fill(WhiteTableModel*, QStringList, int, Qt::SortOrder, bool);       // функция заполнения таблицы
     QVariant data (QModelIndex, int);
+    void hide_show_columns();
+    void set_date();
 
 private:
+    void restore_state();
     inline void connects();
     int sort_column;
     Qt::SortOrder sort_order;
-    QSettings *settings;
 
 
 

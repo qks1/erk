@@ -53,7 +53,7 @@ class Filters
 public:
     Filters();     // конструктор
     // функции, устанавливающие значения фильтров:
-    void set_group_filter(int);
+    void set_group_filter(int, QString);
     void set_columns_filter(QStringList);
     void clear_columns();   // очистить фильтр по столбцам
     void set_limits(pair);
@@ -67,6 +67,7 @@ public:
     void set_parts(QStringList);
     void add_white_sort_column(SortingOrder);
     void set_param(int, QString);
+    void reset_param(int);
     void reset_params();
     void switch_prices();
     void set_prices(int);
@@ -114,6 +115,7 @@ public:
 
     // функции, возвращающие значения фильтров:
     int group_filter();
+    QString group_name_filter();
     QStringList columns_filter();
     pair limits_filter();
     int begin();
@@ -155,6 +157,7 @@ public:
 // непосредственно значения фильтров - private
 private:
     int group;              // по группам
+    QString group_name;
     QStringList columns;    // по столбцам
     pair limits;            // начало и конец выборки
     bool nolimits;          // выбрать весь объём данных?

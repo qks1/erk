@@ -1,0 +1,16 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="switcher_first">D:/Dropbox/sql/images/first.png</file>
+        <file alias="switcher_last">D:/Dropbox/sql/images/last.png</file>
+        <file alias="switcher_next">D:/Dropbox/sql/images/next.png</file>
+        <file alias="switcher_prev">D:/Dropbox/sql/images/prev.png</file>
+        <file alias="new">D:/Dropbox/images/sql/new.png</file>
+        <file alias="back">D:/Dropbox/images/sql/back.png</file>
+        <file alias="camera">D:/Dropbox/sql/images/camera.png</file>
+        <file alias="delete">D:/Dropbox/sql/images/delete.png</file>
+        <file alias="edit">D:/Dropbox/sql/images/edit.png</file>
+        <file alias="photo">D:/Dropbox/sql/images/photo.jpg</file>
+        <file alias="reset">D:/Dropbox/sql/images/reset.png</file>
+        <file alias="settings">D:/Dropbox/sql/images/settings.png</file>
+    </qresource>
+</RCC>

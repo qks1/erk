@@ -1,8 +1,8 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'customcombobox.h'
 **
-** Created: Thu 30. Aug 02:49:44 2012
-**      by: The Qt Meta Object Compiler version 63 (Qt 4.8.2)
+** Created: Mon 10. Sep 18:28:37 2012
+**      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -11,7 +11,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'customcombobox.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 63
-#error "This file was generated using the moc from 4.8.2. It"
+#error "This file was generated using the moc from 4.8.1. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -37,7 +37,7 @@ static const uint qt_meta_data_CustomComboBox[] = {
 };
 
 static const char qt_meta_stringdata_CustomComboBox[] = {
-    "CustomComboBox\0\0fill_boxes_signal()\0"
+    "CustomComboBox\0\0fill_box_signal()\0"
 };
 
 void CustomComboBox::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -46,7 +46,7 @@ void CustomComboBox::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _
         Q_ASSERT(staticMetaObject.cast(_o));
         CustomComboBox *_t = static_cast<CustomComboBox *>(_o);
         switch (_id) {
-        case 0: _t->fill_boxes_signal(); break;
+        case 0: _t->fill_box_signal(); break;
         default: ;
         }
     }
@@ -93,7 +93,7 @@ int CustomComboBox::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 }
 
 // SIGNAL 0
-void CustomComboBox::fill_boxes_signal()
+void CustomComboBox::fill_box_signal()
 {
     QMetaObject::activate(this, &staticMetaObject, 0, 0);
 }

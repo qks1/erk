@@ -5,30 +5,62 @@ WhiteSearcher::WhiteSearcher(QWidget *parent) :
 {
     // создаём виджеты
     white_table = new WhiteTable(this);
-    catalog = new Catalog();
-    input = new Input();
+    catalog = new Catalog(this);
+    input = new Input(this);
     ParamsSelector *param = 0;
     for(int i = 0; i < MAX_PARAMS; i++){
-        param = new ParamsSelector(i);
+        param = new ParamsSelector(i, this);
         selectors << param;
     }
-    params_reset = new QPushButton("X");
+    params_reset = new QPushButton("X", this);
+    panel_button_size = 50;
+    edit_prices_permission = get_privilege(Privileges::Prices_edit_access);
+
+    buttons_lt = new QHBoxLayout();
+    buttons_lt->setMargin(0);
+    buttons_lt->setSpacing(0);
+
+    new_button = create_panel_button("Новая запись", ":/new", SLOT(new_detail_slot()));
+    edit_button = create_panel_button("Редактировать запись", ":/edit", SLOT(edit_detail_slot()));
+    delete_button = create_panel_button("Удалить запись", ":/delete", SLOT(delete_detail_slot()));
+    if(edit_prices_permission){
+        prices_button = create_panel_button("Редактировать цены", ":/prices", SLOT(edit_prices_slot()));
+        discounts_button = create_panel_button("Скидки", ":/discounts", SLOT(edit_discounts_slot()));
+    }
+    settings_button = create_panel_button("Настройки", ":/settings", SIGNAL(open_settings()));
 
     // заполняем переменные
     single_group = -1;
     single_group_without_limits = -1;
     boxes_filled = false;
 
+    success = true;
     // размещаем все элементы
     set_layout();
+
+    clear_where_strs();
 
     // соединяем сигналы со слотами
     white_connects();
 }
 
+QPushButton* WhiteSearcher::create_panel_button(QString tooltip, QString image_file, const char *method){
+    QPushButton *button = new QPushButton(this);
+    button->setFixedSize(panel_button_size, panel_button_size);
+    button->setToolTip(tooltip);
+    QPixmap new_pixmap(image_file);
+    QIcon new_icon(new_pixmap);
+    button->setIcon(new_icon);
+    button->setIconSize(button->rect().size());
+    buttons_lt->addWidget(button);
+    QObject::connect(button, SIGNAL(clicked()), method);
+    return button;
+}
+
 inline void WhiteSearcher::white_connects(){
     // смена группы
-    QObject::connect(this->catalog, SIGNAL(group_changed(int)), SIGNAL(group_changed(int)));
+    QObject::connect(this->catalog, SIGNAL(group_changed(int, QString)), SIGNAL(group_changed(int, QString)));
+    QObject::connect(this->catalog, SIGNAL(hide_catalog()), SLOT(hide_catalog()));
     // смена пределов
     QObject::connect(this->white_table, SIGNAL(limits_changed(pair)), SIGNAL(limits_changed(pair)));
     // снятие лимита
@@ -42,13 +74,16 @@ inline void WhiteSearcher::white_connects(){
     // изменение порядка сортировки
     QObject::connect(this->white_table, SIGNAL(sort_order_changed(int,Qt::SortOrder)), SIGNAL(sort_order_changed(int,Qt::SortOrder)));
     for(int i = 0; i < selectors.size(); i++){
-        // заполнить боксы
-        QObject::connect(this->selectors.at(i), SIGNAL(fill_boxes_signal()), SLOT(fill_boxes_slot()));
+        // заполнение селектора по щелчку
+        QObject::connect(this->selectors.at(i), SIGNAL(fill_box_signal(int)), SLOT(fill_box(int)));
+        // сброс данного селектора при открытии
+        QObject::connect(this->selectors.at(i), SIGNAL(fill_box_signal(int)), SIGNAL(reset_param_signal(int)));
         // выбор элемента из селектора
         QObject::connect(this->selectors.at(i), SIGNAL(item_selected(QString,int)), SIGNAL(item_selected(QString,int)));
         // нажатие на кнопку над селектором
         QObject::connect(this->selectors.at(i), SIGNAL(button_clicked(int)), SIGNAL(button_clicked(int)));
     }
+
     // сброс селекторов
     QObject::connect(this->params_reset, SIGNAL(clicked()), SIGNAL(params_reset_clicked()));
     // изменение фильтра по цене
@@ -86,13 +121,13 @@ inline void WhiteSearcher::set_layout(){
 
     // лайаут для виджета с кнопками и текстовым полем
     QHBoxLayout *top_lt = new QHBoxLayout();
-    top_lt->setMargin(0);
-    top_lt->setSpacing(0);
-    // добавляем кнопки, которые пока не созданы, лол
-    // блаблабла
+    // добавляем кнопки
+    top_lt->addLayout(buttons_lt);
+    top_lt->addStretch(1);
     // добавляем текстовое поле
     top_lt->addWidget(input);
     input->setFixedSize(input_width, 70);
+    top_lt->addStretch(1);
     top_panel->setLayout(top_lt);
     top_panel->setFixedHeight(input->height());
 
@@ -123,10 +158,11 @@ inline void WhiteSearcher::set_layout(){
     mainlt->addWidget(splitter);
 
     this->setLayout(mainlt);
-}
 
-void WhiteSearcher::resize_all(){
-    catalog->resize_all();
+    QSettings *settings = get_settings();
+    if(!settings->value(QString("%1/show_catalog").arg(USERNAME), true).toBool())
+        catalog->hide();
+    delete settings;
 }
 
 QSplitter* WhiteSearcher::split(){
@@ -141,6 +177,150 @@ QSplitter* WhiteSearcher::split(){
     splitter->setSizes(sz);
 
     return splitter;
+}
+
+
+void WhiteSearcher::set_date(){
+    this->white_table->set_date();
+}
+
+void WhiteSearcher::hide_catalog(){
+    QSettings *settings = get_settings();
+    settings->setValue(QString("%1/show_catalog").arg(USERNAME), false);
+    settings->sync();
+    delete settings;
+    this->catalog->hide();
+    emit catalog_hides();
+}
+
+void WhiteSearcher::show_catalog(){
+    QSettings *settings = get_settings();
+    settings->setValue(QString("%1/show_catalog").arg(USERNAME), true);
+    settings->sync();
+    delete settings;
+    this->catalog->show();
+    emit catalog_shows();
+}
+
+void WhiteSearcher::new_detail_slot(){
+    int group = 0;
+    QString name = "";
+    if(filters->group_filter() <= 0 || filters->group_name_filter().length() == 0)
+        qDebug() << QString("Group filters: invalid values: group = %1, name = %2").arg(filters->group_filter()).arg(filters->group_name_filter().length());
+    else{
+        group = filters->group_filter();
+        name = filters->group_name_filter();
+    }
+    WhiteAddDialog *add = new WhiteAddDialog(group, name, DIALOG_WHITE_NEW);
+    if(add->exec() == QDialog::Accepted)
+        fill_table(filters, false, false);
+}
+
+void WhiteSearcher::edit_detail_slot(){
+    int id = this->white_table->table_data("id").toInt();
+    if(id <= 0)
+        error("Ошибка", "Выберите строку");
+    else{
+        WhiteAddDialog *edit = new WhiteAddDialog(id, DIALOG_WHITE_EDIT);
+        if(edit->exec() == QDialog::Accepted)
+            fill_table(filters, false, false);
+    }
+}
+
+void WhiteSearcher::delete_detail_slot(){
+    int id = this->white_table->table_data("id").toInt();
+    if(id <= 0)
+        error("Ошибка", "Выберите строку");
+    else{
+        int quantity = this->white_table->table_data("quantity").toInt();
+        QString name = this->white_table->table_data("name").toString();
+        if(quantity > 0)
+            error("Обнулите количество", "Удалить можно только деталь с нулевым количеством!");
+        else{
+            if(question("Удалить?", QString("Удалить деталь %1?").arg(name))){
+                // собственно, удаление
+                QSqlQuery query(base);
+                QString query_str = QString("UPDATE trademarks SET status = 2 WHERE id = %1").arg(id);
+                if(!query.exec(query_str)){
+                    error("Ошибка", QString("Ошибка при удалении детали: %1").arg(query.lastError().text()));
+                    return;
+                }
+                fill_table(filters, false, false);
+                //QMessageBox::information(this, "Успешно", "Деталь удалена.", QMessageBox::Ok);
+            }
+        }
+    }
+}
+
+void WhiteSearcher::edit_prices_slot(){
+    if(edit_prices_permission){     // я знаю, что проверять это незачем, но МАЛО ЛИ ЧТО
+        int id = this->white_table->table_data("id").toInt();
+        current_row = this->white_table->current_row();
+        if(id <= 0)
+            error("Ошибка", "Выберите строку");
+        else{
+            WhitePricesEditor *pred = new WhitePricesEditor
+                    (id,
+                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_RETAILPRICE)).toDouble(),
+                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEPRICE)).toDouble(),
+                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEBEGIN)).toInt(),
+                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_UNIT)).toString(),
+                     this);
+            QObject::connect(pred, SIGNAL(accepted()), this, SLOT(refresh_table()));
+            pred->exec();
+            //if(pred->exec() == QDialog::Accepted)
+                //refresh_table();
+        }
+    }
+    else
+        error("", "Вам запрещено редактировать цены.");
+}
+
+void WhiteSearcher::edit_discounts_slot(){
+    if(edit_prices_permission){     // я знаю, что проверять это незачем, но МАЛО ЛИ ЧТО
+        int id = this->white_table->table_data("id").toInt();
+        current_row = this->white_table->current_row();
+        if(id <= 0)
+            error("Ошибка", "Выберите строку");
+        else{
+            YearsDiscountsDialog *dlg = new YearsDiscountsDialog
+                    (id,
+                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_NAME)).toString(),
+                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_RETAILPRICE)).toDouble(),
+                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEPRICE)).toDouble(),
+                     this);
+            QObject::connect(dlg, SIGNAL(destroyed()), this, SLOT(refresh_table()));
+            QObject::connect(dlg, SIGNAL(accepted()), this, SLOT(refresh_table()));
+            QObject::connect(dlg, SIGNAL(rejected()), this, SLOT(refresh_table()));
+            dlg->exec();
+        }
+    }
+    else
+        error("", "Вам запрещено просматривать скидки.");
+
+}
+
+void WhiteSearcher::refresh_table(){
+    fill_table(filters, false, false);
+    white_table->set_current_row(current_row);
+}
+
+void WhiteSearcher::resize_all(){
+    catalog->resize_all();
+    white_table->resize_all();
+    for(int i = 0; i < selectors.count(); i++)
+        selectors[i]->resize_all();
+}
+
+int WhiteSearcher::open_columns_list(){
+    if(white_table != 0)
+        return white_table->open_columns_list();
+    return -1;
+}
+
+void WhiteSearcher::hide_show_columns(){
+    if(white_table != 0)
+        white_table->hide_show_columns();
 }
 
 QMap<QString, QString> WhiteSearcher::get_params_names(int group){
@@ -165,8 +345,7 @@ QMap<QString, QString> WhiteSearcher::get_params_names(int group){
 
 
 QString WhiteSearcher::rename_column(QString str, int group){
-    // Если группа определена, то столбцы с параметрами
-    // обзываем названиями этих параметров.
+    // Если группа определена, то столбцы с параметрами обзываем названиями этих параметров.
     // Иначе берём название из WHITE_COLUMNS_NAMES.
     QRegExp rx("^(par[0-9]+)_val$");
     if(group > 0 && str.contains(rx)){
@@ -206,18 +385,6 @@ void WhiteSearcher::set_button_labels(QSqlQuery query){
 }
 
 void WhiteSearcher::set_text_button_labels(){
-    /*QSqlQuery q(base);
-    int cnt;
-    for(int i = 0; i < MAX_PARAMS; i++){
-        q.exec("SELECT DISTINCT t.par" + QString::number(i+1) + "_val " + tables_string + where_string);
-        if(q.lastError().isValid()){
-            error("Ошибка при подсчёте параметров", q.lastError().text());
-            cnt = 0;
-        }
-        else cnt = q.size();
-
-        selectors.at(i)->set_button_label(single_group_without_limits > 0 ? params_names["par" + QString::number(i+1)] : QString::number(i+1), cnt);
-    }*/
     for(int i = 0; i < MAX_PARAMS; i++)
         selectors.at(i)->set_button_label(single_group_without_limits > 0 ? params_names["par" + QString::number(i+1)] : QString::number(i+1));
 }
@@ -250,30 +417,6 @@ void WhiteSearcher::restore_order(){
     this->white_table->restore_order();
 }
 
-
-void WhiteSearcher::get_params_list(){
-    QString query_str, par_name;
-    QStringList list;
-    QSqlQueryModel* query = 0;
-    // сформируем списки параметров деталей
-    // для этого в классе есть лист двумерный QStringList, куда и будем их складывать
-    for(int i = 0; i < MAX_PARAMS; i++){
-        query = new QSqlQueryModel();
-        par_name = "t.par" + QString::number(i+1) + "_val";
-        list.clear();
-        selectors.at(i)->clear_items();
-        query_str = "(SELECT '') UNION (SELECT " + par_name + tables_string + where_string + " AND " + par_name + "!= '')  ORDER BY 1";
-        query->setQuery(query_str, base);
-        //qDebug() << query_str;
-        selectors.at(i)->setModel(query);
-        selectors.at(i)->setEnabled(!(selectors.at(i)->count() <= 1 && selectors.at(i)->item(0) == ""));
-        if(selectors.at(i)->count() == 2 && selectors.at(i)->item(0) == "")
-            selectors.at(i)->set_selected(1);
-    }
-    delete query;
-    set_text_button_labels();
-}
-
 void WhiteSearcher::detail_info(int id){
     DetailCard card(id, this);
     card.exec();
@@ -295,10 +438,19 @@ QString WhiteSearcher::get_original_name(int index){
     return original_column_names[index];
 }
 
-void WhiteSearcher::fill_boxes_slot(){
-    if(!boxes_filled){
-        get_params_list();
-        boxes_filled = true;
+void WhiteSearcher::fill_box(int index){
+    QSqlQueryModel *model = new QSqlQueryModel();
+    QString query_str, cur_par;
+    cur_par = filters->params_filter().at(index);
+    query_str = QString("SELECT DISTINCT t.par") + QString::number(index+1) + "_val " + tables_str + glue_where(QString("par%1_val").arg(index+1)) + " ORDER BY 1";
+    //qDebug() << query_str;
+    model->setQuery(query_str, base);
+    if(model->lastError().isValid()){
+        error("Ошибка при заполнении комбобокса " + QString::number(index), model->lastError().text());
+        return;
+    }
+    else{
+        selectors.at(index)->set_model(model);
     }
 }
 
@@ -312,14 +464,49 @@ void WhiteSearcher::text_changed_slot(int type, QString text){
 }
 
 void WhiteSearcher::open_grey(QModelIndex i){
-    //QMessageBox::warning(this, "qq", white_table->data(i, 0).toString());
     int id = white_table->data(i, 0).toInt();
     emit(create_grey(id));
 }
 
-void WhiteSearcher::fill_table(Filters *filters, bool reset_groups = false, bool delete_last_symbol = false){
-    WhiteTableModel *query = new WhiteTableModel();
+void WhiteSearcher::clear_where_strs(){
+    where_strings["groups"] = "";
+    where_strings["text"] = "";
+    where_strings["prices"] = "";
+    where_strings["quantites"] = "";
+    for(int i = 1; i <= MAX_PARAMS; i++)
+        where_strings[QString("par%1_val").arg(i)] = "";
+}
+
+QString WhiteSearcher::glue_where(QStringList *ex){
+    QString where;
+    QStringList lst;
+    QMap<QString, QString>::iterator it = where_strings.begin();
+    for(; it != where_strings.end(); it++){
+        if(ex != 0)
+            if(ex->indexOf(it.key()) >= 0)
+                continue;
+        if(it.value().size() > 0)
+            lst << it.value();
+    }
+    lst << "status = 1";
+    where = lst.join(" AND ");
+    if(where.size() > 0)
+        where = " WHERE " + where;
+    return where;
+}
+
+QString WhiteSearcher::glue_where(QString str){
+    QStringList lst;
+    lst << str;
+    return glue_where(&lst);
+}
+
+
+void WhiteSearcher::fill_table(Filters *f, bool reset_groups = false, bool delete_last_symbol = false){
+    WhiteTableModel *query = new WhiteTableModel(this);
     QString strSelect;
+    this->filters = f;
+    success = true;
 
     if(delete_last_symbol &&
             (filters->last_applied_filter() == ID_FILTER || filters->last_applied_filter() == BEGIN_TEXT_FILTER ||
@@ -367,6 +554,12 @@ void WhiteSearcher::fill_table(Filters *filters, bool reset_groups = false, bool
         // фильтры применены успешно. Начинаем заполнять поисковик данными.
         // применяем sql-запрос
         query->setQuery(strSelect, base);
+        if(query->lastError().isValid()){
+            // запрос не применился. success устанавливаем в false.
+            success = false;
+            QMessageBox::warning(this, "Ошибка", QString("Не удалось выполнить запрос.\n%1").arg(query->lastError().text()));
+            return;
+        }
         // сохраняем оригинальные имена столбцов, чтобы узнавать потом индексы
         original_column_names.clear();
         for(int i = 0; i < query->columnCount(); i++)
@@ -418,144 +611,119 @@ void WhiteSearcher::fill_table(Filters *filters, bool reset_groups = false, bool
 }
 
 QString WhiteSearcher::apply_filters(Filters *filters){
+    clear_where_strs();
     base.transaction();
-    QString query, tables, where, groupby, order, limits = "", count, final;
-    int group = filters->group_filter();
-    QStringList columns = filters->columns_filter();
-    int begin = filters->begin();
-    int limit = this->white_table->get_items_on_page();
-    int id = filters->white_id_filter();
-    short mode = filters->white_id_mode_filter();
-    QString beginname = filters->beginname_filter();
-    QStringList parts = filters->parts_filter();
-    QStringList params = filters->params_filter();
-    int prices = filters->prices_filter();
-    int quantities = filters->quantity_filter();
+    QString query, where, groupby, order, limits = "", count, final;
+    bool query_success = false;
     int total;
-    bool condition = false;                 // определяет, начали ли мы формировать условие WHERE, т.е. нужно ли вставлять AND
 
     // список таблиц
-    tables = " FROM " + SUBGROUPS_TABLE + " s JOIN " + TOVMARKS_TABLE + " t ON t.subgroup_id = s.id ";
+    tables_str = QString(" FROM ") + SUBGROUPS_TABLE + " s "
+            + "JOIN " + TOVMARKS_TABLE + " t ON t.subgroup_id = s.id "
+            + "JOIN units u ON t.unit_id = u.id "
+            + "LEFT OUTER JOIN weight_units w ON t.weight_unit_id = w.id ";
 
-    // первооснова для условия
-    where = "";
 
-    // применим фильтр по группам
-    if(group == 0)
-        where = "";
-    else if(group < ENLARGER){
-        where = " WHERE t.subgroup_id=" + QString::number(group);
-        condition = true;
-    }
-    else{
-        where = " WHERE t.subgroup_id IN (SELECT id FROM " + SUBGROUPS_TABLE + " WHERE group_id=" + QString::number(group-ENLARGER) + ")";
-        condition = true;
-    }
+    /*
+              ФИЛЬТР ПО ГРУППАМ
+           where_strings["groups"]
+                                        */
+    if(filters->group_filter() == 0)
+        where_strings["groups"] = "";
+    else if(filters->group_filter() < ENLARGER)
+        where_strings["groups"] = QString("t.subgroup_id = %1").arg(QString::number(filters->group_filter()));
+    else
+        where_strings["groups"] = "t.subgroup_id IN (SELECT id FROM " + SUBGROUPS_TABLE + " WHERE group_id = " + QString::number(filters->group_filter()-ENLARGER) + ")";
 
-    if(id != 0){
-        // применяем фильтр по id (белому)
-        // если условие уже имело место, добавляем AND. Если нет, начинаем со слова WHERE
-        where += (condition ? " AND" : " WHERE");
-        where += " t.id";
-        // ищем ли  мы только равные айдишники, или же не меньшие
-        where += (mode == EQUAL ? " =" : " >=");
-        where += QString::number(id);
-        condition = true;
-    }
-
-    if(beginname != ""){
-        // применяем фильтр по имени (с начала)
-        // если условие уже имело место, добавляем AND. Если нет, начинаем со слова WHERE
-        where += (condition ? " AND" : " WHERE");
-        where += " t.pattern LIKE '" + beginname + "%'";
-        condition = true;
-    }
-
-    if(!parts.empty()){
+    /*
+              ТЕКСТОВЫЙ ФИЛЬТР
+            where_strings["text"]
+                                        */
+    // из трёх режимов может одновременно применяться только один
+    if(filters->white_id_filter() != 0)
+        // фильтр по id (белому)
+        where_strings["text"] += QString("t.id") + (filters->white_id_mode_filter() == EQUAL ? " = " : " >= ") + QString::number(filters->white_id_filter());
+    else if(filters->beginname_filter() != "")
+        // фильтр по имени (с начала)
+        where_strings["text"] += "t.pattern LIKE '" + filters->beginname_filter() + "%'";
+    else if(!filters->parts_filter().empty())
         // применяем фильтр по фрагментам
-        where += (condition ? " AND (" : " WHERE (");
-        int size = parts.size();
-        for(int i = 0; i < size-1; i++){
-            where += (" t.pattern LIKE '" + parts.at(i) + "' OR");
-        }
-        where += " t.pattern LIKE '" + parts.at(size-1) + "')";
-        condition = true;
-    }
+        where_strings["text"] = "t.pattern LIKE '" + filters->parts_filter().join("' OR t.pattern LIKE '") + "'";
 
-    // применим фильтр по параметрам
+    /*
+           ФИЛЬТРЫ ПО ПАРАМЕТРАМ
+          where_strings["par1..12"]
+                                        */
     for(int i = 0; i < MAX_PARAMS; i++){
-        if(params.at(i).length() != 0){
-            where += (condition ? " AND (" : " WHERE (");
-            where += " par" + QString::number(i+1) + "_val = '" + params.at(i) + "')";
-            condition = true;
+        if(filters->params_filter().at(i) != ANY_ITEM_TEXT){
+            where_strings[QString("par%1_val").arg(i+1)] = QString("par%1_val = '%2'").arg(QString::number(i+1)).arg(filters->params_filter().at(i));
+            selectors.at(i)->set_edit_text(filters->params_filter().at(i) == "" ? "пусто" : filters->params_filter().at(i));
         }
+        else
+            selectors.at(i)->set_edit_text("");
     }
 
-    // применим фильтр по ценам
-    if(prices == POSITIVE_PRICES){
-        where += (condition ? " AND (" : " WHERE (");
-        where += " t.price_ret > 0)";
-        condition = true;
-    }
-    else if(prices == ZERO_PRICES){
-        where += (condition ? " AND (" : " WHERE (");
-        where += " t.price_ret = 0)";
-        condition = true;
-    }
+    /*
+              ФИЛЬТР ПО ЦЕНАМ
+           where_strings["prices"]
+                                        */
+    if(filters->prices_filter() == POSITIVE_PRICES)
+        where_strings["prices"] = "t.price_ret > 0";
+    else if(filters->prices_filter() == ZERO_PRICES)
+        where_strings["prices"] = "t.price_ret = 0";
 
-    // фильтр по количеству
-    if(quantities == POSITIVE_QUANTITIES){
-        where += (condition ? " AND (" : " WHERE (");
-        where += " t.quantity > 0) ";
-        condition = true;
-    }
+    /*
+            ФИЛЬТР ПО КОЛИЧЕСТВУ
+         where_strings["quantities"]
+                                        */
+    if(filters->quantity_filter() == POSITIVE_QUANTITIES)
+        where_strings["quantities"] = "t.quantity > 0";
 
+    where = glue_where();
     // Для переключателя страниц необходимо подсчитать общее количество записей, удовлетворяющих фильтрам (кроме limits).
     // В table же мы передаём передаём только записи по количеству limits. Поэтому сформируем запрос для подсчёта общего кол-ва записей,
     // выполним его и забудем про это дело.
     count = "SELECT count(*) FROM " + TOVMARKS_TABLE + " t " + where;
     total = set_totals(count);
     if(total <= 0){
+        while(!base.commit());
         return "FAIL";
     }
-    else{
+    else
         white_table->set_totals(total);
-    }
     // порядок сортировки
     order = " ORDER BY " + sorting_order_to_string(filters->white_sort_order_filter());
 
     // лимиты
-    if(filters->are_there_limits()){
-        limits = " OFFSET " + QString::number(begin) + " LIMIT " + QString::number(limit);
-    }
-    //qDebug("params...");
-    // сформируем списки параметров деталей
-    //get_params_list(last_applied_filter, tables, where);
-    tables_string = tables;
-    where_string = where;
+    if(filters->are_there_limits())
+        limits = " OFFSET " + QString::number(filters->begin()) + " LIMIT " + QString::number(this->white_table->get_items_on_page());
 
     // если все детали, удовлетворяющие запросу, принадлежат только одной подгруппе, её номер надо установить в single_group
     // то же, но без учёта лимитов - в single_group_without_limits. Потом объяснить, что к чему!
     // а вообще это не дело, впилить потом в куда-то
     QSqlQuery select_groups(base);
-    query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + ALL_WHITE_COLUMNS.join(",") + tables + where + ") AS t";
-    if(!select_groups.exec(query)){
-        error("Ошибка при выборе групп 1", "Не удалось выполнить запрос:\n" + query);
-    }
+    query_success = true;
+    query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + WHITE_TABLE_COLUMNS.join(",") + ", t.subgroup_id " + tables_str + where + ") AS t";
+    if(!select_groups.exec(query))
+        query_success = false;
     select_groups.next();
     single_group_without_limits = (select_groups.size() == 1 ? select_groups.value(0).toInt() : -1);
     if(single_group_without_limits != -1)
         single_group = single_group_without_limits;
     else{
-        query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + ALL_WHITE_COLUMNS.join(",") + tables + where + limits + ") AS t";
+        query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + WHITE_TABLE_COLUMNS.join(",") + ", t.subgroup_id " + tables_str + where + limits + ") AS t";
         if(!select_groups.exec(query))
-            error("Ошибка при выборе групп 2", "Не удалось выполнить запрос:\n" + query);
+            query_success = false;
         select_groups.next();
         single_group = (select_groups.size() == 1 ? select_groups.value(0).toInt() : -1);
     }
+    if(!query_success)
+        qDebug() << QString("Не удалось выполнить запрос. %1").arg(select_groups.lastError().text());
+
     // теперь сформируем строку, которую надо вернуть функции заполнения таблицы
-    final = "SELECT " + columns.join(",") + tables + where + groupby + order + limits;
+    final = "SELECT " + filters->columns_filter().join(",") + tables_str + where + groupby + order + limits;
     while(!base.commit());
+    //qDebug() << final;
     return final;
 }
 

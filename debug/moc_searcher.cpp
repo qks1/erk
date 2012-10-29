@@ -1,8 +1,8 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'searcher.h'
 **
-** Created: Thu 30. Aug 22:17:56 2012
-**      by: The Qt Meta Object Compiler version 63 (Qt 4.8.2)
+** Created: Mon 10. Sep 18:32:37 2012
+**      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!
 *****************************************************************************/
@@ -11,7 +11,7 @@
 #if !defined(Q_MOC_OUTPUT_REVISION)
 #error "The header file 'searcher.h' doesn't include <QObject>."
 #elif Q_MOC_OUTPUT_REVISION != 63
-#error "This file was generated using the moc from 4.8.2. It"
+#error "This file was generated using the moc from 4.8.1. It"
 #error "cannot be used with the include files from this version of Qt."
 #error "(The moc has changed too much.)"
 #endif
@@ -23,7 +23,7 @@ static const uint qt_meta_data_Searcher[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-      47,   14, // methods
+      48,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -51,35 +51,36 @@ static const uint qt_meta_data_Searcher[] = {
      368,    9,    9,    9, 0x08,
      385,   10,    9,    9, 0x08,
      415,    9,    9,    9, 0x08,
-     437,    9,    9,    9, 0x08,
-     460,    9,    9,    9, 0x08,
-     485,    9,    9,    9, 0x08,
-     506,    9,    9,    9, 0x08,
-     521,    9,    9,    9, 0x08,
+     439,    9,    9,    9, 0x08,
+     461,    9,    9,    9, 0x08,
+     484,    9,    9,    9, 0x08,
+     509,    9,    9,    9, 0x08,
+     530,    9,    9,    9, 0x08,
      545,    9,    9,    9, 0x08,
-     574,    9,    9,    9, 0x08,
-     594,    9,    9,    9, 0x08,
-     612,   10,    9,    9, 0x08,
-     654,    9,    9,    9, 0x08,
-     683,    9,    9,    9, 0x08,
-     709,    9,    9,    9, 0x08,
-     736,    9,    9,    9, 0x08,
-     761,    9,    9,    9, 0x08,
-     780,   10,    9,    9, 0x08,
-     814,   10,    9,    9, 0x08,
-     849,   10,    9,    9, 0x08,
-     882,    9,    9,    9, 0x08,
-     901,    9,    9,    9, 0x08,
-     927,    9,    9,    9, 0x08,
-     945,    9,    9,    9, 0x08,
-     975,    9,    9,    9, 0x08,
-    1003,    9,    9,    9, 0x08,
-    1033,    9,    9,    9, 0x08,
-    1051,    9,    9,    9, 0x08,
-    1069,   10,    9,    9, 0x08,
-    1100,   10,    9,    9, 0x08,
-    1130,    9,    9,    9, 0x08,
-    1152,    9,    9,    9, 0x08,
+     569,    9,    9,    9, 0x08,
+     598,    9,    9,    9, 0x08,
+     618,    9,    9,    9, 0x08,
+     636,   10,    9,    9, 0x08,
+     678,    9,    9,    9, 0x08,
+     707,    9,    9,    9, 0x08,
+     733,    9,    9,    9, 0x08,
+     760,    9,    9,    9, 0x08,
+     785,    9,    9,    9, 0x08,
+     804,   10,    9,    9, 0x08,
+     838,   10,    9,    9, 0x08,
+     873,   10,    9,    9, 0x08,
+     906,    9,    9,    9, 0x08,
+     925,    9,    9,    9, 0x08,
+     951,    9,    9,    9, 0x08,
+     969,    9,    9,    9, 0x08,
+     999,    9,    9,    9, 0x08,
+    1027,    9,    9,    9, 0x08,
+    1057,    9,    9,    9, 0x08,
+    1075,    9,    9,    9, 0x08,
+    1093,   10,    9,    9, 0x08,
+    1124,   10,    9,    9, 0x08,
+    1154,    9,    9,    9, 0x08,
+    1176,    9,    9,    9, 0x08,
 
        0        // eod
 };
@@ -97,9 +98,10 @@ static const char qt_meta_stringdata_Searcher[] = {
     "reset_grey_text_filters()\0"
     "change_sort_order(int,Qt::SortOrder)\0"
     "button_sort(int)\0set_param_filter(QString,int)\0"
-    "reset_params_filter()\0switch_prices_filter()\0"
-    "switch_quantity_filter()\0set_last_filter(int)\0"
-    "open_grey(int)\0close_grey(QModelIndex)\0"
+    "reset_param_filter(int)\0reset_params_filter()\0"
+    "switch_prices_filter()\0switch_quantity_filter()\0"
+    "set_last_filter(int)\0open_grey(int)\0"
+    "close_grey(QModelIndex)\0"
     "set_grey_limits_filter(pair)\0"
     "set_grey_nolimits()\0set_grey_limits()\0"
     "change_grey_sort_order(int,Qt::SortOrder)\0"
@@ -143,36 +145,37 @@ void Searcher::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
         case 14: _t->change_sort_order((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< Qt::SortOrder(*)>(_a[2]))); break;
         case 15: _t->button_sort((*reinterpret_cast< int(*)>(_a[1]))); break;
         case 16: _t->set_param_filter((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
-        case 17: _t->reset_params_filter(); break;
-        case 18: _t->switch_prices_filter(); break;
-        case 19: _t->switch_quantity_filter(); break;
-        case 20: _t->set_last_filter((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 21: _t->open_grey((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 22: _t->close_grey((*reinterpret_cast< QModelIndex(*)>(_a[1]))); break;
-        case 23: _t->set_grey_limits_filter((*reinterpret_cast< pair(*)>(_a[1]))); break;
-        case 24: _t->set_grey_nolimits(); break;
-        case 25: _t->set_grey_limits(); break;
-        case 26: _t->change_grey_sort_order((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< Qt::SortOrder(*)>(_a[2]))); break;
-        case 27: _t->change_grey_storage((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 28: _t->change_grey_rack((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 29: _t->change_grey_board((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 30: _t->change_grey_box((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 31: _t->reset_grey_boxes(); break;
-        case 32: _t->change_grey_one_year((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
-        case 33: _t->change_grey_from_year((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
-        case 34: _t->change_grey_to_year((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
-        case 35: _t->reset_grey_years(); break;
-        case 36: _t->change_grey_insp((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 37: _t->reset_grey_insp(); break;
-        case 38: _t->change_grey_add_info((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 39: _t->change_grey_defect((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 40: _t->change_grey_category((*reinterpret_cast< QString(*)>(_a[1]))); break;
-        case 41: _t->reset_add_boxes(); break;
-        case 42: _t->grey_reset_slot(); break;
-        case 43: _t->white_section_resized((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
-        case 44: _t->grey_section_resized((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
-        case 45: _t->white_section_moved(); break;
-        case 46: _t->grey_section_moved(); break;
+        case 17: _t->reset_param_filter((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 18: _t->reset_params_filter(); break;
+        case 19: _t->switch_prices_filter(); break;
+        case 20: _t->switch_quantity_filter(); break;
+        case 21: _t->set_last_filter((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 22: _t->open_grey((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 23: _t->close_grey((*reinterpret_cast< QModelIndex(*)>(_a[1]))); break;
+        case 24: _t->set_grey_limits_filter((*reinterpret_cast< pair(*)>(_a[1]))); break;
+        case 25: _t->set_grey_nolimits(); break;
+        case 26: _t->set_grey_limits(); break;
+        case 27: _t->change_grey_sort_order((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< Qt::SortOrder(*)>(_a[2]))); break;
+        case 28: _t->change_grey_storage((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 29: _t->change_grey_rack((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 30: _t->change_grey_board((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 31: _t->change_grey_box((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 32: _t->reset_grey_boxes(); break;
+        case 33: _t->change_grey_one_year((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 34: _t->change_grey_from_year((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 35: _t->change_grey_to_year((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 36: _t->reset_grey_years(); break;
+        case 37: _t->change_grey_insp((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 38: _t->reset_grey_insp(); break;
+        case 39: _t->change_grey_add_info((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 40: _t->change_grey_defect((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 41: _t->change_grey_category((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 42: _t->reset_add_boxes(); break;
+        case 43: _t->grey_reset_slot(); break;
+        case 44: _t->white_section_resized((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 45: _t->grey_section_resized((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
+        case 46: _t->white_section_moved(); break;
+        case 47: _t->grey_section_moved(); break;
         default: ;
         }
     }
@@ -210,9 +213,9 @@ int Searcher::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 47)
+        if (_id < 48)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 47;
+        _id -= 48;
     }
     return _id;
 }

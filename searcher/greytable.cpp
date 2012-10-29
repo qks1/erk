@@ -4,8 +4,9 @@ GreyTable::GreyTable(QWidget *parent) :
     BaseTable(parent)
 {
     create_new_table();
-    settings = new QSettings("erk", "base");
+    settings = get_settings();
     settings_section = "GREY_COLUMNS";
+    original_names = GREY_COLUMNS_NAMES;
 
     table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
@@ -16,6 +17,14 @@ GreyTable::GreyTable(QWidget *parent) :
     connects();
 
     restore_state();
+}
+
+GreyTable::~GreyTable(){
+    delete settings;
+}
+
+void GreyTable::mouseDoubleClickEvent(QMouseEvent *e){
+    error("","qq");
 }
 
 inline void GreyTable::connects(){
@@ -55,8 +64,8 @@ void GreyTable::fill(MyTableModel *query,
     update_switcher_values();
     if(!filled){
         filled = true;
+        restore_state();
     }
-    restore_state();
 }
 
 //--------------------------------------------------------------------------//

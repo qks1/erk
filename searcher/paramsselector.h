@@ -35,6 +35,8 @@ public:
     void setModelColumn(int);
     QString item(int);
     void set_edit_text(QString);
+    void set_model(QSqlQueryModel*);
+    void resize_all();
 
 private:
     QPushButton *button;
@@ -46,11 +48,12 @@ private:
 signals:
     void item_selected(QString, int);
     void button_clicked(int);
-    void fill_boxes_signal();
+    void fill_box_signal(int);
 
 private slots:
     void select_item(QString);
     void click_button();
+    void fill_box_slot();
 
 };
 

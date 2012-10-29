@@ -8,12 +8,23 @@ DetailCard::DetailCard(int id, QWidget *parent) :
     //exec();
 }
 
+DetailCard::~DetailCard(){
+    delete settings;
+}
+
+void DetailCard::load_default_picture(QPixmap pix){
+    //QString path = settings->value(QString("%1PHOTOS_PATH").arg(USERNAME), PHOTOS_PATH).toString();
+    //''QString address = settings->value(QString("%1PHOTOS_PATH").arg(USERNAME), PHOTOS_PATH).toString() + "00000.jpg";
+    if(!pix.load(":/nophoto"))
+        qDebug() << QString("Не удалось загрузить картинку по умолчанию.");
+}
+
 int DetailCard::exec(){
     CardDialog *info = new CardDialog(parent);
 
     QLabel *info_label = new QLabel();
     QLabel *quantity_label = new QLabel();
-    settings = new QSettings("erk", "base");
+    settings = get_settings();
 
     // выбираем название, группу, подгруппу, общее кол-во
     QString tm_query = QString("SELECT t.name as trademark, t.quantity, t.photo, s.name as subgroup, g.name as group") +
@@ -41,17 +52,15 @@ int DetailCard::exec(){
     QPixmap picture;
     QString address;
     QString path = settings->value(QString("%1PHOTOS_PATH").arg(USERNAME), PHOTOS_PATH).toString();
-    if(path.at(path.size()-1) != QDir::separator())
-        path += QDir::separator();
-    if(photo.toInt() > 0){
-        address = QString("%1%2.jpg").arg(path).arg(photo);
-        if(!picture.load(address))
-            error("Ошибка при загрузке картинки", QString("Не удалось загрузить картинку по адресу %1.").arg(address));
+    if(photo.length() > 0){
+        address = QString("%1%2").arg(path).arg(photo);
+        if(!picture.load(address)){
+            qDebug() << QString("Не удалось загрузить картинку по адресу %1. Загружаем картинку по умолчанию...").arg(address);
+            load_default_picture(picture);
+        }
     }
     else{
-        address = path + "00000.jpg";
-        if(!picture.load(address))
-            error("Ошибка при загрузке картинки", QString("Не удалось загрузить картинку по адресу %1.").arg(address));
+        load_default_picture(picture);
     }
 
     QLabel *picture_label = new QLabel();
@@ -174,8 +183,12 @@ void DetailCard::column_moved(int, int, int){
 }
 
 CardDialog::CardDialog(QWidget *parent){
-    settings = new QSettings("erk", "base");
+    settings = get_settings();
     restoreGeometry(settings->value(QString("%1/CARD/geometry").arg(USERNAME)).toByteArray());
+}
+
+CardDialog::~CardDialog(){
+    delete settings;
 }
 
 void CardDialog::closeEvent(QCloseEvent *event){

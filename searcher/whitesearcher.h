@@ -10,6 +10,11 @@
 #include "filters.h"
 #include "constants.h"
 #include "detailcard.h"
+#include "whiteadddialog.h"
+#include "helpers.h"
+#include "whitepriceseditor.h"
+#include "addyeardiscount.h"
+#include "yearsdiscountsdialog.h"
 
 /*
     Поисковик в белом экране.
@@ -31,6 +36,12 @@ public:
     void resize_all();
     void restore_width(int index, int width);
     void restore_order();
+    int open_columns_list();
+    void hide_show_columns();
+    bool success;
+    bool edit_prices_permission;
+    QHBoxLayout *buttons_lt;
+    void set_date();
 
 
 private:
@@ -41,6 +52,14 @@ private:
     QList<ParamsSelector*> selectors;       // набор выпадающих списков с параметрами
     QPushButton *params_reset;              // кнопка сброса параметров
 
+    // КНОПКИ НА ВЕРХНЕЙ ПАНЕЛИ
+    QPushButton *new_button;
+    QPushButton *edit_button;
+    QPushButton *delete_button;
+    QPushButton *prices_button;
+    QPushButton *discounts_button;
+    QPushButton *settings_button;
+
     // СПИСКИ И ПЕРЕМЕННЫЕ:
     QList<QStringList> params_lists;        // набор списков параметров, из которых будут формироваться чекбоксы
     QMap<QString, QString> params_names;    // имена параметров, отображаемые в заголовках соотв. столбцов и на кнопках селекторов
@@ -48,7 +67,10 @@ private:
     int single_group_without_limits;        // то же, что single_group, только без учёта limits_filter
     QStringList original_column_names;      // оригинальные имена столбцов (для получения индекса)
     bool boxes_filled;                      // заполнены ли комбобоксы с параметрами
-    QString tables_string, where_string;    // для выбора параметров
+    QString tables_str;
+    QMap<QString, QString> where_strings;
+    Filters *filters;
+    int panel_button_size;
 
     // ФУНКЦИИ ДЛЯ КОНСТРУКТОРА:
     inline void set_layout();               // функция размещения объектов
@@ -56,7 +78,6 @@ private:
 
     // ФУНКЦИИ:
     QString apply_filters(Filters*);                        // функция "применить фильтры", формирующая строку запроса к БД
-    void get_params_list();                                 // заполнение комбобоксов с параметрами
     QMap<QString, QString> get_params_names(int);           // получить названия параметров
     void set_button_labels();                               // устанавливает названия кнопок над селекторами (с подсчётом элементов)
     void set_button_labels(QSqlQuery);
@@ -65,11 +86,16 @@ private:
     QString rename_column(QString, int group);              // переименовывает столбцы с названием "par№_val" в №
     int set_totals(QString);                                // считает кол-во записей
     QSplitter *split();                                     // функция установки разделителя
+    QString glue_where(QStringList *ex = 0);
+    QString glue_where(QString);
+    void clear_where_strs();
+    QPushButton *create_panel_button(QString, QString, const char *method);
+    int current_row;
 
 signals:
     void fill(QSqlQuery, QStringList);
     void last_filter_changed(int);
-    void group_changed(int);
+    void group_changed(int, QString);
     void limits_changed(pair);
     void limits_removed();
     void limits_restored();
@@ -78,20 +104,33 @@ signals:
     void sort_order_changed(int, Qt::SortOrder);
     void item_selected(QString, int);
     void button_clicked(int);
+    void reset_param_signal(int);
     void params_reset_clicked();
     void prices_clicked();
     void quantity_clicked();
     void create_grey(int);
     void section_resized(int, int);
     void section_moved();
+    void open_settings();
+    void catalog_shows();
+    void catalog_hides();
 
 private slots:
     void detail_info(int);
-    void fill_boxes_slot();
+    void fill_box(int index);
+    void refresh_table();
+
     void open_grey(QModelIndex);
     void text_changed_slot(int, QString);
+    void new_detail_slot();
+    void edit_detail_slot();
+    void delete_detail_slot();
+    void edit_prices_slot();
+    void edit_discounts_slot();
 
 public slots:
+    void hide_catalog();
+    void show_catalog();
     
 };
 

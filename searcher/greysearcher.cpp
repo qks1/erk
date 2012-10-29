@@ -63,12 +63,10 @@ void GreySearcher::connects(){
     QObject::connect(this->input, SIGNAL(text_changed_signal(int,QString)), SLOT(text_changed_slot(int,QString)));
     // очистка текста
     QObject::connect(this->input, SIGNAL(reset_signal()), SIGNAL(reset_signal()));
-    // заполнение складского комбобокса при щелчке на нём
-    //QObject::connect(this->storages, SIGNAL(fill_boxes_signal()), SLOT(fill_storages_box()));
-    QObject::connect(this->storages, SIGNAL(activated(QString)), SIGNAL(storage_signal(QString)));
-    QObject::connect(this->racks, SIGNAL(activated(QString)), SIGNAL(rack_signal(QString)));
-    QObject::connect(this->boards, SIGNAL(activated(QString)), SIGNAL(board_signal(QString)));
-    QObject::connect(this->boxes, SIGNAL(activated(QString)), SIGNAL(box_signal(QString)));
+    QObject::connect(this->storages, SIGNAL(activated(QString)), SLOT(storages_slot(QString)));
+    QObject::connect(this->racks, SIGNAL(activated(QString)), SLOT(racks_slot(QString)));
+    QObject::connect(this->boards, SIGNAL(activated(QString)), SLOT(boards_slot(QString)));
+    QObject::connect(this->boxes, SIGNAL(activated(QString)), SLOT(boxes_slot(QString)));
     QObject::connect(this->reset_boxes, SIGNAL(clicked()), SLOT(reset_boxes_slot()));
     QObject::connect(this->one_year, SIGNAL(activated(QString)), SLOT(one_year_changed(QString)));
     QObject::connect(this->from_year, SIGNAL(activated(QString)), SLOT(from_year_changed(QString)));
@@ -76,21 +74,21 @@ void GreySearcher::connects(){
     QObject::connect(this->oneyear_mode, SIGNAL(clicked()), SLOT(change_mode()));
     QObject::connect(this->multiyear_mode, SIGNAL(clicked()), SLOT(change_mode()));
     QObject::connect(this->reset_years_button, SIGNAL(clicked()), SIGNAL(reset_years()));
-    QObject::connect(this->one_year, SIGNAL(fill_boxes_signal()), SLOT(fill_one_year_box()));
-    QObject::connect(this->from_year, SIGNAL(fill_boxes_signal()), SLOT(fill_from_year_box()));
-    QObject::connect(this->to_year, SIGNAL(fill_boxes_signal()), SLOT(fill_to_year_box()));
-    QObject::connect(this->storages, SIGNAL(fill_boxes_signal()), SLOT(fill_storages_box()));
-    QObject::connect(this->racks, SIGNAL(fill_boxes_signal()), SLOT(fill_racks_box()));
-    QObject::connect(this->boards, SIGNAL(fill_boxes_signal()), SLOT(fill_boards_box()));
-    QObject::connect(this->boxes, SIGNAL(fill_boxes_signal()), SLOT(fill_boxes_box()));
+    QObject::connect(this->one_year, SIGNAL(fill_box_signal()), SLOT(fill_one_year_box()));
+    QObject::connect(this->from_year, SIGNAL(fill_box_signal()), SLOT(fill_from_year_box()));
+    QObject::connect(this->to_year, SIGNAL(fill_box_signal()), SLOT(fill_to_year_box()));
+    QObject::connect(this->storages, SIGNAL(fill_box_signal()), SLOT(fill_storages_box()));
+    QObject::connect(this->racks, SIGNAL(fill_box_signal()), SLOT(fill_racks_box()));
+    QObject::connect(this->boards, SIGNAL(fill_box_signal()), SLOT(fill_boards_box()));
+    QObject::connect(this->boxes, SIGNAL(fill_box_signal()), SLOT(fill_boxes_box()));
     QObject::connect(this->insp_box, SIGNAL(activated(QString)), SIGNAL(change_insp_signal(QString)));
     QObject::connect(this->reset_insp_button, SIGNAL(clicked()), SIGNAL(reset_insp_signal()));
     QObject::connect(this->add_info_mode, SIGNAL(clicked()), SLOT(change_add_mode()));
     QObject::connect(this->defect_mode, SIGNAL(clicked()), SLOT(change_add_mode()));
     QObject::connect(this->category_mode, SIGNAL(clicked()), SLOT(change_add_mode()));
-    QObject::connect(this->add_info_box, SIGNAL(fill_boxes_signal()), SLOT(fill_add_info_box()));
-    QObject::connect(this->defect_box, SIGNAL(fill_boxes_signal()), SLOT(fill_defect_box()));
-    QObject::connect(this->category_box, SIGNAL(fill_boxes_signal()), SLOT(fill_category_box()));
+    QObject::connect(this->add_info_box, SIGNAL(fill_box_signal()), SLOT(fill_add_info_box()));
+    QObject::connect(this->defect_box, SIGNAL(fill_box_signal()), SLOT(fill_defect_box()));
+    QObject::connect(this->category_box, SIGNAL(fill_box_signal()), SLOT(fill_category_box()));
     QObject::connect(this->add_info_box, SIGNAL(activated(QString)), SIGNAL(change_add_info_signal(QString)));
     QObject::connect(this->defect_box, SIGNAL(activated(QString)), SIGNAL(change_defect_signal(QString)));
     QObject::connect(this->category_box, SIGNAL(activated(QString)), SIGNAL(change_category_signal(QString)));
@@ -99,7 +97,10 @@ void GreySearcher::connects(){
     //
     QObject::connect(this->grey_table, SIGNAL(section_resized(int, int)), SIGNAL(section_resized(int, int)));
     QObject::connect(this->grey_table, SIGNAL(section_moved()), SIGNAL(section_moved()));
+
+    //QObject::connect(this)
 }
+
 
 QVBoxLayout* GreySearcher::create_box_layout(QComboBox *box, QString label_str, int width){
     QVBoxLayout *vbox = new QVBoxLayout();
@@ -132,7 +133,7 @@ void GreySearcher::set_layout(){
     edit_button->setFixedSize(action_button_size, action_button_size);
     del_button->setFixedSize(action_button_size, action_button_size);
     reset_button->setFixedSize(action_button_size, action_button_size);
-    reset_button->setIcon(QPixmap("images/reset.png"));
+    reset_button->setIcon(QPixmap(":/reset"));
     reset_button->setToolTip("Сброс");
     QHBoxLayout *btn_lt = new QHBoxLayout();
     btn_lt->addWidget(new_button);
@@ -268,8 +269,18 @@ void GreySearcher::restore_width(int index, int width){
         this->grey_table->restore_width(index, width);
 }
 
+int GreySearcher::open_columns_list(){
+    if(grey_table != 0)
+        return grey_table->open_columns_list();
+}
+
 void GreySearcher::restore_order(){
     this->grey_table->restore_order();
+}
+
+void GreySearcher::hide_show_columns(){
+    if(grey_table != 0)
+        grey_table->hide_show_columns();
 }
 
 void GreySearcher::clear_where_strs(){
@@ -397,7 +408,7 @@ void GreySearcher::fill_boxes_box(){
 bool GreySearcher::fill_places_box(int mode){
     QSqlQueryModel *query = new QSqlQueryModel();
     QString which, cur_filter, query_str;
-    CustomComboBox *box, *next;
+    CustomComboBox *box = 0, *next = 0;
     int cur_index;
     switch(mode){
     case 1:
@@ -440,7 +451,7 @@ bool GreySearcher::fill_places_box(int mode){
     query->setQuery(query_str, base);
     if(query->lastError().isValid()){
         error("Ошибка при заполнении комбобокса " + which, query->lastError().text());
-        box->setEnabled(false);
+        //box->setEnabled(false);
         return false;
     }
     box->setModel(query);
@@ -481,6 +492,31 @@ bool GreySearcher::fill_places_box(int mode){
         return true;
     }
     return true;
+}
+
+void GreySearcher::storages_slot(QString str){
+    racks->setEditText("");
+    boards->setEditText("");
+    boxes->setEditText("");
+    boards->setEnabled(false);
+    boxes->setEnabled(false);
+    emit storage_signal(str);
+}
+
+void GreySearcher::racks_slot(QString str){
+    boards->setEditText("");
+    boxes->setEditText("");
+    boxes->setEnabled(false);
+    emit rack_signal(str);
+}
+
+void GreySearcher::boards_slot(QString str){
+    boxes->setEditText("");
+    emit board_signal(str);
+}
+
+void GreySearcher::boxes_slot(QString str){
+    emit box_signal(str);
 }
 
 QString GreySearcher::year_text(QString year){
@@ -714,7 +750,7 @@ void GreySearcher::set_years_filters(){
 
 bool GreySearcher::set_place_filter(int mode){
     QString cur, which;
-    CustomComboBox *box;
+    CustomComboBox *box = 0;
     switch(mode){
     case 0:
         cur = filters->grey_storage_filter();
@@ -739,7 +775,6 @@ bool GreySearcher::set_place_filter(int mode){
     }
 
     if(cur == NOPLACE_TEXT){
-        // TRY
         QSqlQuery *q = new QSqlQuery("(SELECT '" + ANY_ITEM_TEXT + "') UNION (SELECT DISTINCT p." + which + tables_str + glue_where("places") + " ORDER BY 1)", base);
              if(q->lastError().isValid()){
             error("Ошибка", q->lastError().text());
@@ -849,7 +884,7 @@ void GreySearcher::fill_table(Filters *f, bool delete_last_symbol){
     }
 
     QString query_str = apply_filters();
-    qDebug() << query_str;
+    //qDebug() << query_str;
     if(query_str == "FAIL"){
         // если последний фильтр - текстовый, удаляем последний символ из текстового поля, таблица после этого перезаполнится
         // не удаляем, если это поиск по id в режиме '='

@@ -18,6 +18,7 @@ class GreyTable : public BaseTable
     Q_OBJECT
 public:
     explicit GreyTable(QWidget *parent = 0);
+    ~GreyTable();
 
     void fill(MyTableModel*, QStringList, int, Qt::SortOrder, bool);       // функция заполнения таблицы
     void close_func();                  // функция, вызываемая при закрытии таблицы.
@@ -28,7 +29,7 @@ private:
     int sort_column;
     Qt::SortOrder sort_order;
     QSettings *settings;
-
+    void mouseDoubleClickEvent(QMouseEvent *e);
 
 
 signals:

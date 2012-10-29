@@ -17,6 +17,10 @@ BaseTable::BaseTable(QWidget *parent) :
 {   
 }
 
+BaseTable::~BaseTable(){
+    delete settings;
+}
+
 void BaseTable::create_new_table(){
     table = new QTableView();
     switcher = new Switcher(table);
@@ -25,11 +29,14 @@ void BaseTable::create_new_table(){
     begin = 0;
     offset = 0;
     filled = false;
-    settings = new QSettings("erk", "base");
+    settings = get_settings();
     hh = new MyHeaderView(Qt::Horizontal);
+    hh->setClickable(true);
     table->setHorizontalHeader(hh);
     last_resized_index = 0;
     last_resized_width = 0;
+    clist = 0;
+    list = 0;
 
     // настройки таблицы, общие для всех классов таблиц в программе
     custom_table();
@@ -41,31 +48,31 @@ void BaseTable::create_new_table(){
     layout();
     move_switcher();
 
+
 }
 
 //--------------------------------------------------------------------------//
 
 inline void BaseTable::base_connects(){
-    QObject::connect(table->horizontalHeader(), SIGNAL(mouse_release()), SLOT(section_resized_slot()));
-    //QObject::connect(table->horizontalHeader(), SIGNAL(mouse_release()), SLOT(save_order()));
     // если получен сигнал о смене номера страницы, сменить значение current_page и послать сигнал поисковику
-    QObject::connect(this->switcher, SIGNAL(page_changed(int)),
-                     this, SLOT(change_page(int)));
+    QObject::connect(this->switcher, SIGNAL(page_changed(int)), SLOT(change_page(int)));
 
     // если получен сигнал о смене кол-ва элементов на странице, сменить значение items_on_page и послать сигнал поисковику
-    QObject::connect(this->switcher, SIGNAL(items_on_page_changed(int)),
-                     this, SLOT(change_onpage(int)));
+    QObject::connect(this->switcher, SIGNAL(items_on_page_changed(int)), SLOT(change_onpage(int)));
 
     // если получен сигнал singlepage_mode_selected, снять лимит записей
-    QObject::connect(this->switcher, SIGNAL(singlepage_mode_selected()),
-                     this, SLOT(remove_limits()));
+    QObject::connect(this->switcher, SIGNAL(singlepage_mode_selected()), SLOT(remove_limits()));
 
     // если получен сигнал multipage_mode_selected, установить лимит записей
-    QObject::connect(this->switcher, SIGNAL(multipage_mode_selected()),
-                     this, SLOT(restore_limits()));
+    QObject::connect(this->switcher, SIGNAL(multipage_mode_selected()), SLOT(restore_limits()));
 
+    // реакция на изменение размера столбца и его перемещение
     QObject::connect(this->table->horizontalHeader(), SIGNAL(sectionResized(int,int,int)), SLOT(column_width_changed(int,int,int)));
     QObject::connect(this->table->horizontalHeader(), SIGNAL(sectionMoved(int,int,int)), SLOT(column_moved(int,int,int)));
+
+    // сохранение настроек при завершении изменения размера столбца
+    QObject::connect(table->horizontalHeader(), SIGNAL(mouse_release()), SLOT(section_resized_slot()));
+
 }
 
 void BaseTable::section_resized_slot(){
@@ -95,7 +102,7 @@ inline void BaseTable::custom_table(){
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
-    table->verticalHeader()->setDefaultSectionSize(table->verticalHeader()->fontMetrics().height() + 2);
+    resize_row();
     table->horizontalHeader()->setHighlightSections(false);
     table->setAlternatingRowColors(true);
     table->horizontalHeader()->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -125,6 +132,19 @@ void BaseTable::move_switcher(){
                           switcher->height());
 }
 
+void BaseTable::column_moved(int log, int old, int neww){
+    this->save_order();
+}
+
+void BaseTable::resize_all(){
+    resize_row();
+}
+
+void BaseTable::resize_row(){
+    table->verticalHeader()->setDefaultSectionSize(table->verticalHeader()->fontMetrics().height() + 2);
+}
+
+
 void BaseTable::save_order(){
     if(!filled) return;
     settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
@@ -136,50 +156,138 @@ void BaseTable::save_order(){
     emit section_moved();
 }
 
-void BaseTable::save_state(){
-    // сохраняем состояние (столбцы и их ширина)
+void BaseTable::restore_order(){
     if(!filled) return;
+    int index;
     settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
-    for(int i = 0; i < table->model()->columnCount(); i++){
-        // записываем в настройки ширину столбца, называя ключ оригинальным именем этого столбца
-        // оригинальное имя хранится в column_names в столбце по номеру логического индекса в модели,
-        // который не меняется никогда, в отличие от визуального
-        settings->setValue(column_names[table->horizontalHeader()->logicalIndex(i)], table->columnWidth(table->horizontalHeader()->logicalIndex(i)));
-        // записываем в настройки соответствие визуального индекса и логического,
-        // чтобы потом восстановить порядок.
-        // Визуальный индекс тождественен счётчику i, логический же зашит в модели.
-        settings->setValue(QString(column_names[table->horizontalHeader()->logicalIndex(i)]).append("_index"), i);
+    QMap<int,int> indexes;
+    int i;
+    for(i = 0; i < table->model()->columnCount(); i++){
+        indexes[i] = settings->value(QString("index[%3]").arg(i), i).toInt();
     }
     settings->endGroup();
-    //emit section_resized();
+    for(i = 0; i < table->model()->columnCount(); i++){
+        index = indexes.key(i);
+        table->horizontalHeader()->moveSection(table->horizontalHeader()->visualIndex(index), i);
+    }
 }
+
 
 void BaseTable::restore_width(int index, int width){
     if(index >= 0 && index < table->model()->columnCount())
         table->horizontalHeader()->resizeSection(index, width);
 }
 
-void BaseTable::restore_order(){
+void BaseTable::hide_show_columns(){
     if(!filled) return;
-    int index;
     settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
     for(int i = 0; i < table->model()->columnCount(); i++){
-        index = settings->value(QString("index[%1]").arg(i), i).toInt();
-        //if(table->horizontalHeader()->visualIndex(i) != i)
-          //  qDebug() << QString("logical: %1, visual: %2").arg(table->horizontalHeader()->visualIndex(i)).arg(i);
-        table->horizontalHeader()->moveSection(table->horizontalHeader()->visualIndex(i), index);
+        //settings->value(QString("show[%1]").arg(i), "1").toString() == "1" ? table->horizontalHeader()->showSection(i) : table->horizontalHeader()->hideSection(i);
+        table->setColumnHidden(i, (settings->value(QString("show[%1]").arg(i), "1").toString() == "0"));
+        //table->setColumnHidden(i, false);
+
     }
     settings->endGroup();
 }
 
-void BaseTable::restore_state(){
+void BaseTable::restore_columns_width(){
     if(!filled) return;
-    for(int i = 0; i < table->model()->columnCount(); i++){
-        settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
+    settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
+    for(int i = 0; i < table->model()->columnCount(); i++)
         table->setColumnWidth(i, settings->value(QString("width[%1]").arg(i), DEFAULT_COLUMN_WIDTH).toInt());
-        settings->endGroup();
-    }
+    settings->endGroup();
+}
+
+
+void BaseTable::restore_state(){
+    restore_columns_width();
+    hide_show_columns();
     restore_order();
+}
+
+int BaseTable::open_columns_list(){
+    clist = new QDialog(this);
+    list = new QListWidget();
+    // некоторые столбцы могут быть запрещены к показу! Например, складам нельзя показывать цены.
+    // также не нужно показывать столбец с ед. изм. веса
+    QList<int> hidden_columns;
+    //hidden_columns << WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WEIGHTUNIT);
+    /*
+    if(!get_privilege(Privileges::Prices_view_access)){
+        hidden_columns << WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_RETAILPRICE)
+                       << WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEPRICE)
+                       << WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEBEGIN)
+                       << WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_RETAILUPDATE)
+                       << WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEUPDATE)
+                       << WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEBEGINUPDATE);
+    }*/
+    QListWidgetItem *wi = 0;
+    settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
+    for(int i = 0; i < table->model()->columnCount(); i++){
+        if(hidden_columns.indexOf(i) > 0) continue;
+        wi = new QListWidgetItem(original_names[column_names[i]], list);
+        wi->setCheckState(settings->value(QString("show[%1]").arg(i), "1").toString() == "1" ? Qt::Checked : Qt::Unchecked);
+        if(i == WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WEIGHTUNIT)) wi->setHidden(true);
+    }
+    settings->endGroup();
+    QWidget *btns_wgt = new QWidget();
+    QPushButton *ok_button = new QPushButton("OK");
+    QPushButton *cancel_button = new QPushButton("Отмена");
+    QHBoxLayout *btn_layout = new QHBoxLayout();
+    btn_layout->addWidget(ok_button);
+    btn_layout->addWidget(cancel_button);
+    ok_button->setFixedWidth(100);
+    cancel_button->setFixedWidth(100);
+    btns_wgt->setLayout(btn_layout);
+    btns_wgt->adjustSize();
+    btns_wgt->setFixedSize(btns_wgt->size());
+
+    QVBoxLayout *lt = new QVBoxLayout();
+    lt->addWidget(list);
+    lt->addWidget(btns_wgt);
+    clist->setLayout(lt);
+    clist->adjustSize();
+    //cl->setFixedSize(cl->size());
+
+    // устанавливаем заголовок окна
+    clist->setWindowTitle("Столбцы");
+
+    // соединяем кнопки с действиями
+    QObject::connect(ok_button, SIGNAL(clicked()), SLOT(accept_clist()));
+    QObject::connect(cancel_button, SIGNAL(clicked()), SLOT(reject_clist()));
+
+    int t = clist->exec();
+    return t;
+}
+
+QString BaseTable::current_name(QString value){
+    return original_names[value];
+}
+
+QVariant BaseTable::table_data(int column){
+    if(this->table->currentIndex().row() < 0)
+        return -1;
+    return this->table->model()->data(this->table->model()->index(this->table->currentIndex().row(), column));
+}
+
+int BaseTable::current_row(){
+    return this->table->currentIndex().row();
+}
+
+void BaseTable::set_current_row(int row){
+    table->setCurrentIndex(table->model()->index(row, 0));
+}
+
+QVariant BaseTable::table_data(QString name){
+    int index = -1;
+    for(int i = 0; i < this->table->model()->columnCount(); i++){
+        QString col = current_name(name);
+        if(this->table->model()->headerData(i, Qt::Horizontal).toString() == col){
+            index = i;
+            break;
+        }
+    }
+    return (index < 0 ? -1 : table_data(index));
 }
 
 //--------------------------------------------------------------------------//
@@ -219,10 +327,6 @@ void BaseTable::column_width_changed(int index, int old_width, int new_width){
     last_resized_width = new_width;
 }
 
-void BaseTable::column_moved(int, int, int){
-    this->save_order();
-}
-
 
 //--------------------------------------------------------------------------//
 //--------------------------- СЛОТЫ ----------------------------------------//
@@ -230,7 +334,6 @@ void BaseTable::column_moved(int, int, int){
 
 void BaseTable::change_page(int type){
     // возможные значения type описаны в constants.cpp
-    int page;
     switch(type){
     case PAGE_FIRST:
         // если нажата кнопка "на первую страницу", устанавливаем current_page = 1 и offset = 0
@@ -270,8 +373,7 @@ void BaseTable::change_page(int type){
     case PAGE_NUMBER:
         // если введён номер страницы, установить current_page
         // предварительно необходимо проверить, чтобы номер был в отрезке [1, total_pages]
-        page = switcher->page_number();
-        if(page >= 1 && page <= total_pages){
+        if(switcher->page_number() >= 1 && switcher->page_number() <= total_pages){
             current_page = switcher->page_number();
             begin = items_on_page * (current_page-1);
             offset = 0;
@@ -331,6 +433,20 @@ void BaseTable::remove_limits(){
 void BaseTable::restore_limits(){
     this->switcher->switch_to_multipage_mode();
     emit(limits_restored());
+}
+
+void BaseTable::accept_clist(){
+    settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(settings_section));
+    for(int i = 0; i < table->model()->columnCount(); i++){
+        settings->setValue(QString("show[%1]").arg(i), list->item(i)->checkState() == Qt::Checked ? "1" : "0");
+    }
+    settings->endGroup();
+    settings->sync();
+    clist->accept();
+}
+
+void BaseTable::reject_clist(){
+    clist->reject();
 }
 
 //--------------------------------------------------------------------------//

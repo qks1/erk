@@ -7,6 +7,7 @@ TARGET =
 DEPENDPATH += . release searcher
 INCLUDEPATH += . searcher
 QT += sql
+CONFIG += qaxcontainer
 
 # Input
 HEADERS += basetable.h \
@@ -26,7 +27,16 @@ HEADERS += basetable.h \
            searcher/searcher.h \
            searcher/whitesearcher.h \
            searcher/whitetable.h \
-    settingsdialog.h
+    settingsdialog.h \
+    searcher/whiteadddialog.h \
+    headercomboboxdelegate.h \
+    customtabwidget.h \
+    authorisewindow.h \
+    searcher/greyadddialog.h \
+    searcher/whitepriceseditor.h \
+    changepricedatedialog.h \
+    addyeardiscount.h \
+    yearsdiscountsdialog.h
 SOURCES += basetable.cpp \
            constants.cpp \
            customcombobox.cpp \
@@ -45,5 +55,24 @@ SOURCES += basetable.cpp \
            searcher/searcher.cpp \
            searcher/whitesearcher.cpp \
            searcher/whitetable.cpp \
-    settingsdialog.cpp
+    settingsdialog.cpp \
+    searcher/whiteadddialog.cpp \
+    headercomboboxdelegate.cpp \
+    customtabwidget.cpp \
+    authorisewindow.cpp \
+    searcher/greyadddialog.cpp \
+    searcher/whitepriceseditor.cpp \
+    changepricedatedialog.cpp \
+    addyeardiscount.cpp \
+    yearsdiscountsdialog.cpp
+
 RESOURCES += images.qrc
+
+FORMS += \
+    searcher/whiteadddialog.ui \
+    authorisewindow.ui \
+    searcher/greyadddialog.ui \
+    searcher/whitepriceseditor.ui \
+    changepricedatedialog.ui \
+    addyeardiscount.ui \
+    yearsdiscountsdialog.ui

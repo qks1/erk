@@ -12,6 +12,7 @@ class DetailCard : public QWidget
     Q_OBJECT
 public:
     explicit DetailCard(int id, QWidget *parent = 0);
+    ~DetailCard();
     int exec();
 
 private:
@@ -19,6 +20,7 @@ private:
     QWidget *parent;
     void save_state();
     void restore_state();
+    void load_default_picture(QPixmap);
     QSettings *settings;
     QTableView *table;
     QStringList column_names;
@@ -37,6 +39,7 @@ class CardDialog : public QDialog
     Q_OBJECT
 public:
     explicit CardDialog(QWidget *parent = 0);
+    ~CardDialog();
 
 private:
     QSettings *settings;

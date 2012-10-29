@@ -24,6 +24,13 @@ public:
     void restore_grey_width(int index, int width);
     void restore_white_order();
     void restore_grey_order();
+    int open_white_columns_list();
+    int open_grey_columns_list();
+    void hide_show_white_columns();
+    void hide_show_grey_columns();
+    int mode();
+    bool success;
+    void set_date();
 
 private:
     QStackedWidget *stack;
@@ -46,10 +53,13 @@ signals:
     void clear_text_signal();
     void section_resized(int, int, int);
     void section_moved(int);
+    void open_settings();
+    void catalog_hides();
+    void catalog_shows();
 
 private slots:
     void refresh_grey();
-    void set_group_filter(int);
+    void set_group_filter(int, QString);
     void reset_group_filter();
     void set_limits_filter(pair);
     void set_nolimits();
@@ -61,6 +71,7 @@ private slots:
     void change_sort_order(int, Qt::SortOrder);
     void button_sort(int);
     void set_param_filter(QString, int);
+    void reset_param_filter(int);
     void reset_params_filter();
     void switch_prices_filter();
     void switch_quantity_filter();
@@ -93,6 +104,8 @@ private slots:
     void grey_section_moved();
 
 public slots:
+    void show_white_catalog();
+    void hide_white_catalog();
 
 };
 

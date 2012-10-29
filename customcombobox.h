@@ -1,11 +1,11 @@
 #ifndef CUSTOMCOMBOBOX_H
 #define CUSTOMCOMBOBOX_H
 
-#include <QComboBox>
-#include <QWidget>
-#include <QMessageBox>
+#include <QtGui>
 #include <QMouseEvent>
 #include "constants.h"
+#include "qglobal.h"
+#include "helpers.h"
 
 class CustomComboBox : public QComboBox
 {
@@ -20,7 +20,7 @@ private:
 
     
 signals:
-    void fill_boxes_signal();
+    void fill_box_signal();
     
 public slots:
     

@@ -1,16 +1,16 @@
 #include "mainwindow.h"
 
-MainWindow::MainWindow(bool success)
+MainWindow::MainWindow()
 {
-    is_connect = success;
+    init_vars();
+    this->setWindowTitle("ООО \"ЭРК\"");
     search_tabs = 0;
     mwidget = new QStackedWidget();
-    settings = new QSettings("erk", "base");
+    settings = get_settings();
+    comp_settings = get_comp_settings();
     this->setCentralWidget(mwidget);
-    // если соединение с базой было успешным, создаём центральный виджет (таблицу с документами).
-    // Иначе экран будет пустым, пока не соединимся с базой
-    if(is_connect)
-        create_search_widget();
+    // создаём поисковик
+    create_search_widget();
 
     // создаём действия
     create_actions();
@@ -19,34 +19,14 @@ MainWindow::MainWindow(bool success)
     create_menu();
 }
 
-void MainWindow::closeEvent(QCloseEvent *){
-    //searcher->close_func();
+MainWindow::~MainWindow(){
+    delete mwidget;
+    delete settings;
+    delete comp_settings;
 }
 
-void MainWindow::create_search_widget(){
-    // создаём tabWidget с поисковиками
-    search_tabs = new CustomTabWidget();
-
-    // расположить вкладки снизу
-    search_tabs->setTabPosition(QTabWidget::South);
-
-    search_tabs->setTabsClosable(true);
-    // создаём и добавляем кнопку добавления таба
-    QPushButton *addtab = new QPushButton("+");
-    addtab->setFixedSize(20,20);
-    QObject::connect(addtab, SIGNAL(clicked()), search_tabs, SLOT(add_tab()));
-    search_tabs->setCornerWidget(addtab, Qt::TopRightCorner);
-    // на каждый таб создадим свой Searcher
-    // кол-во вкладок по умолчанию устанавливается в constants.cpp
-    for(int i = 0; i < TABS_DEFAULT; i++){
-        search_tabs->add_tab();
-    }
-
-    mwidget->addWidget(search_tabs);
-
-    QObject::connect(search_tabs, SIGNAL(tabCloseRequested(int)), search_tabs, SLOT(close_tab(int)));
-    QObject::connect(search_tabs, SIGNAL(resize_section(int,int,int)), SLOT(save_width(int,int,int)));
-    QObject::connect(search_tabs, SIGNAL(move_section(int)), SLOT(save_order(int)));
+void MainWindow::closeEvent(QCloseEvent *){
+    //searcher->close_func();
 }
 
 void MainWindow::create_menu(){
@@ -54,20 +34,38 @@ void MainWindow::create_menu(){
     menu->addAction(columns_action);
     menu->addAction(settings_action);
     menu->addAction(quit_action);
+
+    if(get_privilege(Privileges::Prices_view_access)){
+        menu = menuBar()->addMenu("Цены");
+        menu->addAction(pricedate_action);
+    }
+
+    menu = menuBar()->addMenu("Вид");
+    menu->addAction(showcatalog_action);
 }
 
 void MainWindow::create_actions(){
     quit_action = new QAction("Выход", this);
     quit_action->setStatusTip("Выход из программы");
-    connect(quit_action, SIGNAL(activated()), this, SLOT(send_exit()));
+    connect(quit_action, SIGNAL(triggered()), this, SLOT(send_exit()));
 
     settings_action = new QAction("Настройки", this);
-    quit_action->setStatusTip("Открыть окно настроек");
-    connect(settings_action, SIGNAL(activated()), this, SLOT(send_settings()));
+    settings_action->setStatusTip("Открыть окно настроек");
+    connect(settings_action, SIGNAL(triggered()), this, SLOT(send_settings()));
 
     columns_action = new QAction("Столбцы", this);
     columns_action->setStatusTip("Выбрать отображаемые столбцы");
-    connect(columns_action, SIGNAL(activated()), this, SLOT(send_columns()));
+    connect(columns_action, SIGNAL(triggered()), this, SLOT(send_columns()));
+
+    pricedate_action = new QAction("Дата изм. цены", this);
+    pricedate_action->setStatusTip("Установить дату изменения цены");
+    connect(pricedate_action, SIGNAL(triggered()), this, SLOT(send_pricedate()));
+
+    showcatalog_action = new QAction("Показать каталог", this);
+    showcatalog_action->setStatusTip("Скрыть/показать каталог");
+    showcatalog_action->setCheckable(true);
+    showcatalog_action->setChecked(settings->value(QString("%1/show_catalog").arg(USERNAME), true).toBool());
+    connect(showcatalog_action, SIGNAL(triggered(bool)), this, SLOT(send_showcatalog(bool)));
 }
 
 
@@ -108,21 +106,72 @@ void MainWindow::send_settings(){
         settings->endGroup();
         // если измененён шрифт, меняем его
         QFont new_font;
-        settings->beginGroup(QString(USERNAME) + "/FONTS");
-        new_font.setFamily(settings->value("system_family").toString());
-        new_font.setPointSize(settings->value("system_size").toInt());
+        comp_settings->beginGroup("FONTS");
+        new_font.setFamily(comp_settings->value("system_family").toString());
+        new_font.setPointSize(comp_settings->value("system_size").toInt());
         if(new_font != qApp->font()){
             QApplication::setFont(new_font, "QWidget");
-            //if(docs_list > 0) docs_list->resize();
-            //if(doc > 0) doc->resize();
-            //if(preview > 0) preview->resize();
+            if(search_tabs > 0){
+                Searcher *s;
+                for(int i = 0; i < search_tabs->count(); i++){
+                    s = static_cast<Searcher*>(search_tabs->widget(i));
+                    s->resize_all();
+                }
+            }
         }
-        settings->endGroup();
+        comp_settings->endGroup();
         if(settings->value(QString("%1/PHOTOS_PATH").arg(USERNAME)).toString() != PHOTOS_PATH)
             PHOTOS_PATH = settings->value(QString("%1/PHOTOS_PATH").arg(USERNAME)).toString();
+        if(comp_settings->value("path").toString() != SETTINGS_PATH){
+            SETTINGS_PATH = comp_settings->value("path").toString();
+            QMessageBox::information(0, "Внимание", "Чтобы новые настройки вступили в силу, необходимо перезапустить программу");
+        }
         return;
     }
     delete sd;
+}
+
+
+void MainWindow::send_columns(){
+    if(open_columns_list(GLOBAL_MODE) == QDialog::Accepted){
+        // скрываем/показываем нужные столбцы
+        if(GLOBAL_MODE == SEARCHER_WHITE_MODE || GLOBAL_MODE == SEARCHER_GREY_MODE){
+            Searcher *s;
+            for(int i = 0; i < search_tabs->count(); i++){
+                s = static_cast<Searcher*>(search_tabs->widget(i));
+                s->hide_show_white_columns();
+                s->hide_show_grey_columns();
+            }
+        }
+    }
+}
+
+void MainWindow::send_pricedate(){
+    ChangePriceDateDialog *dlg = new ChangePriceDateDialog(this);
+    if(dlg->exec() == QDialog::Accepted){
+        Searcher *s;
+        for(int i = 0; i < search_tabs->count(); i++){
+            s = static_cast<Searcher*>(search_tabs->widget(i));
+            s->set_date();
+        }
+    }
+}
+
+void MainWindow::send_showcatalog(bool state){
+    Searcher *s;
+    for(int i = 0; i < search_tabs->count(); i++){
+        s = static_cast<Searcher*>(search_tabs->widget(i));
+        state ? s->show_white_catalog() : s->hide_white_catalog();
+    }
+
+}
+
+int MainWindow::open_columns_list(int mode){
+    if(mode == SEARCHER_WHITE_MODE || mode == SEARCHER_GREY_MODE){
+        Searcher *s = static_cast<Searcher*>(search_tabs->currentWidget());
+        return (s->mode() == WHITE_MODE ? s->open_white_columns_list() : s->open_grey_columns_list());
+    }
+    return -1;
 }
 
 bool MainWindow::reload_base(){
@@ -143,6 +192,7 @@ bool MainWindow::reload_base(){
     // если base.open завершается неудачно, выдаём ошибку
     if(!(base.open())){
         QMessageBox::warning(0, "Ошибка", "Не удалось подключиться к базе данных. Проверьте настройки.\n" + base.lastError().text(), QMessageBox::Ok);
+        is_connect = false;
         return false;
     }
     else{
@@ -159,96 +209,37 @@ bool MainWindow::reload_base(){
     return true;
 }
 
-void MainWindow::send_columns(){
-    open_columns_list(GLOBAL_MODE);
-}
+void MainWindow::create_search_widget(){
+    // создаём tabWidget с поисковиками
+    search_tabs = new CustomTabWidget(mwidget);
 
-void MainWindow::open_columns_list(int mode){
-    QDialog *cl = new QDialog(this);
-    QListWidget *list = new QListWidget();
-    //QListWidgetItem *i1 = new QListWidgetItem("qqqq", list);
-    QString c;
-    foreach(c, ALL_WHITE_COLUMNS){
-        QListWidgetItem *wi = new QListWidgetItem(WHITE_COLUMNS_NAMES[c], list);
-        wi->setCheckState(Qt::Checked);
+    // расположить вкладки снизу
+    search_tabs->setTabPosition(QTabWidget::South);
+
+    search_tabs->setTabsClosable(true);
+    // создаём и добавляем кнопку добавления таба
+    QPushButton *addtab = new QPushButton("+");
+    addtab->setFixedSize(20,20);
+    QObject::connect(addtab, SIGNAL(clicked()), search_tabs, SLOT(add_tab()));
+    search_tabs->setCornerWidget(addtab, Qt::TopRightCorner);
+    // на каждый таб создадим свой Searcher
+    // кол-во вкладок по умолчанию устанавливается в constants.cpp
+    for(int i = 0; i < settings->value(QString("%1/tabs_default").arg(USERNAME), 5).toInt(); i++){
+        Searcher *s = search_tabs->add_tab();
+        if(s->success == false)
+            break;
+        QObject::connect(s, SIGNAL(open_settings()), this, SLOT(send_settings()));
+        QObject::connect(s, SIGNAL(catalog_hides()), this, SLOT(uncheck_menu_catalog()));
+        QObject::connect(s, SIGNAL(catalog_shows()), this, SLOT(check_menu_catalog()));
     }
 
-    QHBoxLayout *lt = new QHBoxLayout();
-    lt->addWidget(list);
-    cl->setLayout(lt);
-
-    cl->exec();
+    mwidget->addWidget(search_tabs);
 }
 
-void MainWindow::save_searcher_width(int mode, int index, int width){
-    QString section;
-    if(mode == SEARCHER_WHITE_MODE) section = "WHITE_COLUMNS";
-    else if(mode == SEARCHER_GREY_MODE) section = "GREY_COLUMNS";
-    // сначала сохраняем настройки
-    settings->beginGroup(QString("%1/%2").arg(USERNAME).arg(section));
-    settings->setValue(QString("width[%1]").arg(index), width);
-    settings->endGroup();
-    settings->sync();
-    // теперь применяем их ко всем вкладкам
-    Searcher *s;
-    for(int i = 0; i < this->search_tabs->count(); i++){
-        s = static_cast<Searcher*>(search_tabs->widget(i));
-        if(mode == SEARCHER_WHITE_MODE) s->restore_white_width(index, width);
-        else if(mode == SEARCHER_GREY_MODE) s->restore_grey_width(index, width);
-    }
+void MainWindow::check_menu_catalog(){
+    showcatalog_action->setChecked(true);
 }
 
-void MainWindow::save_searcher_order(int mode){
-    Searcher *s;
-    for(int i = 0; i < this->search_tabs->count(); i++){
-        s = static_cast<Searcher*>(search_tabs->widget(i));
-        if(mode == SEARCHER_WHITE_MODE) s->restore_white_order();
-        else if(mode == SEARCHER_GREY_MODE) s->restore_grey_order();
-    }
+void MainWindow::uncheck_menu_catalog(){
+    showcatalog_action->setChecked(false);
 }
-
-void MainWindow::save_width(int mode, int index, int width){
-    switch(mode){
-    case SEARCHER_WHITE_MODE:
-        save_searcher_width(mode, index, width);
-        break;
-    case SEARCHER_GREY_MODE:
-        save_searcher_width(mode, index, width);
-        break;
-    }
-}
-
-void MainWindow::save_order(int mode){
-    switch(mode){
-    case SEARCHER_WHITE_MODE:
-        save_searcher_order(mode);
-        break;
-    case SEARCHER_GREY_MODE:
-        save_searcher_order(mode);
-        break;
-    }
-}
-
-
-CustomTabWidget::CustomTabWidget(QWidget *parent){
-    max = 0;
-}
-
-void CustomTabWidget::close_tab(int index){
-    if(this->count() <= 1)
-        return;
-    QWidget *d = widget(index);
-    this->removeTab(index);
-    delete(d);
-}
-
-void CustomTabWidget::add_tab(){
-    Searcher *s = new Searcher();
-    this->max++;
-    this->addTab(s, QString::number(this->max));
-    QObject::connect(s, SIGNAL(section_resized(int, int, int)), SIGNAL(resize_section(int, int, int)));
-    QObject::connect(s, SIGNAL(section_moved(int)), SIGNAL(move_section(int)));
-}
-
-
-

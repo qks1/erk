@@ -16,11 +16,13 @@ ParamsSelector::ParamsSelector(int number, QWidget *parent) :
 }
 
 inline void ParamsSelector::connect(){
-    QObject::connect(this->items, SIGNAL(activated(QString)),
-                     this, SLOT(select_item(QString)));
-    QObject::connect(this->button, SIGNAL(clicked()),
-                     this, SLOT(click_button()));
-    QObject::connect(this->items, SIGNAL(fill_boxes_signal()), SIGNAL(fill_boxes_signal()));
+    QObject::connect(this->items, SIGNAL(activated(QString)), SLOT(select_item(QString)));
+    QObject::connect(this->button, SIGNAL(clicked()), SLOT(click_button()));
+    QObject::connect(this->items, SIGNAL(fill_box_signal()), SLOT(fill_box_slot()));
+}
+
+void ParamsSelector::resize_all(){
+
 }
 
 inline void ParamsSelector::set_layout(){
@@ -70,6 +72,10 @@ void ParamsSelector::clear_button_label(){
     this->button->setText("");
 }
 
+void ParamsSelector::set_model(QSqlQueryModel *model){
+    this->items->setModel(model);
+}
+
 void ParamsSelector::add_item(QString item){
     this->items->addItem(item);
 }
@@ -114,6 +120,10 @@ int ParamsSelector::count(){
 
 QString ParamsSelector::item(int i){
     return this->items->itemText(i);
+}
+
+void ParamsSelector::fill_box_slot(){
+    emit fill_box_signal(this->number);
 }
 
 

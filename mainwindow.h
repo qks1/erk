@@ -7,50 +7,34 @@
 #include "searcher.h"
 #include "constants.h"
 #include "settingsdialog.h"
-
-class CustomTabWidget : public QTabWidget{
-    Q_OBJECT
-public:
-    explicit CustomTabWidget(QWidget *parent = 0);
-
-private:
-    int max;
-
-public slots:
-    void close_tab(int index);
-    void add_tab();
-
-signals:
-    void resize_section(int, int, int);
-    void move_section(int);
-};
-
+#include "customtabwidget.h"
+#include "helpers.h"
+#include "changepricedatedialog.h"
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(bool);
+    MainWindow();
+    ~MainWindow();
 
 
 private:
-    bool is_connect;
-    QStackedWidget *mwidget;
-    CustomTabWidget *search_tabs;
     QSettings *settings;
+    QSettings *comp_settings;
 
     QAction *quit_action;
-    QAction *settings_action;
     QAction *columns_action;
+    QAction *settings_action;
+    QAction *pricedate_action;
+    QAction *showcatalog_action;
 
     void create_search_widget();
     void create_actions();
     void create_menu();
     bool reload_base();
-    void open_columns_list(int mode);
-    void save_searcher_width(int mode, int index, int width);
-    void save_searcher_order(int mode);
+    int open_columns_list(int mode);
 
     void closeEvent(QCloseEvent *);
 
@@ -63,8 +47,10 @@ private slots:
     void send_exit();
     void send_settings();
     void send_columns();
-    void save_width(int mode, int index, int width);
-    void save_order(int mode);
+    void send_pricedate();
+    void check_menu_catalog();
+    void uncheck_menu_catalog();
+    void send_showcatalog(bool);
 
 public slots:
 
