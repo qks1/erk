@@ -1,4 +1,4 @@
-#ifndef WHITESEARCHER_H
+﻿#ifndef WHITESEARCHER_H
 #define WHITESEARCHER_H
 
 #include <QWidget>
@@ -15,6 +15,10 @@
 #include "whitepriceseditor.h"
 #include "addyeardiscount.h"
 #include "yearsdiscountsdialog.h"
+#include "yearsdiscounts.h"
+#include "quickquantitywindow.h"
+#include "managerreservewidget.h"
+#include "storagereservewidget.h"
 
 /*
     Поисковик в белом экране.
@@ -27,7 +31,10 @@ class WhiteSearcher : public QWidget
 {
     Q_OBJECT
 public:
-    explicit WhiteSearcher(QWidget *parent = 0);
+    explicit WhiteSearcher(ReserveStruct rstruct,
+                           bool need_blue,
+                           ColumnsStruct *columns,
+                           QWidget *parent = 0);
     void fill_table(Filters*, bool, bool);              // заполнение таблицы
     void clear_text();
     int input_id_combobox_value();
@@ -35,13 +42,14 @@ public:
     QString get_original_name(int);
     void resize_all();
     void restore_width(int index, int width);
-    void restore_order();
+    void restore_order(int logical, int newvisual);
     int open_columns_list();
     void hide_show_columns();
     bool success;
     bool edit_prices_permission;
-    QHBoxLayout *buttons_lt;
     void set_date();
+    void switch_reserve();
+    void set_reserve_header();
 
 
 private:
@@ -51,14 +59,24 @@ private:
     Input *input;                           // текстовое поле с радиокнопками
     QList<ParamsSelector*> selectors;       // набор выпадающих списков с параметрами
     QPushButton *params_reset;              // кнопка сброса параметров
+    YearsDiscounts *dlg;
+    WhitePricesEditor *wpe;
+    ManagerReserveWidget *reserve;
+    StorageReserveWidget *pipe;
 
     // КНОПКИ НА ВЕРХНЕЙ ПАНЕЛИ
+    QHBoxLayout *buttons_lt;
     QPushButton *new_button;
     QPushButton *edit_button;
     QPushButton *delete_button;
     QPushButton *prices_button;
     QPushButton *discounts_button;
+    QPushButton *photo_button;
+    QPushButton *docs_button;
+    QPushButton *catalog_button;
     QPushButton *settings_button;
+    QPushButton *reserve_button;
+    QPushButton *blue_button;
 
     // СПИСКИ И ПЕРЕМЕННЫЕ:
     QList<QStringList> params_lists;        // набор списков параметров, из которых будут формироваться чекбоксы
@@ -71,6 +89,9 @@ private:
     QMap<QString, QString> where_strings;
     Filters *filters;
     int panel_button_size;
+    int current_row;
+    bool need_blue;
+    bool grey_mode;
 
     // ФУНКЦИИ ДЛЯ КОНСТРУКТОРА:
     inline void set_layout();               // функция размещения объектов
@@ -90,7 +111,9 @@ private:
     QString glue_where(QString);
     void clear_where_strs();
     QPushButton *create_panel_button(QString, QString, const char *method);
-    int current_row;
+    bool up_selected_string();
+    bool down_selected_string();
+    void load_default_picture(QPixmap*);
 
 signals:
     void fill(QSqlQuery, QStringList);
@@ -108,30 +131,48 @@ signals:
     void params_reset_clicked();
     void prices_clicked();
     void quantity_clicked();
-    void create_grey(int);
-    void section_resized(int, int);
-    void section_moved();
+    void create_grey(int, QString);
+    void create_blue(int, QString);
+    void section_resized(int, int, QString);
+    void section_moved(int, int, QString);
     void open_settings();
     void catalog_shows();
     void catalog_hides();
+    void columns_changed();
+    void need_refresh();
+    void rename_tab(QString);
+    void switch_reserve_signal();
+    void refresh_searcher();
 
 private slots:
     void detail_info(int);
     void fill_box(int index);
-    void refresh_table();
 
     void open_grey(QModelIndex);
     void text_changed_slot(int, QString);
+    void reset_params();
     void new_detail_slot();
     void edit_detail_slot();
     void delete_detail_slot();
     void edit_prices_slot();
     void edit_discounts_slot();
+    void open_photo_slot();
+    void open_docs_window();
+    void switch_catalog();
+    void up_years_discounts();
+    void down_years_discounts();
+    void up_prices_editor();
+    void down_prices_editor();
+    void reset_table();
+    void reserve_button_slot();
+    void switch_grey_mode();
 
 public slots:
     void hide_catalog();
     void show_catalog();
-    
+    void refresh_table();
+
 };
 
 #endif // WHITESEARCHER_H
+

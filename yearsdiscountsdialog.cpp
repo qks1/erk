@@ -15,7 +15,7 @@ YearsDiscountsDialog::YearsDiscountsDialog(int id, QString name, double retail_p
     ui->price_label->setText(QString("Цена: розн. %1, опт. %2").arg(retail_price, 0,'f',2).arg(whole_price, 0, 'f', 2));
     ui->price_label->adjustSize();
     ui->add_button->setIcon(QIcon(":/plus"));
-    ui->edit_button->setIcon(QIcon(":/down"));
+    ui->edit_button->setIcon(QIcon(":/pen"));
     ui->delete_button->setIcon(QIcon(":/minus"));
     ui->close_button->setIcon(QIcon(":/back"));
 

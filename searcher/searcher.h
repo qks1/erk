@@ -13,17 +13,22 @@
 #include "constants.h"
 #include "whitesearcher.h"
 #include "greysearcher.h"
+#include "managerreservewidget.h"
 
 class Searcher : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Searcher(QWidget *parent = 0);
+    explicit Searcher(ReserveStruct rstruct,
+                       ColumnsStruct *white_columns,
+                       ColumnsStruct *grey_columns,
+                       ColumnsStruct *reserve_columns,
+                       QWidget *parent = 0);
     void resize_all();
     void restore_white_width(int index, int width);
     void restore_grey_width(int index, int width);
-    void restore_white_order();
-    void restore_grey_order();
+    void restore_white_order(int logical, int newvisual);
+    void restore_grey_order(int logical, int newvisual);
     int open_white_columns_list();
     int open_grey_columns_list();
     void hide_show_white_columns();
@@ -31,34 +36,56 @@ public:
     int mode();
     bool success;
     void set_date();
+    void refresh_white_table();
+    void refresh_grey_table();
+    void refresh_blue_table();
+    void switch_reserves();
+    void set_reserve_header();
 
 private:
     QStackedWidget *stack;
     WhiteSearcher *white_searcher;
     GreySearcher *grey_searcher;
+    GreySearcher *blue_searcher;
+    //ManagerReserveWidget *reserve;
     Filters *filters;
+    Filters *old_grey_filters;
 
     inline void connects();
-    inline void grey_connects();
+    inline void grey_connects(GreySearcher*);
     inline void set_layout();
     inline void filters_default();
     inline void grey_filters_default();
     void clear_grey_boxes();
     int size_of_select(QString);
     int size_of_select(QStringList);
+    bool need_blue;
     QStringList valid_strings(QStringList);
 
 signals:
     void fill(QSqlQuery, QStringList);
     void clear_text_signal();
-    void section_resized(int, int, int);
-    void section_moved(int);
+    void section_resized(int, int, int, QString);
+    void section_moved(int, int, int, QString);
     void open_settings();
     void catalog_hides();
     void catalog_shows();
+    void white_columns_changed();
+    void grey_columns_changed();
+    void need_white_refresh();
+    void need_grey_refresh();
+    void need_blue_refresh();
+    void need_total_refresh();
+    void rename_tab(QString, bool);
+    void rename_tab(QString);
+    void switch_reserve_signal();
 
 private slots:
+    void open_grey(int, QString);
     void refresh_grey();
+    void close_grey(QModelIndex);
+    void open_blue(int, QString);
+    void close_blue();
     void set_group_filter(int, QString);
     void reset_group_filter();
     void set_limits_filter(pair);
@@ -76,8 +103,6 @@ private slots:
     void switch_prices_filter();
     void switch_quantity_filter();
     void set_last_filter(int);
-    void open_grey(int);
-    void close_grey(QModelIndex);
     void set_grey_limits_filter(pair);
     void set_grey_nolimits();
     void set_grey_limits();
@@ -98,10 +123,12 @@ private slots:
     void change_grey_category(QString);
     void reset_add_boxes();
     void grey_reset_slot();
-    void white_section_resized(int, int);
-    void grey_section_resized(int, int);
-    void white_section_moved();
-    void grey_section_moved();
+    void white_section_resized(int, int, QString);
+    void grey_section_resized(int, int, QString);
+    void white_section_moved(int, int, QString);
+    void grey_section_moved(int, int, QString);
+    void tempgreyslot();
+    void tempwhiteslot();
 
 public slots:
     void show_white_catalog();

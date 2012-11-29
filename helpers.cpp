@@ -86,6 +86,7 @@ QString replases(QString text){
     text.replace("?", "_");
     text.replace("*", "%");
     text.replace(",", ".");
+    //text.remove()
     return text.toUpper();
 }
 
@@ -149,7 +150,7 @@ bool add_groups(QTreeWidget *groups){
 bool add_subgroup(QTreeWidgetItem *groupItem, int groupNum){
     // выбираем из БД список подгрупп для группы groupNum
     QSqlQuery query(base);
-    QString strSelect = "SELECT id, name FROM " + SUBGROUPS_TABLE + " WHERE group_id=" + QString::number(groupNum);
+    QString strSelect = "SELECT id, name FROM " + SUBGROUPS_TABLE + " WHERE group_id=" + QString::number(groupNum) + " ORDER BY name";
 
     // если не удаётся выполнить запрос, выдаём ошибку
     if(!query.exec(strSelect)){
@@ -186,8 +187,8 @@ QSettings *get_settings(){
 }
 
 QSettings *get_comp_settings(){
-    //QSettings *comp_settings = new QSettings("erk", "base");
-    QSettings *comp_settings = new QSettings("/home/df/erk_global.ini", QSettings::IniFormat);
+    QSettings *comp_settings = new QSettings("erk", "base");
+    //QSettings *comp_settings = new QSettings("/home/df/erk_global.ini", QSettings::IniFormat);
     return comp_settings;
 }
 
@@ -203,103 +204,28 @@ bool get_privilege(Privileges::Type type){
     return query.value(0).toBool();
 }
 
+// имена столбцов в белом и сером экране
+QMap<QString,QString> columns_white_names;
+QMap<QString,QString> columns_grey_names;
+QMap<QString, QString> columns_white_sql;
+QMap<QString, int> columns_white_ids;
+QMap<QString, QString> columns_grey_sql;
+QMap<QString, int> columns_grey_ids;
+QStringList columns_white_table;
+QStringList columns_grey_table;
+
 void init_vars(){
     GLOBAL_MODE = SEARCHER_WHITE_MODE;
 
-    WHITE_TABLE_COLUMNS << COLUMN_WHITE_ID
-                        << COLUMN_WHITE_PHOTO
-                        << COLUMN_WHITE_YEARSDISCOUNTS
-                        << COLUMN_WHITE_NAME
-                        << COLUMN_WHITE_SUBGROUP
-                        << COLUMN_WHITE_QUANTITY
-                        //<< COLUMN_WHITE_RETAILPRICE
-                        //<< COLUMN_WHITE_WHOLEPRICE
-                        //<< COLUMN_WHITE_WHOLEBEGIN
-                        //<< COLUMN_WHITE_WHOLEUNIT
-                        << COLUMN_WHITE_PAR1
-                        << COLUMN_WHITE_PAR2
-                        << COLUMN_WHITE_PAR3
-                        << COLUMN_WHITE_PAR4
-                        << COLUMN_WHITE_PAR5
-                        << COLUMN_WHITE_PAR6
-                        << COLUMN_WHITE_PAR7
-                        << COLUMN_WHITE_PAR8
-                        << COLUMN_WHITE_PAR9
-                        << COLUMN_WHITE_PAR10
-                        << COLUMN_WHITE_PAR11
-                        << COLUMN_WHITE_PAR12
-                        << COLUMN_WHITE_UNIT
-                        << COLUMN_WHITE_WEIGHT
-                        << COLUMN_WHITE_WEIGHTUNIT
-                        << COLUMN_WHITE_NOTES
-                        << COLUMN_WHITE_CREATED
-                        << COLUMN_WHITE_EDITED;
-    if(get_privilege(Privileges::Prices_view_access)){
-        // сами цены вставляем в серёдку, даты их изменения - в конец
-        WHITE_TABLE_COLUMNS.insert(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_QUANTITY)+1, COLUMN_WHITE_RETAILPRICE);
-        WHITE_TABLE_COLUMNS.insert(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_RETAILPRICE)+1, COLUMN_WHITE_WHOLEPRICE);
-        WHITE_TABLE_COLUMNS.insert(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEPRICE)+1, COLUMN_WHITE_WHOLEBEGIN);
-        WHITE_TABLE_COLUMNS << COLUMN_WHITE_RETAILUPDATE
-                            << COLUMN_WHITE_WHOLEUPDATE
-                            << COLUMN_WHITE_WHOLEBEGINUPDATE;
-    }
-    GREY_TABLE_COLUMNS << COLUMN_GREY_ID
-                       << COLUMN_GREY_NAME
-                       << COLUMN_GREY_QUANTITY
-                       << COLUMN_GREY_YEAR
-                       << COLUMN_GREY_RETAILPRICE
-                       << COLUMN_GREY_STORAGE
-                       << COLUMN_GREY_RACK
-                       << COLUMN_GREY_BOARD
-                       << COLUMN_GREY_BOX
-                       << COLUMN_GREY_INSPECTION
-                       << COLUMN_GREY_ADDINFO
-                       << COLUMN_GREY_DEFECT
-                       << COLUMN_GREY_CATEGORY;
+    bool prices_access = get_privilege(Privileges::Prices_view_access);
 
-    WHITE_COLUMNS_NAMES["id"] = "id";
-    WHITE_COLUMNS_NAMES["name"] = "Имя";
-    WHITE_COLUMNS_NAMES["subgroup"] = "Группа";
-    WHITE_COLUMNS_NAMES["quantity"] = "Кол-во";
-    WHITE_COLUMNS_NAMES["price_ret"] = "Розн. цена";
-    WHITE_COLUMNS_NAMES["price_whole"] = "Опт. цена";
-    WHITE_COLUMNS_NAMES["whole_begin"] = "Опт с";
-    WHITE_COLUMNS_NAMES["par1_val"] = "1";
-    WHITE_COLUMNS_NAMES["par2_val"] = "2";
-    WHITE_COLUMNS_NAMES["par3_val"] = "3";
-    WHITE_COLUMNS_NAMES["par4_val"] = "4";
-    WHITE_COLUMNS_NAMES["par5_val"] = "5";
-    WHITE_COLUMNS_NAMES["par6_val"] = "6";
-    WHITE_COLUMNS_NAMES["par7_val"] = "7";
-    WHITE_COLUMNS_NAMES["par8_val"] = "8";
-    WHITE_COLUMNS_NAMES["par9_val"] = "9";
-    WHITE_COLUMNS_NAMES["par10_val"] = "10";
-    WHITE_COLUMNS_NAMES["par11_val"] = "11";
-    WHITE_COLUMNS_NAMES["par12_val"] = "12";
-    WHITE_COLUMNS_NAMES["photo"] = "Фото";
-    WHITE_COLUMNS_NAMES["unit_name"] = "Ед.изм.";
-    WHITE_COLUMNS_NAMES["weight"] = "Вес";
-    WHITE_COLUMNS_NAMES["notes"] = "Примечание";
-    WHITE_COLUMNS_NAMES["created"] = "Создан";
-    WHITE_COLUMNS_NAMES["edited"] = "Изменён";
-    WHITE_COLUMNS_NAMES["retail_update"] = "Розн. цена изм.";
-    WHITE_COLUMNS_NAMES["whole_update"] = "Опт. цена изм.";
-    WHITE_COLUMNS_NAMES["begin_update"] = "Опт с изм.";
-    WHITE_COLUMNS_NAMES["years_discounts"] = "Г";
+    set_columns_white_sql();
+    set_columns_white(prices_access);
+    set_columns_white_names();
 
-    GREY_COLUMNS_NAMES["id"] = "id";
-    GREY_COLUMNS_NAMES["quantity"] = "Кол-во";
-    GREY_COLUMNS_NAMES["year"] = "Год";
-    GREY_COLUMNS_NAMES["name"] = "Имя";
-    GREY_COLUMNS_NAMES["storage"] = "Склад";
-    GREY_COLUMNS_NAMES["rack"] = "Стеллаж";
-    GREY_COLUMNS_NAMES["board"] = "Полка";
-    GREY_COLUMNS_NAMES["box"] = "Ящик";
-    GREY_COLUMNS_NAMES["insp_name"] = "Приёмка";
-    GREY_COLUMNS_NAMES["add_info"] = "Доп.пар.1";
-    GREY_COLUMNS_NAMES["defect"] = "Доп.пар.2";
-    GREY_COLUMNS_NAMES["category_name"] = "Категория";
-    GREY_COLUMNS_NAMES["price_ret"] = "Цена";
+    set_columns_grey_sql();
+    set_columns_grey(prices_access);
+    set_columns_grey_names();
 
     // текст для пункта "любой" в комбобоксе
     ANY_ITEM_TEXT = "<любой>";
@@ -313,7 +239,7 @@ void init_vars(){
     NOINFO_TEXT = "NOINFO";
 
     QSettings *comp_settings = get_comp_settings();
-    SETTINGS_PATH = comp_settings->value("path", "D:\erk.ini").toString();
+    SETTINGS_PATH = comp_settings->value("path", "D:\\erk.ini").toString();
     if(comp_settings->value("path").toString() != SETTINGS_PATH)
         comp_settings->setValue("path", SETTINGS_PATH);
 
@@ -323,8 +249,8 @@ void init_vars(){
     PHOTOS_PATH = settings->value(QString("%1/PHOTOS_PATH").arg(USERNAME), "\\\\192.168.1.101\\config\\BMP\\").toString();
     if(settings->value(QString("%1/PHOTOS_PATH").arg(USERNAME)).toString() != PHOTOS_PATH)
         settings->setValue(QString("%1/PHOTOS_PATH").arg(USERNAME), PHOTOS_PATH);
-    if(PHOTOS_PATH.at(PHOTOS_PATH.size()-1) != QDir::separator())
-        PHOTOS_PATH += QDir::separator();
+    //if(PHOTOS_PATH.at(PHOTOS_PATH.size()-1) != QDir::separator())
+        //PHOTOS_PATH += QDir::separator();
     settings->sync();
     delete settings;
     delete comp_settings;

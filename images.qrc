@@ -9,16 +9,33 @@
         <file alias="camera">images/camera.png</file>
         <file alias="delete">images/delete.png</file>
         <file alias="edit">images/edit.png</file>
-        <file alias="photo">images/photo.jpg</file>
         <file alias="reset">images/reset.png</file>
         <file alias="settings">images/settings.png</file>
         <file alias="prices">images/prices.png</file>
         <file alias="discounts">images/discount.png</file>
-        <file>images/nophoto.png</file>
+        <file alias="nophoto">images/nophoto.png</file>
         <file alias="check">images/срусло.png</file>
-        <file alias="down">images/downarrow.png</file>
+        <file alias="downarrow">images/downarrow.png</file>
         <file alias="minus">images/minus.png</file>
         <file alias="plus">images/plus.png</file>
         <file alias="pen">images/pen.png</file>
+        <file alias="columns_grey">images/columns_grey.png</file>
+        <file alias="delete_grey">images/delete_grey.png</file>
+        <file alias="edit_grey">images/edit_grey.png</file>
+        <file alias="new_grey">images/new_grey.png</file>
+        <file alias="prices_grey">images/prices_grey.png</file>
+        <file alias="settings_grey">images/settings_grey.png</file>
+        <file alias="columns">images/columns.png</file>
+        <file alias="back_grey">images/back_grey.png</file>
+        <file alias="docs">images/docs.png</file>
+        <file alias="docs_grey">images/docs_grey.png</file>
+        <file alias="photo">images/photo.png</file>
+        <file alias="catalog">images/catalog.png</file>
+        <file alias="down">images/down.png</file>
+        <file alias="up">images/up.png</file>
+        <file alias="photo_big">images/photo_big.png</file>
+        <file alias="reserve">images/reserve.PNG</file>
+        <file alias="blue">images/blue.png</file>
+        <file alias="grey">images/grey.png</file>
     </qresource>
 </RCC>

@@ -159,8 +159,8 @@ void SettingsDialog::accept(){
 
     if(settings->value(QString("%1/PHOTOS_PATH").arg(USERNAME)).toString() != photo_path->text()){
         QString temppath = photo_path->text();
-        if(temppath.at(temppath.size()-1) != QDir::separator())
-            temppath += QDir::separator();
+        //if(temppath.at(temppath.size()-1) != QDir::separator())
+            //temppath += QDir::separator();
         settings->setValue(QString("%1/PHOTOS_PATH").arg(USERNAME), temppath);
     }
 

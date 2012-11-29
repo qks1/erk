@@ -9,6 +9,7 @@
 /*
   Класс каталога групп и подгрупп.
   Состоит из дерева и кнопки сброса.
+  Каждый элемент дерева - товарная группа, содаржащая одну или несколько подгрупп.
 */
 
 class Catalog : public QWidget
@@ -31,8 +32,11 @@ private:
 
     inline void connects();                     // функция соединения сигналов и слотов
 
-    void resizeEvent(QResizeEvent *);           // реакция на изменение размеров каталога
-    void showEvent(QShowEvent *);               // реакция на появление каталога на экране
+protected:
+    virtual void resizeEvent(QResizeEvent *);           // реакция на изменение размеров каталога
+    virtual void showEvent(QShowEvent *);               // реакция на появление каталога на экране
+    virtual void mouseReleaseEvent(QMouseEvent *);
+    virtual void mousePressEvent(QMouseEvent *);
     
 signals:
     void group_changed(int, QString);           // испускается при изменении выбранной группы

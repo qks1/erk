@@ -6,192 +6,110 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>548</width>
-    <height>317</height>
+    <width>617</width>
+    <height>240</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QWidget" name="buttons_widget" native="true">
-   <property name="geometry">
-    <rect>
-     <x>260</x>
-     <y>280</y>
-     <width>281</width>
-     <height>31</height>
-    </rect>
-   </property>
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>278</width>
-      <height>29</height>
-     </rect>
-    </property>
-    <layout class="QHBoxLayout" name="buttons_layout">
-     <property name="spacing">
-      <number>0</number>
-     </property>
-     <property name="sizeConstraint">
-      <enum>QLayout::SetDefaultConstraint</enum>
-     </property>
-     <item>
-      <widget class="QPushButton" name="apply_button">
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Применить</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="save_button">
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Сохранить</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="cancel_button">
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Отмена</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>541</width>
-     <height>258</height>
+     <x>10</x>
+     <y>10</y>
+     <width>581</width>
+     <height>230</height>
     </rect>
    </property>
-   <layout class="QGridLayout" name="top_layout">
-    <item row="0" column="0">
-     <widget class="QLabel" name="detail_name_label">
-      <property name="font">
-       <font>
-        <pointsize>14</pointsize>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>Название</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1" rowspan="2">
-     <layout class="QGridLayout" name="prices_layout">
-      <property name="verticalSpacing">
-       <number>2</number>
-      </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QGridLayout" name="top_layout" columnstretch="0,1">
       <item row="0" column="0">
-       <widget class="QLabel" name="ret_price_label">
+       <widget class="QLabel" name="detail_name_label">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
         <property name="text">
-         <string>Розн. цена</string>
+         <string>Название</string>
         </property>
        </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QCheckBox" name="manual_checkbox">
-        <property name="text">
-         <string>Уст. вручную</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QLineEdit" name="whole_price_text"/>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLineEdit" name="ret_price_text">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="whole_price_label">
-        <property name="text">
-         <string>Опт. цена</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLineEdit" name="whole_from_text"/>
       </item>
       <item row="2" column="0">
-       <widget class="QLabel" name="whole_from_label">
-        <property name="text">
-         <string>Опт с</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="discount_label">
-        <property name="text">
-         <string>Скидка</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QSpinBox" name="discount_spin"/>
-      </item>
-     </layout>
-    </item>
-    <item row="1" column="0">
-     <layout class="QGridLayout" name="top_grid_layout">
-      <item row="0" column="0">
-       <layout class="QHBoxLayout" name="quantity_layout">
-        <item>
-         <widget class="QLabel" name="quantity_box">
+       <layout class="QGridLayout" name="places_layout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="storage_label">
           <property name="text">
-           <string>Кол-во</string>
+           <string>Склад</string>
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QSpinBox" name="quantity_spin"/>
+        <item row="0" column="1">
+         <widget class="QLabel" name="rack_label">
+          <property name="text">
+           <string>Стеллаж</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QLabel" name="board_label">
+          <property name="text">
+           <string>Полка</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <widget class="QLabel" name="box_label">
+          <property name="text">
+           <string>Ящик</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QComboBox" name="storage_box">
+          <property name="editable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QComboBox" name="rack_box">
+          <property name="editable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QComboBox" name="board_box">
+          <property name="editable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3">
+         <widget class="QComboBox" name="box_box">
+          <property name="editable">
+           <bool>true</bool>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
-      <item row="0" column="1">
-       <layout class="QHBoxLayout" name="year_layout">
+      <item row="3" column="1">
+       <layout class="QVBoxLayout" name="addpar2_layout">
         <item>
-         <widget class="QLabel" name="year_label">
+         <widget class="QLabel" name="addpar2_label">
           <property name="text">
-           <string>Год</string>
+           <string>Доп. параметр 2</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="year_box">
+         <widget class="QComboBox" name="addpar2_box">
           <property name="editable">
            <bool>true</bool>
           </property>
@@ -200,148 +118,228 @@
        </layout>
       </item>
       <item row="1" column="0">
-       <layout class="QHBoxLayout" name="inspection_layout">
+       <layout class="QGridLayout" name="top_grid_layout">
+        <item row="0" column="0">
+         <layout class="QHBoxLayout" name="quantity_layout">
+          <item>
+           <widget class="QLabel" name="quantity_box">
+            <property name="text">
+             <string>Кол-во</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="quantity_spin">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>1000000</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="remain_label">
+            <property name="text">
+             <string>Ост.</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="0" column="1">
+         <layout class="QHBoxLayout" name="year_layout">
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="year_label">
+            <property name="text">
+             <string>Год</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="year_box">
+            <property name="editable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="0">
+         <layout class="QHBoxLayout" name="inspection_layout">
+          <item>
+           <widget class="QLabel" name="inspection_label">
+            <property name="text">
+             <string>Приёмка</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="inspection_box"/>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="1">
+         <layout class="QHBoxLayout" name="pack_layout">
+          <item>
+           <widget class="QLabel" name="pack_label">
+            <property name="text">
+             <string>Норма уп.</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="pack_text"/>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item row="2" column="1">
+       <layout class="QVBoxLayout" name="category_layout">
         <item>
-         <widget class="QLabel" name="inspection_label">
+         <widget class="QLabel" name="category_label">
           <property name="text">
-           <string>Приёмка</string>
+           <string>Категория</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="inspection_box"/>
+         <widget class="QComboBox" name="category_box">
+          <property name="editable">
+           <bool>true</bool>
+          </property>
+          <property name="insertPolicy">
+           <enum>QComboBox::NoInsert</enum>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
-      <item row="1" column="1">
-       <layout class="QHBoxLayout" name="pack_layout">
+      <item row="3" column="0">
+       <layout class="QVBoxLayout" name="addpar1_layout">
         <item>
-         <widget class="QLabel" name="pack_label">
+         <widget class="QLabel" name="addpar1_label">
           <property name="text">
-           <string>Норма уп.</string>
+           <string>Доп. параметр 1</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="pack_text"/>
+         <widget class="QComboBox" name="addpar1_box">
+          <property name="editable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="1">
+       <layout class="QVBoxLayout" name="photo_layout">
+        <item>
+         <widget class="QLabel" name="photo_label">
+          <property name="text">
+           <string>Фото</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="photo_sublayout">
+          <item>
+           <widget class="QLineEdit" name="photo_edit"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="photo_button">
+            <property name="maximumSize">
+             <size>
+              <width>30</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>...</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </item>
      </layout>
     </item>
-    <item row="2" column="0">
-     <layout class="QGridLayout" name="places_layout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="storage_label">
-        <property name="text">
-         <string>Склад</string>
+    <item>
+     <widget class="QWidget" name="buttons_widget" native="true">
+      <widget class="QWidget" name="layoutWidget">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>278</width>
+         <height>29</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="buttons_layout">
+        <property name="spacing">
+         <number>0</number>
         </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="rack_label">
-        <property name="text">
-         <string>Стеллаж</string>
+        <property name="sizeConstraint">
+         <enum>QLayout::SetDefaultConstraint</enum>
         </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="board_label">
-        <property name="text">
-         <string>Полка</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="box_label">
-        <property name="text">
-         <string>Ящик</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QComboBox" name="storage_box">
-        <property name="editable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="rack_box">
-        <property name="editable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QComboBox" name="board_box">
-        <property name="editable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
-       <widget class="QComboBox" name="box_box">
-        <property name="editable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="2" column="1">
-     <layout class="QVBoxLayout" name="category_layout">
-      <item>
-       <widget class="QLabel" name="category_label">
-        <property name="text">
-         <string>Категория</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="category_box">
-        <property name="editable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="3" column="0">
-     <layout class="QVBoxLayout" name="addpar1_layout">
-      <item>
-       <widget class="QLabel" name="addpar1_label">
-        <property name="text">
-         <string>Доп. параметр 1</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="addpar1_box">
-        <property name="editable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </item>
-    <item row="3" column="1">
-     <layout class="QVBoxLayout" name="addpar2_layout">
-      <item>
-       <widget class="QLabel" name="addpar2_label">
-        <property name="text">
-         <string>Доп. параметр 2</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QComboBox" name="addpar2_box">
-        <property name="editable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-     </layout>
+        <item>
+         <widget class="QPushButton" name="apply_button">
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Применить</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="save_button">
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Сохранить</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="cancel_button">
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Отмена</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>

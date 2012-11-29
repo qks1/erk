@@ -7,6 +7,7 @@ WhiteAddDialog::WhiteAddDialog(int gr, QString name, int mode, QWidget *parent) 
 {
     ui->setupUi(this);
     this->setWindowTitle("Новая деталь");
+    this->ui->name_box->setEditable(true);
     this->ui->name_box->setAutoCompletion(true);
     this->ui->name_box->setEnabled(false);
     this->ui->name_label->setEnabled(false);
@@ -38,6 +39,7 @@ WhiteAddDialog::WhiteAddDialog(int gr, QString name, int mode, QWidget *parent) 
 WhiteAddDialog::WhiteAddDialog(int id, int mode, QWidget *parent) : QDialog(parent), ui(new Ui::whiteAddDialog){
     ui->setupUi(this);
     this->setWindowTitle("Редактирование детали");
+    this->ui->name_box->setEditable(true);
     this->ui->name_box->setAutoCompletion(true);
     this->ui->name_box->setEnabled(false);
     this->ui->name_label->setEnabled(false);
@@ -508,6 +510,7 @@ bool WhiteAddDialog::save_new(){
     params["notes"] = this->ui->notes_edit->toPlainText();
     params["status"] = "1";
     params["years_discounts"] = "0";
+    params["reserve_total"] = "0";
 
     if(this->ui->weight_line->text().length() > 0)
         params["weight"] = this->ui->weight_line->text().replace(",", ".");

@@ -3,7 +3,7 @@
 CustomComboBox::CustomComboBox(QWidget *parent) :
     QComboBox(parent)
 {
-    this->setEditable(true);
+    this->setEditable(false);
     this->setAutoCompletion(true);
     this->setInsertPolicy(QComboBox::NoInsert);
 }

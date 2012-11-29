@@ -5,6 +5,7 @@
 #include "mainwindow.h"
 #include "authorisewindow.h"
 
+
 void create_mainwindow(){
 
 }
@@ -21,7 +22,8 @@ int main(int argc, char **argv){
     bool success = create_connection(base);
 
     // создаём стиль для табвиджета, устанавливающий размер вкладок
-    app.setStyleSheet("QTabBar::tab { min-width:50px; max-height:20px}");
+    app.setStyleSheet("QTabBar::tab { min-width:50px; max-height:20px}"
+                      "QTableView::item:selected {background-color: darkblue; color:white;}");
 
     set_system_font();
 

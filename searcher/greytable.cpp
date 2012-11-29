@@ -1,17 +1,22 @@
 #include "greytable.h"
 
-GreyTable::GreyTable(QWidget *parent) :
-    BaseTable(parent)
+GreyTable::GreyTable(QString settings_section,
+                     bool need_switcher,
+                     bool need_multiselect,
+                     bool blue,
+                     ColumnsStruct *columns,
+                     QWidget *parent) :
+    BaseTable(settings_section, need_switcher, need_multiselect, columns, parent)
 {
     create_new_table();
+    this->blue = blue;
     settings = get_settings();
-    settings_section = "GREY_COLUMNS";
-    original_names = GREY_COLUMNS_NAMES;
+    original_names = columns_grey_names;
 
     table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     table->setAlternatingRowColors(false);
-    this->setStyleSheet("background-color: #D4D0C8");
+    this->setStyleSheet(blue ? "background-color: #80BBFF" : "background-color: #D4D0C8");
     filled = false;
 
     connects();
@@ -23,8 +28,12 @@ GreyTable::~GreyTable(){
     delete settings;
 }
 
-void GreyTable::mouseDoubleClickEvent(QMouseEvent *e){
-    error("","qq");
+void GreyTable::mousePressEvent(QMouseEvent *e){
+    BaseTable::mousePressEvent(e);
+}
+
+void GreyTable::mouseReleaseEvent(QMouseEvent *e){
+    BaseTable::mouseReleaseEvent(e);
 }
 
 inline void GreyTable::connects(){
@@ -34,7 +43,7 @@ inline void GreyTable::connects(){
 }
 
 
-void GreyTable::fill(MyTableModel *query,
+void GreyTable::fill(GreyTableModel *query,
                  QStringList names,
                  int cur_sort_column,
                  Qt::SortOrder cur_sort_order,
@@ -86,9 +95,33 @@ void GreyTable::table_right_click(QPoint pos){
 
 
 //--------------------------------------------------------------------------//
-//--------------------------- СОБЫТИЯ --------------------------------------//
+//------------------------------ МОДЕЛЬ ------------------------------------//
 //--------------------------------------------------------------------------//
 
+GreyTableModel::GreyTableModel(QWidget *parent) : MyTableModel(parent){
+    background_color = QColor("#D4D0C8");
+}
+
+QVariant GreyTableModel::data(const QModelIndex &index, int role) const{
+    if(role == Qt::BackgroundRole){
+        return background_color;
+    }
+    return MyTableModel::data(index, role);
+}
+
 
 //--------------------------------------------------------------------------//
 
+BlueTableModel::BlueTableModel(QWidget *parent) : GreyTableModel(parent){
+
+}
+
+QVariant BlueTableModel::data(const QModelIndex &index, int role) const{
+    if(role == Qt::BackgroundRole){
+        return QColor("#80FFFF");
+    }
+    return MyTableModel::data(index, role);
+}
+
+
+//--------------------------------------------------------------------------//

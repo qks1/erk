@@ -6,7 +6,7 @@ Input::Input(QWidget *parent) :
 {
     // создаём объекты
     id_mode = new QRadioButton("id");
-    begin_mode = new QRadioButton("сначала");
+    begin_mode = new QRadioButton("с начала");
     parts_mode = new QRadioButton("по фрагменту");
     begin_mode->setChecked(true);
 
@@ -73,6 +73,7 @@ inline void Input::set_layout(){
     idlt->addWidget(eqge);
 
     QVBoxLayout *radio = new QVBoxLayout;
+    radio->setMargin(0);
     radio->addLayout(idlt);
     radio->addWidget(begin_mode);
     radio->addWidget(parts_mode);
@@ -80,6 +81,7 @@ inline void Input::set_layout(){
     // основной layout
     QHBoxLayout *layout = new QHBoxLayout();
     layout->setSpacing(0);
+    layout->setMargin(0);
     layout->addLayout(radio);
     layout->addWidget(text);
     layout->addWidget(reset);

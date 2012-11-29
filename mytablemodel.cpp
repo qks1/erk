@@ -19,6 +19,13 @@ QVariant MyTableModel::data (const QModelIndex &index, int role) const{
     if(role == Qt::DisplayRole && this->headerData(index.column(), Qt::Horizontal).toString() == "Год" && QSqlQueryModel::data(index).toInt() == 0 && QSqlQueryModel::data(index).toString().size() > 0)
         return QString("бг");
 
+    if(role == Qt::BackgroundRole){
+        if (0 == index.row() % 2)
+            return QColor(245, 245, 250);
+        else
+            return Qt::white;
+    }
+
     return QSqlQueryModel::data(index, role);
 }
 

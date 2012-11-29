@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>YearsDiscounts</class>
+ <widget class="QDialog" name="YearsDiscounts">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>605</width>
+    <height>543</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>10</y>
+     <width>436</width>
+     <height>251</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="main_layout">
+    <item>
+     <widget class="QLabel" name="name_label">
+      <property name="font">
+       <font>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Наименование: </string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <layout class="QGridLayout" name="years_layout">
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="labels_left_layout">
+        <item>
+         <widget class="QLabel" name="year_laft_label">
+          <property name="text">
+           <string>Год</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="percenrts_left_label">
+          <property name="text">
+           <string>%</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="retail_left_label">
+          <property name="text">
+           <string>Розн.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="whole_left_label">
+          <property name="text">
+           <string>Опт.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="manual_left_label">
+          <property name="text">
+           <string>Р</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="1">
+       <layout class="QHBoxLayout" name="labels_middle_layout">
+        <item>
+         <widget class="QLabel" name="year_middle_label">
+          <property name="text">
+           <string>Год</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="percenrts_middle_label">
+          <property name="text">
+           <string>%</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="retail_middle_label">
+          <property name="text">
+           <string>Розн.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="whole_middle_label">
+          <property name="text">
+           <string>Опт.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="manual_middle_label">
+          <property name="text">
+           <string>Р</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="0" column="2">
+       <layout class="QHBoxLayout" name="labels_right_layout">
+        <item>
+         <widget class="QLabel" name="year_right_label">
+          <property name="text">
+           <string>Год</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="percenrts_right_label">
+          <property name="text">
+           <string>%</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="retail_right_label">
+          <property name="text">
+           <string>Розн.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="whole_right_label">
+          <property name="text">
+           <string>Опт.</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="manual_right_label">
+          <property name="text">
+           <string>Р</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="bottom_layout">
+      <item>
+       <layout class="QVBoxLayout" name="remember_layout">
+        <item>
+         <widget class="QCheckBox" name="remember_checkbox">
+          <property name="text">
+           <string>Запомнить года</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="remember_spacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="updown_layout">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="up_button">
+          <property name="maximumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="images.qrc">
+            <normaloff>:/up</normaloff>:/up</iconset>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="down_button">
+          <property name="maximumSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset resource="images.qrc">
+            <normaloff>:/down</normaloff>:/down</iconset>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="buttons_layout">
+        <property name="spacing">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="apply_button">
+          <property name="text">
+           <string>Записать</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="close_button">
+          <property name="text">
+           <string>Закрыть</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources>
+  <include location="images.qrc"/>
+ </resources>
+ <connections/>
+</ui>

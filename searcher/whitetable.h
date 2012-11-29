@@ -21,6 +21,7 @@ public:
 
     QDate retail_change_date;
     void set_date();
+    bool prices_access;
 
     QVariant data(const QModelIndex &index, int role) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
@@ -32,7 +33,11 @@ class WhiteTable : public BaseTable
 {
     Q_OBJECT
 public:
-    explicit WhiteTable(QWidget *parent = 0);
+    explicit WhiteTable(QString settings_section,
+                        bool need_switcher,
+                        bool need_multiselect,
+                        ColumnsStruct *columns,
+                        QWidget *parent = 0);
     ~WhiteTable();
 
     void fill(WhiteTableModel*, QStringList, int, Qt::SortOrder, bool);       // функция заполнения таблицы

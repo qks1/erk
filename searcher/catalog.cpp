@@ -7,20 +7,18 @@
 Catalog::Catalog(QWidget *parent) :
     QWidget(parent){
 
-    // В конструкторе класса создаём объекты
     groups = new QTreeWidget();
     header = groups->header();
-    default_header = "Выберите группу";
 
     // кнопка сброса фильтра по группам должна лежать на заголовке каталога,
     // поэтому передаём указатель на него в качестве виджета-предка
     reset_groups = new QPushButton("X", header);
 
-    // устанавливаем, чтобы у каталога всегда была видна полоса прокрутки
-    // (нужно, чтобы корректно отображалась кнопка сброса фильтра)
-    groups->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    // устанавливаем, чтобы у каталога никогда не отображалась полоса прокрутки
+    groups->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    // устанавливаем заголовок каталога по умолчанию
+    // задаём устанавливаем заголовок каталога по умолчанию
+    default_header = "Выберите группу";
     groups->setHeaderLabel(default_header);
 
     // заполняем каталог
@@ -35,6 +33,7 @@ Catalog::Catalog(QWidget *parent) :
     QHBoxLayout* lt = new QHBoxLayout;
     lt->addWidget(groups);
     setLayout(lt);
+    lt->setMargin(0);
 
     // соединяем сигналы со слотами
     connects();
@@ -45,20 +44,16 @@ Catalog::Catalog(QWidget *parent) :
 
 inline void Catalog::connects(){
     // при выборе группы из каталога - установить фильтр по группам
-    QObject::connect(this->groups, SIGNAL(itemActivated(QTreeWidgetItem*, int)),
-                     this, SLOT(change_group(QTreeWidgetItem*, int)));
+    QObject::connect(this->groups, SIGNAL(itemActivated(QTreeWidgetItem*, int)), SLOT(change_group(QTreeWidgetItem*, int)));
 
     // при нажатии кнопки сброса фильтра по группам - сбросить его
-    //QObject::connect(this->reset_groups, SIGNAL(clicked()), SLOT(clear_group()));
     QObject::connect(this->reset_groups, SIGNAL(clicked()), SIGNAL(hide_catalog()));
 
     // при выборе группы из каталога - установить заголовок каталога
-    QObject::connect(this->groups, SIGNAL(itemActivated(QTreeWidgetItem*, int)),
-                     this, SLOT(change_header(QTreeWidgetItem*,int)));
+    QObject::connect(this->groups, SIGNAL(itemActivated(QTreeWidgetItem*, int)), SLOT(change_header(QTreeWidgetItem*,int)));
 
     // при сбросе фильтра по группам - установить заголовок каталога по умолчанию
-    QObject::connect(this->reset_groups, SIGNAL(clicked()),
-                     this, SLOT(clear_header()));
+    QObject::connect(this->reset_groups, SIGNAL(clicked()), SLOT(clear_header()));
 }
 
 //--------------------------------------------------------------------------//
@@ -78,11 +73,8 @@ void Catalog::move_button(){
     // ширина и высота кнопки должны быть равны высоте заголовка
     int size = header->height();
 
-    // получим ширину вертикального скроллбара
-    int scrollbar_width = groups->verticalScrollBar()->width();
-
-    // отстоять от левого края кнопка должна на (ширина_каталога-ширина_скроллбара-ширина_кнопки-небольшой_отступ)
-    int wdth = groups->width() - scrollbar_width - size - 5;
+    // отстоять от левого края кнопка должна на (ширина_каталога-ширина_кнопки-небольшой_отступ)
+    int wdth = groups->width() - size - 5;
 
     // наконец, устанавливаем геометрию кнопки
     reset_groups->setGeometry(wdth, 0, size, size);
@@ -126,17 +118,29 @@ void Catalog::clear_header(){
 //--------------------------- СОБЫТИЯ --------------------------------------//
 //--------------------------------------------------------------------------//
 
-void Catalog::resizeEvent(QResizeEvent *){
+void Catalog::resizeEvent(QResizeEvent *e){
     // при изменении размеров каталога (будь то изменение размеров окна
     // или перемещение разделителя) необходимо корректировать положение кнопки сброса
     move_button();
+    QWidget::resizeEvent(e);
 }
 
 //--------------------------------------------------------------------------//
 
-void Catalog::showEvent(QShowEvent *){
+void Catalog::showEvent(QShowEvent *e){
     // при отрисовке каталога на экране корректировать положение кнопки сброса
     move_button();
+    QWidget::showEvent(e);
 }
 
 //--------------------------------------------------------------------------//
+
+void Catalog::mousePressEvent(QMouseEvent *e){
+    QWidget::mousePressEvent(e);
+}
+
+void Catalog::mouseReleaseEvent(QMouseEvent *e){
+    //if(e->button() == Qt::LeftButton)
+    move_button();
+    QWidget::mouseReleaseEvent(e);
+}

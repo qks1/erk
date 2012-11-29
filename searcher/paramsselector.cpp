@@ -31,8 +31,8 @@ inline void ParamsSelector::set_layout(){
     lt->setMargin(0);
     lt->addWidget(button);
     lt->addWidget(items);
-    this->button->setFixedHeight(this->button->fontMetrics().height() + 4);
-    this->setFixedHeight(button->height() + items->height());
+    this->button->setFixedHeight(this->button->font().pointSize() * 2.5);
+    //this->setFixedHeight(button->height()*2/* + items->height()*/);
 
     this->setLayout(lt);
 }

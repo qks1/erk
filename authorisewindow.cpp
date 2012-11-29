@@ -13,6 +13,9 @@ AuthoriseWindow::AuthoriseWindow(bool success, QWidget *parent) :
     // ширина кнопки "настройки..."
     this->ui->settings_button->setMaximumWidth(this->ui->settings_button->fontMetrics().width('_') * (this->ui->settings_button->text().length() + 2));
 
+    // высота окна
+    this->setFixedHeight(qApp->font().pointSize()*20);
+
     // заголовок окна
     this->setWindowTitle("Авторизация");
 

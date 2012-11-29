@@ -1,10 +1,19 @@
 #include "searcher.h"
 
-Searcher::Searcher(QWidget *parent) :
+Searcher::Searcher(ReserveStruct rstruct,
+                   ColumnsStruct *white_columns,
+                   ColumnsStruct *grey_columns,
+                   ColumnsStruct *reserve_columns,
+                   QWidget *parent) :
     QWidget(parent)
 {
-    white_searcher = new WhiteSearcher(this);
-    grey_searcher = 0;
+    need_blue = get_privilege(Privileges::Blue_screen_access);
+    //reserve = new ManagerReserveWidget(this);
+    white_searcher = new WhiteSearcher(rstruct, need_blue, white_columns, this);
+    grey_searcher = new GreySearcher(rstruct, need_blue, false, grey_columns, this);
+    blue_searcher = 0;
+    if(need_blue)
+        blue_searcher = new GreySearcher(rstruct, need_blue, true, grey_columns, this);
     filters = new Filters();
     filters_default();
     white_searcher->fill_table(filters, false, false);
@@ -12,16 +21,42 @@ Searcher::Searcher(QWidget *parent) :
     GLOBAL_MODE = SEARCHER_WHITE_MODE;
     set_layout();
     connects();
+    grey_connects(grey_searcher);
+    if(need_blue)
+        grey_connects(blue_searcher);
 }
 
 
 inline void Searcher::set_layout(){
     stack = new QStackedWidget();
     stack->addWidget(white_searcher);
+    stack->addWidget(grey_searcher);
+    if(need_blue)
+        stack->addWidget(blue_searcher);
+    stack->setCurrentWidget(white_searcher);
+
+    //grey_searcher->hide();
 
     QHBoxLayout *hlt = new QHBoxLayout();
     hlt->addWidget(stack);
     this->setLayout(hlt);
+}
+
+void Searcher::switch_reserves(){
+    white_searcher->switch_reserve();
+    if(grey_searcher != 0)
+        grey_searcher->switch_reserve();
+    if(need_blue && blue_searcher != 0)
+        blue_searcher->switch_reserve();
+}
+
+void Searcher::set_reserve_header(){
+    if(!need_blue){
+        if(!(this->white_searcher->isHidden()))
+            this->white_searcher->set_reserve_header();
+        else if(!(this->grey_searcher->isHidden()))
+            this->grey_searcher->set_reserve_header();
+    }
 }
 
 void Searcher::resize_all(){
@@ -30,14 +65,6 @@ void Searcher::resize_all(){
 
 void Searcher::set_date(){
     this->white_searcher->set_date();
-}
-
-void Searcher::white_section_moved(){
-    emit section_moved(SEARCHER_WHITE_MODE);
-}
-
-void Searcher::grey_section_moved(){
-    emit section_moved(SEARCHER_GREY_MODE);
 }
 
 void Searcher::restore_white_width(int index, int width){
@@ -50,14 +77,14 @@ void Searcher::restore_grey_width(int index, int width){
         grey_searcher->restore_width(index, width);
 }
 
-void Searcher::restore_white_order(){
+void Searcher::restore_white_order(int logical, int newvisua){
     if(white_searcher != 0)
-        white_searcher->restore_order();
+        white_searcher->restore_order(logical, newvisua);
 }
 
-void Searcher::restore_grey_order(){
+void Searcher::restore_grey_order(int logical, int newvisual){
     if(grey_searcher != 0)
-        grey_searcher->restore_order();
+        grey_searcher->restore_order(logical, newvisual);
 }
 
 int Searcher::open_white_columns_list(){
@@ -90,7 +117,7 @@ inline void Searcher::filters_default(){
     filters->reset_white_id();
     filters->reset_beginname();
     filters->set_group_filter(0, "");
-    filters->set_columns_filter(WHITE_TABLE_COLUMNS);
+    filters->set_columns_filter(columns_white_table);
     filters->set_prices(ALL_PRICES);
     filters->set_quantity(ALL_QUANTITIES);
     SortingOrder order = {DEFAULT_WHITE_SORT_COLUMN, DEFAULT_WHITE_SORT_ORDER};
@@ -140,43 +167,82 @@ inline void Searcher::connects(){
     QObject::connect(this->white_searcher, SIGNAL(prices_clicked()), SLOT(switch_prices_filter()));
     QObject::connect(this->white_searcher, SIGNAL(quantity_clicked()), SLOT(switch_quantity_filter()));
     QObject::connect(this->white_searcher, SIGNAL(last_filter_changed(int)), SLOT(set_last_filter(int)));
-    QObject::connect(this->white_searcher, SIGNAL(create_grey(int)), SLOT(open_grey(int)));
-    QObject::connect(this->white_searcher, SIGNAL(section_resized(int, int)), SLOT(white_section_resized(int, int)));
-    QObject::connect(this->white_searcher, SIGNAL(section_moved()), SLOT(white_section_moved()));
+    QObject::connect(this->white_searcher, SIGNAL(create_grey(int, QString)), SLOT(open_grey(int, QString)));
+    QObject::connect(this->white_searcher, SIGNAL(create_blue(int, QString)), SLOT(open_blue(int, QString)));
+    QObject::connect(this->white_searcher, SIGNAL(section_resized(int, int, QString)), SLOT(white_section_resized(int, int, QString)));
+    QObject::connect(this->white_searcher, SIGNAL(section_moved(int, int, QString)), SLOT(white_section_moved(int, int, QString)));
     QObject::connect(this->white_searcher, SIGNAL(reset_param_signal(int)), SLOT(reset_param_filter(int)));
     QObject::connect(this->white_searcher, SIGNAL(open_settings()), SIGNAL(open_settings()));
     QObject::connect(this->white_searcher, SIGNAL(catalog_hides()), SIGNAL(catalog_hides()));
     QObject::connect(this->white_searcher, SIGNAL(catalog_shows()), SIGNAL(catalog_shows()));
+    QObject::connect(this->white_searcher, SIGNAL(columns_changed()), SIGNAL(white_columns_changed()));
+    QObject::connect(this->white_searcher, SIGNAL(need_refresh()), SIGNAL(need_white_refresh()));
+    QObject::connect(this->white_searcher, SIGNAL(switch_reserve_signal()), SIGNAL(switch_reserve_signal()));
+    QObject::connect(this->white_searcher, SIGNAL(refresh_searcher()), SIGNAL(need_total_refresh()));
 }
 
-inline void Searcher::grey_connects(){
+void Searcher::tempgreyslot(){
+    qDebug("receive from grey, force it to TabWidget...");
+    emit switch_reserve_signal();
+}
+
+void Searcher::tempwhiteslot(){
+    qDebug("receive from white, force it to TabWidget...");
+    emit switch_reserve_signal();
+}
+
+inline void Searcher::grey_connects(GreySearcher *g){
     // сигналы от серого поисковика
-    QObject::connect(this->grey_searcher, SIGNAL(close_grey(QModelIndex)), SLOT(close_grey(QModelIndex)));
-    QObject::connect(this->grey_searcher, SIGNAL(limits_changed(pair)), SLOT(set_grey_limits_filter(pair)));
-    QObject::connect(this->grey_searcher, SIGNAL(limits_removed()), SLOT(set_grey_nolimits()));
-    QObject::connect(this->grey_searcher, SIGNAL(limits_restored()), SLOT(set_grey_limits()));
-    QObject::connect(this->grey_searcher, SIGNAL(sort_order_changed(int, Qt::SortOrder)), SLOT(change_grey_sort_order(int, Qt::SortOrder)));
-    QObject::connect(this->grey_searcher, SIGNAL(text_changed_signal(int, int, QString)), SLOT(set_text_filter(int, int, QString)));
-    QObject::connect(this->grey_searcher, SIGNAL(reset_signal()), SLOT(reset_grey_text_filters()));
-    QObject::connect(this->grey_searcher, SIGNAL(storage_signal(QString)), SLOT(change_grey_storage(QString)));
-    QObject::connect(this->grey_searcher, SIGNAL(rack_signal(QString)), SLOT(change_grey_rack(QString)));
-    QObject::connect(this->grey_searcher, SIGNAL(board_signal(QString)), SLOT(change_grey_board(QString)));
-    QObject::connect(this->grey_searcher, SIGNAL(box_signal(QString)), SLOT(change_grey_box(QString)));
-    QObject::connect(this->grey_searcher, SIGNAL(reset_boxes_signal()), SLOT(reset_grey_boxes()));
-    QObject::connect(this->grey_searcher, SIGNAL(change_one_year_signal(QString,int)), SLOT(change_grey_one_year(QString,int)));
-    QObject::connect(this->grey_searcher, SIGNAL(change_from_year_signal(QString,int)), SLOT(change_grey_from_year(QString,int)));
-    QObject::connect(this->grey_searcher, SIGNAL(change_to_year_signal(QString,int)), SLOT(change_grey_to_year(QString,int)));
-    QObject::connect(this->grey_searcher, SIGNAL(refresh()), SLOT(refresh_grey()));
-    QObject::connect(this->grey_searcher, SIGNAL(reset_years()), SLOT(reset_grey_years()));
-    QObject::connect(this->grey_searcher, SIGNAL(change_insp_signal(QString)), SLOT(change_grey_insp(QString)));
-    QObject::connect(this->grey_searcher, SIGNAL(reset_insp_signal()), SLOT(reset_grey_insp()));
-    QObject::connect(this->grey_searcher, SIGNAL(change_add_info_signal(QString)), SLOT(change_grey_add_info(QString)));
-    QObject::connect(this->grey_searcher, SIGNAL(change_defect_signal(QString)), SLOT(change_grey_defect(QString)));
-    QObject::connect(this->grey_searcher, SIGNAL(change_category_signal(QString)), SLOT(change_grey_category(QString)));
-    QObject::connect(this->grey_searcher, SIGNAL(reset_add_boxes_signal()), SLOT(reset_add_boxes()));
-    QObject::connect(this->grey_searcher, SIGNAL(total_reset_signal()), SLOT(grey_reset_slot()));
-    QObject::connect(this->grey_searcher, SIGNAL(section_resized(int, int)), SLOT(grey_section_resized(int, int)));
-    QObject::connect(this->grey_searcher, SIGNAL(section_moved()), SLOT(grey_section_moved()));
+    QObject::connect(g, SIGNAL(close_grey(QModelIndex)), SLOT(close_grey(QModelIndex)));
+    QObject::connect(g, SIGNAL(limits_changed(pair)), SLOT(set_grey_limits_filter(pair)));
+    QObject::connect(g, SIGNAL(limits_removed()), SLOT(set_grey_nolimits()));
+    QObject::connect(g, SIGNAL(limits_restored()), SLOT(set_grey_limits()));
+    QObject::connect(g, SIGNAL(sort_order_changed(int, Qt::SortOrder)), SLOT(change_grey_sort_order(int, Qt::SortOrder)));
+    QObject::connect(g, SIGNAL(text_changed_signal(int, int, QString)), SLOT(set_text_filter(int, int, QString)));
+    QObject::connect(g, SIGNAL(reset_signal()), SLOT(reset_grey_text_filters()));
+    QObject::connect(g, SIGNAL(storage_signal(QString)), SLOT(change_grey_storage(QString)));
+    QObject::connect(g, SIGNAL(rack_signal(QString)), SLOT(change_grey_rack(QString)));
+    QObject::connect(g, SIGNAL(board_signal(QString)), SLOT(change_grey_board(QString)));
+    QObject::connect(g, SIGNAL(box_signal(QString)), SLOT(change_grey_box(QString)));
+    QObject::connect(g, SIGNAL(reset_boxes_signal()), SLOT(reset_grey_boxes()));
+    QObject::connect(g, SIGNAL(change_one_year_signal(QString,int)), SLOT(change_grey_one_year(QString,int)));
+    QObject::connect(g, SIGNAL(change_from_year_signal(QString,int)), SLOT(change_grey_from_year(QString,int)));
+    QObject::connect(g, SIGNAL(change_to_year_signal(QString,int)), SLOT(change_grey_to_year(QString,int)));
+    QObject::connect(g, SIGNAL(refresh()), SLOT(refresh_grey()));
+    QObject::connect(g, SIGNAL(reset_years()), SLOT(reset_grey_years()));
+    QObject::connect(g, SIGNAL(change_insp_signal(QString)), SLOT(change_grey_insp(QString)));
+    QObject::connect(g, SIGNAL(reset_insp_signal()), SLOT(reset_grey_insp()));
+    QObject::connect(g, SIGNAL(change_add_info_signal(QString)), SLOT(change_grey_add_info(QString)));
+    QObject::connect(g, SIGNAL(change_defect_signal(QString)), SLOT(change_grey_defect(QString)));
+    QObject::connect(g, SIGNAL(change_category_signal(QString)), SLOT(change_grey_category(QString)));
+    QObject::connect(g, SIGNAL(reset_add_boxes_signal()), SLOT(reset_add_boxes()));
+    QObject::connect(g, SIGNAL(total_reset_signal()), SLOT(grey_reset_slot()));
+    QObject::connect(g, SIGNAL(section_resized(int, int, QString)), SLOT(grey_section_resized(int, int, QString)));
+    QObject::connect(g, SIGNAL(section_moved(int, int, QString)), SLOT(grey_section_moved(int, int, QString)));
+    QObject::connect(g, SIGNAL(columns_changed()), SIGNAL(grey_columns_changed()));
+    QObject::connect(g, SIGNAL(open_settings()), SIGNAL(open_settings()));
+    QObject::connect(g, SIGNAL(need_refresh()), SIGNAL(need_grey_refresh()));
+    QObject::connect(g, SIGNAL(switch_reserve_signal()), SIGNAL(switch_reserve_signal()));
+    QObject::connect(g, SIGNAL(refresh_searcher()), SIGNAL(need_total_refresh()));
+
+    if(g == blue_searcher){
+        QObject::connect(g, SIGNAL(need_blue_refresh()), SIGNAL(need_blue_refresh()));
+    }
+}
+
+void Searcher::refresh_white_table(){
+    white_searcher->refresh_table();
+}
+
+void Searcher::refresh_grey_table(){
+    if(grey_searcher != 0)
+        grey_searcher->refresh_table();
+}
+
+void Searcher::refresh_blue_table(){
+    if(need_blue && blue_searcher != 0){
+        blue_searcher->refresh_table();
+    }
 }
 
 void Searcher::show_white_catalog(){
@@ -191,12 +257,20 @@ int Searcher::mode(){
     return filters->mode();
 }
 
-void Searcher::white_section_resized(int index, int width){
-    emit section_resized(SEARCHER_WHITE_MODE, index, width);
+void Searcher::white_section_resized(int index, int width, QString section){
+    emit section_resized(SEARCHER_WHITE_MODE, index, width, section);
 }
 
-void Searcher::grey_section_resized(int index, int width){
-    emit section_resized(SEARCHER_GREY_MODE, index, width);
+void Searcher::grey_section_resized(int index, int width, QString section){
+    emit section_resized(SEARCHER_GREY_MODE, index, width, section);
+}
+
+void Searcher::white_section_moved(int logical, int newvisual, QString section){
+    emit section_moved(SEARCHER_WHITE_MODE, logical, newvisual, section);
+}
+
+void Searcher::grey_section_moved(int logical, int newvisual, QString section){
+    emit section_moved(SEARCHER_GREY_MODE, logical, newvisual, section);
 }
 
 void Searcher::reset_white_text_filters(){
@@ -219,6 +293,12 @@ void Searcher::reset_text_filters(int mode){
         this->filters->reset_grey_text_id();
         this->grey_searcher->clear_text();
     }
+    else if(mode == BLUE_MODE){
+        this->filters->reset_grey_beginname();
+        this->filters->reset_grey_text_id();
+        this->blue_searcher->clear_text();
+    }
+    emit rename_tab("");
 }
 
 void Searcher::set_group_filter(int group, QString name){
@@ -228,14 +308,16 @@ void Searcher::set_group_filter(int group, QString name){
     filters->set_last_filter(GROUPS_FILTER);
     if(filters->mode() == WHITE_MODE)
         white_searcher->fill_table(this->filters, true, false);
+    emit rename_tab(name);
 }
 
 void Searcher::reset_group_filter(){
-        this->filters->reset_params();
+    this->filters->reset_params();
     this->filters->set_group_filter(0, "");
-        this->filters->set_last_filter(GROUPS_FILTER);
-        if(filters->mode() == WHITE_MODE)
-            white_searcher->fill_table(this->filters, true, false);
+    this->filters->set_last_filter(GROUPS_FILTER);
+    if(filters->mode() == WHITE_MODE)
+        white_searcher->fill_table(this->filters, true, false);
+    emit rename_tab("");
 }
 
 void Searcher::set_limits_filter(pair limits){
@@ -264,6 +346,8 @@ void Searcher::set_grey_limits_filter(pair limits){
     filters->set_last_filter(GREY_LIMITS_FILTER);
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    else if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::set_grey_nolimits(){
@@ -271,6 +355,8 @@ void Searcher::set_grey_nolimits(){
     filters->set_last_filter(GREY_NOLIMITS_FILTER);
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    else if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::set_grey_limits(){
@@ -278,6 +364,8 @@ void Searcher::set_grey_limits(){
     filters->set_last_filter(GREY_SETLIMITS_FILTER);
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    else if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::change_grey_one_year(QString year, int mode){
@@ -286,6 +374,8 @@ void Searcher::change_grey_one_year(QString year, int mode){
     filters->set_last_filter(GREY_YEARS_FILTER);
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    else if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::change_grey_from_year(QString year, int mode){
@@ -294,6 +384,8 @@ void Searcher::change_grey_from_year(QString year, int mode){
     filters->set_last_filter(GREY_YEARS_FILTER);
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    else if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::change_grey_to_year(QString year, int mode){
@@ -302,6 +394,8 @@ void Searcher::change_grey_to_year(QString year, int mode){
     filters->set_last_filter(GREY_YEARS_FILTER);
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    else if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::reset_grey_years(){
@@ -310,12 +404,16 @@ void Searcher::reset_grey_years(){
     filters->set_grey_to_year("");
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    else if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::grey_reset_slot(){
     grey_filters_default();
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    else if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::set_text_filter(int mode, int type, QString text){
@@ -327,7 +425,7 @@ void Searcher::set_text_filter(int mode, int type, QString text){
         // и текущее значение текстового фильтра - тоже, если ранее текстовое поле было очищено
         //this->reset_text_filters();
     }
-    else if(mode == GREY_MODE){
+    else if(mode == GREY_MODE  || mode == BLUE_MODE){
         // сбрасываем фильтры по местам
         clear_grey_boxes();
     }
@@ -340,16 +438,19 @@ void Searcher::set_text_filter(int mode, int type, QString text){
             else if(this->white_searcher->input_id_combobox_value() == 1)
                 this->filters->set_white_id_mode(EQUAL);
             filters->set_last_filter(ID_FILTER);
+            emit rename_tab(QString("id: ").append(text));
         }
-        else if(mode == GREY_MODE){
+        else if(mode == GREY_MODE || mode == BLUE_MODE){
+            GreySearcher *t = (mode == GREY_MODE ? grey_searcher : blue_searcher);
             this->filters->reset_grey_id();
             // устанавливаем фильтр по id
             this->filters->set_grey_text_id(text.toInt());
-            if(this->grey_searcher->input_id_combobox_value() == 0)
+            if(t->input_id_combobox_value() == 0)
                 this->filters->set_grey_id_mode(GREATER_OR_EQUAL);
-            else if(this->grey_searcher->input_id_combobox_value() == 1)
+            else if(t->input_id_combobox_value() == 1)
                 this->filters->set_grey_id_mode(EQUAL);
             filters->set_last_filter(GREY_TEXT_ID_FILTER);
+            emit rename_tab(QString("серый id: ").append(text));
         }
     }
     else if(type == BEGIN_MODE){
@@ -358,11 +459,13 @@ void Searcher::set_text_filter(int mode, int type, QString text){
         if(mode == WHITE_MODE){
             this->filters->set_beginname(text.toUpper());
             filters->set_last_filter(BEGIN_TEXT_FILTER);
+            emit rename_tab(QString("с нач.: ").append(text));
         }
-        else if(mode == GREY_MODE){
+        else if(mode == GREY_MODE || mode == BLUE_MODE){
             this->filters->reset_grey_id();
             this->filters->set_grey_beginname(text.toUpper());
             filters->set_last_filter(GREY_BEGIN_TEXT_FILTER);
+            emit rename_tab(QString("серый с нач.: ").append(text));
         }
     }
     else if(type == PARTS_MODE){
@@ -383,6 +486,10 @@ void Searcher::set_text_filter(int mode, int type, QString text){
                 grey_searcher->fill_table(this->filters, true);
                 return;
             }
+            else if(patterns.size() == 0 && filters->mode() == BLUE_MODE){
+                blue_searcher->fill_table(this->filters, true);
+                return;
+            }
         }
         else{
             patterns.clear();
@@ -390,11 +497,13 @@ void Searcher::set_text_filter(int mode, int type, QString text){
         if(mode == WHITE_MODE){
             filters->set_parts(patterns);
             filters->set_last_filter(PARTS_TEXT_FILTER);
+            emit rename_tab(QString("фрагм.: ").append(text));
         }
-        else if(mode == GREY_MODE){
+        else if(mode == GREY_MODE || mode == BLUE_MODE){
             this->filters->reset_grey_id();
             filters->set_grey_parts(patterns);
             filters->set_last_filter(GREY_PARTS_TEXT_FILTER);
+            emit rename_tab(QString("серый фрагм.: ").append(text));
         }
     }
     else{
@@ -404,6 +513,8 @@ void Searcher::set_text_filter(int mode, int type, QString text){
         white_searcher->fill_table(this->filters, false, false);
     else if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    else if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::change_sort_order(int column, Qt::SortOrder order){
@@ -422,6 +533,8 @@ void Searcher::change_grey_sort_order(int column, Qt::SortOrder order){
     filters->set_last_filter(GREY_SORT_FILTER);
     if(filters->mode() == GREY_MODE)
         grey_searcher->fill_table(this->filters, false);
+    if(filters->mode() == BLUE_MODE)
+        blue_searcher->fill_table(this->filters, false);
 }
 
 void Searcher::button_sort(int num){
@@ -602,26 +715,52 @@ void Searcher::reset_grey_insp(){
     grey_searcher->fill_table(filters, false);
 }
 
-void Searcher::open_grey(int id){
+void Searcher::open_blue(int id, QString name){
+    old_grey_filters = this->filters;
     grey_filters_default();
     filters->set_grey_id(id);
     set_last_filter(GREY_ID_FILTER);
-    grey_searcher = new GreySearcher();
+    blue_searcher->fill_table(this->filters, false);
+    blue_searcher->set_reserve_header();
+    stack->setCurrentWidget(blue_searcher);
+    filters->set_mode(BLUE_MODE);
+    GLOBAL_MODE = SEARCHER_BLUE_MODE;
+
+    emit rename_tab(name, true);
+}
+
+void Searcher::close_blue(){
+    this->filters = old_grey_filters;
+    stack->setCurrentWidget(grey_searcher);
+    filters->set_mode(GREY_MODE);
+    GLOBAL_MODE = SEARCHER_WHITE_MODE;
+    //emit rename_tab(old_tab_name);
+}
+
+void Searcher::open_grey(int id, QString name){
+    //if(need_blue )
+    grey_filters_default();
+    filters->set_grey_id(id);
+    set_last_filter(GREY_ID_FILTER);
+    //grey_searcher->open_trademark(id, filters);
     grey_searcher->fill_table(this->filters, false);
-    stack->addWidget(grey_searcher);
+    grey_searcher->set_reserve_header();
     stack->setCurrentWidget(grey_searcher);
     filters->set_mode(GREY_MODE);
     GLOBAL_MODE = SEARCHER_GREY_MODE;
-    grey_connects();
+
+    emit rename_tab(name, true);
 }
 
 void Searcher::close_grey(QModelIndex i){
     set_last_filter(CLOSE_GREY_FILTER);
     stack->setCurrentWidget(white_searcher);
-    stack->removeWidget(grey_searcher);
-    grey_searcher = 0;
     filters->set_mode(WHITE_MODE);
+    white_searcher->set_reserve_header();
     GLOBAL_MODE = SEARCHER_WHITE_MODE;
+    //refresh_white_table();
+
+    emit rename_tab(old_tab_name);
 }
 
 void Searcher::refresh_grey(){

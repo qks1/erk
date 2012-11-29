@@ -3,6 +3,7 @@
 
 #include <QtGui>
 #include "searcher.h"
+#include "constants.h"
 
 //class Searcher;
 
@@ -14,21 +15,30 @@ public:
 private:
     int max;
 
+signals:
+    void save_width_signal(int, int, QString);
+    void save_order_signal(int, int, QString);
+
 public slots:
     void close_tab(int index);
-    Searcher *add_tab();
+    Searcher *add_tab(ReserveStruct, ColumnsStruct*, ColumnsStruct*, ColumnsStruct*);
+    void set_tab_name(QString name, bool save = false);
 
 private slots:
     void save_searcher_width(int mode, int index, int width);
-    void save_searcher_order(int mode);
-    void save_width(int mode, int index, int width);
-    void save_order(int mode);
+    void save_searcher_order(int mode, int logical, int newvisual);
+    void save_width(int mode, int index, int width, QString section);
+    void save_order(int mode, int logical, int newvisual, QString section);
+    void switch_reserves();
+    void set_reserve_header();
+    void refresh_white_searcher();
+    void refresh_grey_searcher();
+    void refresh_blue_searcher();
+    void refresh_searcher();
 
 
 
 signals:
-    void resize_section(int, int, int);
-    void move_section(int);
     void open_settings();
 };
 

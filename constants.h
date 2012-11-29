@@ -63,6 +63,7 @@
 // режимы поисковика
 #define WHITE_MODE 600
 #define GREY_MODE 601
+#define BLUE_MODE 602
 
 // режимы фильтра по годам в сером экране
 #define ONE_YEAR_MODE 700
@@ -71,6 +72,7 @@
 // режимы
 #define SEARCHER_WHITE_MODE 800
 #define SEARCHER_GREY_MODE 801
+#define SEARCHER_BLUE_MODE 802
 
 // режимы диалогов в поисковике
 #define DIALOG_WHITE_NEW 900
@@ -85,62 +87,26 @@
 ///////////////////////
 
 
-// ПОИСКОВИК, БЕЛЫЙ ЭКРАН
-#define COLUMN_WHITE_ID "t.id as id"
-#define COLUMN_WHITE_PHOTO "t.photo as photo"
-#define COLUMN_WHITE_YEARSDISCOUNTS "t.years_discounts as years_discounts"
-#define COLUMN_WHITE_NAME "t.name as name"
-#define COLUMN_WHITE_SUBGROUP "s.name as subgroup"
-#define COLUMN_WHITE_QUANTITY "t.quantity as quantity"
-#define COLUMN_WHITE_RETAILPRICE "t.price_ret as price_ret"
-#define COLUMN_WHITE_WHOLEPRICE "t.price_whole as price_whole"
-#define COLUMN_WHITE_WHOLEBEGIN "t.whole_begin as whole_begin"
-#define COLUMN_WHITE_WHOLEUNIT "t.whole_begin_unit as whole_begin_unit"
-#define COLUMN_WHITE_PAR1 "t.par1_val as par1_val"
-#define COLUMN_WHITE_PAR2 "t.par2_val as par2_val"
-#define COLUMN_WHITE_PAR3 "t.par3_val as par3_val"
-#define COLUMN_WHITE_PAR4 "t.par4_val as par4_val"
-#define COLUMN_WHITE_PAR5 "t.par5_val as par5_val"
-#define COLUMN_WHITE_PAR6 "t.par6_val as par6_val"
-#define COLUMN_WHITE_PAR7 "t.par7_val as par7_val"
-#define COLUMN_WHITE_PAR8 "t.par8_val as par8_val"
-#define COLUMN_WHITE_PAR9 "t.par9_val as par9_val"
-#define COLUMN_WHITE_PAR10 "t.par10_val as par10_val"
-#define COLUMN_WHITE_PAR11 "t.par11_val as par11_val"
-#define COLUMN_WHITE_PAR12 "t.par12_val as par12_val"
-#define COLUMN_WHITE_UNIT "u.unit_name as unit_name"
-#define COLUMN_WHITE_WEIGHT "t.weight as weight"
-#define COLUMN_WHITE_WEIGHTUNIT "w.weight_unit_name as weight_unit_name"
-#define COLUMN_WHITE_NOTES "t.notes as notes"
-#define COLUMN_WHITE_CREATED "to_char(t.created, 'YYYY-MM-DD HH24:MI:SS') as created"
-#define COLUMN_WHITE_EDITED "to_char(t.edited, 'YYYY-MM-DD HH24:MI:SS') as edited"
-#define COLUMN_WHITE_RETAILUPDATE "CASE WHEN t.retail_update IS NULL THEN '1900-01-01' ELSE to_char(t.retail_update, 'YYYY-MM-DD') END as retail_update"
-#define COLUMN_WHITE_WHOLEUPDATE "CASE WHEN t.whole_update IS NULL THEN '1900-01-01' ELSE to_char(t.whole_update, 'YYYY-MM-DD') END as whole_update"
-#define COLUMN_WHITE_WHOLEBEGINUPDATE "CASE WHEN t.wholebegin_update IS NULL THEN '1900-01-01' ELSE to_char(t.wholebegin_update, 'YYYY-MM-DD') END as begin_update"
+// ПОИСКОВИК, БЕЛЫЙ ЭК� АН
+extern QMap<QString, QString> columns_white_sql;
+extern QMap<QString, int> columns_white_ids;
 
-// ПОИСКОВИК, СЕРЫЙ ЭКРАН
-#define COLUMN_GREY_ID "g.id as id"
-#define COLUMN_GREY_NAME "t.name as name"
-#define COLUMN_GREY_QUANTITY "g.quantity as quantity"
-#define COLUMN_GREY_YEAR "g.year as year"
-#define COLUMN_GREY_RETAILPRICE "g.price_ret as price_ret"
-#define COLUMN_GREY_STORAGE "p.storage as storage"
-#define COLUMN_GREY_RACK "p.rack as rack"
-#define COLUMN_GREY_BOARD "p.board as board"
-#define COLUMN_GREY_BOX "p.box as box"
-#define COLUMN_GREY_INSPECTION "i.insp_name as insp_name"
-#define COLUMN_GREY_ADDINFO "g.add_info as add_info"
-#define COLUMN_GREY_DEFECT "g.defect as defect"
-#define COLUMN_GREY_CATEGORY "c.category_name as category_name";
+
+// ПОИСКОВИК, СЕ� ЫЙ ЭК� АН
+extern QMap<QString, QString> columns_grey_sql;
+extern QMap<QString, int> columns_grey_ids;
 
 class CustomTabWidget;
+class PaintStackedWidget;
 
 namespace Privileges{
     enum Type{
         Prices_view_access = 1,
         Prices_edit_access = 2,
         NDS_enabling_access = 3,
-        NDS_changing_access = 4
+        NDS_changing_access = 4,
+        Reserving_access = 5,
+        Blue_screen_access = 6
     };
 }
 
@@ -174,17 +140,18 @@ extern int ITEMS_ON_PAGE;
 extern int MAX_ITEMS_WITHOUT_WARNING;
 
 extern const int MAX_PARAMS;
+extern const int max_reserves;
 
 extern int DEFAULT_COLUMN_WIDTH;
 
 extern QString DEFAULT_WHITE_SORT_COLUMN;
 extern Qt::SortOrder DEFAULT_WHITE_SORT_ORDER;
 
-extern QStringList WHITE_TABLE_COLUMNS;
-extern QStringList GREY_TABLE_COLUMNS;
+extern QStringList columns_white_table;
+extern QStringList columns_grey_table;
 
-extern QMap<QString,QString> WHITE_COLUMNS_NAMES;
-extern QMap<QString,QString> GREY_COLUMNS_NAMES;
+extern QMap<QString,QString> columns_white_names;
+extern QMap<QString,QString> columns_grey_names;
 
 extern QString ANY_ITEM_TEXT;
 extern QString NOPLACE_TEXT;
@@ -203,8 +170,15 @@ extern int GLOBAL_MODE;
 extern QString DEFAULT_WEIGHT_UNIT;
 extern QString DEFAULT_UNIT;
 
+extern QString old_tab_name;
+
 extern bool is_connect;
 extern QStackedWidget *mwidget;
 extern CustomTabWidget *search_tabs;
+
+extern const int top_panel_size;
+extern const int bottom_panel_size;
+
+extern bool searcher_show_reserve;
 
 #endif // CONSTANTS_H

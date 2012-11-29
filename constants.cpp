@@ -23,6 +23,7 @@ int MAX_ITEMS_WITHOUT_WARNING = 300;
 
 // сколько параметров может быть у детали
 const int MAX_PARAMS = 12;
+const int max_reserves = 10;
 
 // ширина столбца по умолчанию
 int DEFAULT_COLUMN_WIDTH = 70;
@@ -33,14 +34,6 @@ QString DEFAULT_WHITE_SORT_COLUMN = "id";
 // порядок сортиорвки в белом экране по умолчанию
 Qt::SortOrder DEFAULT_WHITE_SORT_ORDER = Qt::AscendingOrder;
 
-QStringList ALL_WHITE_COLUMNS;
-QStringList WHITE_TABLE_COLUMNS;
-QStringList ALL_GREY_COLUMNS;
-QStringList GREY_TABLE_COLUMNS;
-
-// имена столбцов в белом и сером экране
-QMap<QString,QString> WHITE_COLUMNS_NAMES;
-QMap<QString,QString> GREY_COLUMNS_NAMES;
 
 QString ANY_ITEM_TEXT;
 QString NOPLACE_TEXT;
@@ -54,8 +47,14 @@ QString DEFAULT_WEIGHT_UNIT;
 QString DEFAULT_UNIT;
 Usergroups::Group USERGROUP;
 int USER_ID;
+QString old_tab_name = "";
+
+const int top_panel_size = 50;
+const int bottom_panel_size = 50;
 
 int GLOBAL_MODE;
 bool is_connect;
+bool searcher_show_reserve = false;
+
 QStackedWidget *mwidget;
 CustomTabWidget *search_tabs;

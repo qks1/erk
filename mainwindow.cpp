@@ -1,13 +1,53 @@
 #include "mainwindow.h"
+#include <QMetaType>
+
+QDataStream &operator<<(QDataStream &out, const ColumnsStruct &obj)
+{
+     out << obj.sizes << obj.indices << obj.appears;
+     return out;
+}
+
+QDataStream &operator>>(QDataStream &in, ColumnsStruct &obj)
+{
+    in >> obj.sizes >> obj.indices >> obj.appears;
+    return in;
+}
+
 
 MainWindow::MainWindow()
 {
+    // Чтобы можно было записывать и считывать из настроек структуры ColumnsStruct,
+    // зарегистрируем метатипы и stream operators (определения самих операторов внизу файла)
+    qRegisterMetaType<ColumnsStruct>("ColumnsStruct");
+    qRegisterMetaTypeStreamOperators<ColumnsStruct>("ColumnsStruct");
+
     init_vars();
     this->setWindowTitle("ООО \"ЭРК\"");
     search_tabs = 0;
-    mwidget = new QStackedWidget();
+    mwidget = new QStackedWidget(this);
     settings = get_settings();
     comp_settings = get_comp_settings();
+
+    reserve_struct.source_model = new QSqlQueryModel(this);
+    reserve_struct.list_model = new QStandardItemModel(10, 1, this);
+    reserve_struct.selection_model = new QItemSelectionModel(reserve_struct.list_model);
+    reserve_struct.table_header = new QHeaderView(Qt::Horizontal);
+
+    // считываем из settings настройки столбцов (ширину, индексы, показываются ли).
+
+    white_columns = form_columns_struct("WHITE_COLUMNS");
+    grey_columns = form_columns_struct("GREY_COLUMNS");
+    reserve_columns = form_columns_struct("RESERVE_COLUMNS");
+    for(int i = 0; i < white_columns.indices.count(); i++)
+        qDebug() << QString("%1 -> %2").arg(i).arg(white_columns.indices[i]);
+
+    // заполняем reserve.list_model заявками по числу max_reserves
+    for(int i = 0; i < max_reserves; i++){
+        reserve_struct.list_model->setData(reserve_struct.list_model->index(i, 0), QString("Заявка %1").arg(i+1));
+        reserve_struct.list_model->setData(reserve_struct.list_model->index(i, 0), QString::number(i+1), Qt::UserRole);
+        if(count_reserve_doc_sum(i+1) > 0)
+            reserve_struct.list_model->setData(reserve_struct.list_model->index(i, 0), Qt::red, Qt::TextColorRole);
+    }
     this->setCentralWidget(mwidget);
     // создаём поисковик
     create_search_widget();
@@ -17,16 +57,79 @@ MainWindow::MainWindow()
 
     // создаём меню
     create_menu();
+
 }
 
 MainWindow::~MainWindow(){
-    delete mwidget;
-    delete settings;
-    delete comp_settings;
 }
 
 void MainWindow::closeEvent(QCloseEvent *){
-    //searcher->close_func();
+    // тут надо записать все столбцы
+    save_columns_struct(white_columns, "WHITE_COLUMNS");
+    for(int i = 0; i < white_columns.indices.count(); i++)
+        qDebug() << QString("%1 -> %2").arg(i).arg(white_columns.indices[i]);
+    save_columns_struct(grey_columns, "GREY_COLUMNS");
+    save_columns_struct(reserve_columns, "RESERVE_COLUMNS");
+    settings->sync();
+
+    delete mwidget;
+    delete settings;
+    delete comp_settings;
+    base.close();
+
+    qDebug() << "Screw you guys! I'm going home.";
+}
+
+inline ColumnsStruct MainWindow::form_columns_struct(QString section){
+    /* Функция формирует структуру столбцов (списки размеров, индексов и показываемых столбцов), считывая их из настроек.
+       Аргумент - секция настроек, из которой будем считывать.
+       Сами настройки - элемент класса section.
+       Структура состоит из трёх списков (sizes, indices, appears) и записана в настройках сразу целиком.
+    */
+    ColumnsStruct structure;
+    settings->beginGroup(QString("%1").arg(USERNAME));
+    structure = settings->value(section, QVariant()).value<ColumnsStruct>();
+    settings->endGroup();
+
+
+    return structure;
+}
+
+inline void MainWindow::save_columns_struct(ColumnsStruct structure, QString section){
+    ColumnsStruct strrtr;
+    settings->beginGroup(QString("%1").arg(USERNAME));
+    settings->setValue(section, QVariant::fromValue<ColumnsStruct>(structure));
+    strrtr = settings->value(section, QVariant()).value<ColumnsStruct>();
+    settings->endGroup();
+}
+
+void MainWindow::save_width(int index, int width, QString section){
+    if(section == "WHITE_COLUMNS")
+        white_columns.sizes[index] = width;
+    else if(section == "GREY_COLUMNS")
+        grey_columns.sizes[index] = width;
+    else if(section == "RESERVE_COLUMNS")
+        reserve_columns.sizes[index] = width;
+}
+
+void MainWindow::save_order(int logical, int newvisual, QString section){
+    // так как при перемещении столбцов меняются обычно несколько индексов, уместно переписать их все
+}
+
+double MainWindow::count_reserve_doc_sum(int num){
+    QSqlQuery query(base);
+    QString query_str = QString("SELECT sum(price*quantity) "
+                                "FROM reserve "
+                                "WHERE doc_id = (SELECT id FROM reserve_docs WHERE user_id = %1 AND doc_num = %2)")
+                                .arg(USER_ID).arg(num);
+    if(!query.exec(query_str)){
+        qDebug() << query.lastError().text();
+        return 0;
+    }
+    if(query.size() == 0)
+        return 0;
+    query.next();
+    return query.value(0).toDouble();
 }
 
 void MainWindow::create_menu(){
@@ -163,7 +266,6 @@ void MainWindow::send_showcatalog(bool state){
         s = static_cast<Searcher*>(search_tabs->widget(i));
         state ? s->show_white_catalog() : s->hide_white_catalog();
     }
-
 }
 
 int MainWindow::open_columns_list(int mode){
@@ -172,6 +274,22 @@ int MainWindow::open_columns_list(int mode){
         return (s->mode() == WHITE_MODE ? s->open_white_columns_list() : s->open_grey_columns_list());
     }
     return -1;
+}
+
+void MainWindow::refresh_white_tables(){
+    Searcher *s;
+    for(int i = 0; i < search_tabs->count(); i++){
+        s = static_cast<Searcher*>(search_tabs->widget(i));
+        s->refresh_white_table();
+    }
+}
+
+void MainWindow::refresh_grey_tables(){
+    Searcher *s;
+    for(int i = 0; i < search_tabs->count(); i++){
+        s = static_cast<Searcher*>(search_tabs->widget(i));
+        s->refresh_grey_table();
+    }
 }
 
 bool MainWindow::reload_base(){
@@ -220,20 +338,33 @@ void MainWindow::create_search_widget(){
     // создаём и добавляем кнопку добавления таба
     QPushButton *addtab = new QPushButton("+");
     addtab->setFixedSize(20,20);
-    QObject::connect(addtab, SIGNAL(clicked()), search_tabs, SLOT(add_tab()));
+    QObject::connect(addtab, SIGNAL(clicked()), this, SLOT(add_tab()));
     search_tabs->setCornerWidget(addtab, Qt::TopRightCorner);
     // на каждый таб создадим свой Searcher
     // кол-во вкладок по умолчанию устанавливается в constants.cpp
+    Searcher *s;
     for(int i = 0; i < settings->value(QString("%1/tabs_default").arg(USERNAME), 5).toInt(); i++){
-        Searcher *s = search_tabs->add_tab();
+        s = search_tabs->add_tab(reserve_struct, &white_columns, &grey_columns, &reserve_columns);
         if(s->success == false)
             break;
         QObject::connect(s, SIGNAL(open_settings()), this, SLOT(send_settings()));
         QObject::connect(s, SIGNAL(catalog_hides()), this, SLOT(uncheck_menu_catalog()));
         QObject::connect(s, SIGNAL(catalog_shows()), this, SLOT(check_menu_catalog()));
+        QObject::connect(s, SIGNAL(white_columns_changed()), this, SLOT(send_columns()));
+        QObject::connect(s, SIGNAL(grey_columns_changed()), this, SLOT(send_columns()));
+        //QObject::connect(s, SIGNAL(need_white_refresh()), this, SLOT(refresh_white_tables()));
+        //QObject::connect(s, SIGNAL(need_grey_refresh()), this, SLOT(refresh_grey_tables()));
     }
-
+    s = (Searcher *)search_tabs->widget(0);
+    s->set_reserve_header();
     mwidget->addWidget(search_tabs);
+
+    connect(search_tabs, SIGNAL(save_width_signal(int,int,QString)), SLOT(save_width(int,int,QString)));
+    connect(search_tabs, SIGNAL(save_order_signal(int,int,QString)), SLOT(save_order(int,int,QString)));
+}
+
+void MainWindow::add_tab(){
+    search_tabs->add_tab(reserve_struct, &white_columns, &grey_columns, &reserve_columns);
 }
 
 void MainWindow::check_menu_catalog(){
@@ -243,3 +374,6 @@ void MainWindow::check_menu_catalog(){
 void MainWindow::uncheck_menu_catalog(){
     showcatalog_action->setChecked(false);
 }
+
+
+

@@ -114,9 +114,14 @@ void Filters::reset_param(int index){
 }
 
 void Filters::reset_params(){
-    this->params.clear();
-    for(int i = 0; i < MAX_PARAMS; i++)
-        params << ANY_ITEM_TEXT;
+    //this->params.clear();
+    if(this->params.count() == 0){
+        for(int i = 0; i < MAX_PARAMS; i++)
+            this->params << ANY_ITEM_TEXT;
+    }
+    else
+        for(int i = 0; i < MAX_PARAMS; i++)
+            this->params[i] = ANY_ITEM_TEXT;
 }
 
 void Filters::switch_prices(){

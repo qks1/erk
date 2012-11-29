@@ -90,7 +90,7 @@ int DetailCard::exec(){
 
     // переименование столбцов
     for(int i = 0; i < model->columnCount(); i++){
-        model->setHeaderData(i, Qt::Horizontal, GREY_COLUMNS_NAMES[model->headerData(i, Qt::Horizontal).toString()]);
+        model->setHeaderData(i, Qt::Horizontal, columns_grey_names[model->headerData(i, Qt::Horizontal).toString()]);
     }
 
     table = new QTableView();

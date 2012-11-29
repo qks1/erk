@@ -20,21 +20,31 @@
 #include "constants.h"
 #include "customcombobox.h"
 #include "helpers.h"
+#include "greyadddialog.h"
+#include "managerreservewidget.h"
+#include "storagereservewidget.h"
 
 class GreySearcher : public QWidget
 {
     Q_OBJECT
 public:
-    explicit GreySearcher(QWidget *parent = 0);
+    explicit GreySearcher(ReserveStruct rstruct,
+                          bool need_blue,
+                          bool blue,
+                          ColumnsStruct *columns,
+                          QWidget *parent = 0);
     void fill_table(Filters*, bool);
+    void open_trademark(int id, Filters *f);
     int get_original_index(QString);
     QString get_original_name(int);
     int input_id_combobox_value();
     void clear_text();
     void restore_width(int index, int width);
-    void restore_order();
+    void restore_order(int logical, int newvisual);
     int open_columns_list();
     void hide_show_columns();
+    void switch_reserve();
+    void set_reserve_header();
 
 private:
     GreyTable *grey_table;
@@ -62,12 +72,37 @@ private:
     CustomComboBox *defect_box;
     CustomComboBox *category_box;
     QPushButton *reset_add_boxes;
+    ManagerReserveWidget *reserve;
+    StorageReserveWidget *pipe;
+
+    // охохо
+    bool blue;
+    bool need_blue;
+    int items_status;
+
+    // размеры всякие
+    int panel_button_size;
+    int input_width;
+    int reset_button_size;
+    int spacing;
+    int selector_width;
+
+    bool edit_prices_permission;
 
     //BUTTONS
+    QHBoxLayout *buttons_lt;
+    QMenu *edit_button_menu;
     QPushButton *new_button;
     QPushButton *edit_button;
-    QPushButton *del_button;
+    QPushButton *delete_button;
     QPushButton *reset_button;
+    QPushButton *prices_button;
+    QPushButton *docs_button;
+    QPushButton *columns_button;
+    QPushButton *settings_button;
+    QPushButton *escape_button;
+    QPushButton *reserve_button;
+    QPushButton *blue_button;
 
     QStringList original_columns_names;
     QString tables_str;
@@ -75,8 +110,15 @@ private:
     Filters *filters;
     bool filled;
     bool years_box_filled;
+    int last_added_place;
 
+    // функции для лайаута
     void set_layout();
+    QWidget *create_top_panel();
+    QWidget *create_bottom_panel();
+    QWidget *create_years_layout();
+    QWidget *create_add_layout();
+
     void connects();
     int set_totals(QString);
     QVBoxLayout *create_box_layout(QComboBox*, QString, int);
@@ -97,10 +139,14 @@ private:
     QString glue_where(QStringList *ex = 0);
     QString glue_where(QString);
     QString apply_filters();
+    QPushButton *create_panel_button(QString, QString, const char *method);
+    QMenu *create_edit_button_menu();
 
     
 signals:
     void close_grey(QModelIndex);
+    void open_blue_signal(int, QString);
+    void close_blue_signal();
     void last_filter_changed(int);
     void limits_changed(pair);
     void limits_removed();
@@ -126,9 +172,14 @@ signals:
     void change_category_signal(QString);
     void reset_add_boxes_signal();
     void total_reset_signal();
-    void section_resized(int, int);
-    void section_moved();
-
+    void section_resized(int, int, QString);
+    void section_moved(int, int, QString);
+    void columns_changed();
+    void open_settings();
+    void switch_reserve_signal();
+    void need_refresh();
+    void need_blue_refresh();
+    void refresh_searcher();
 
 
 private slots:
@@ -151,13 +202,29 @@ private slots:
     void fill_add_info_box();
     void fill_defect_box();
     void fill_category_box();
-    void total_reset_slot();
     void storages_slot(QString);
     void racks_slot(QString);
     void boards_slot(QString);
     void boxes_slot(QString);
+    // штукуёвины для кнопок
+    void add_button_slot();
+    void edit_button_slot();
+    void delete_button_slot();
+    void reset_button_slot();
+    void prices_button_slot();
+    void docs_button_slot();
+    void columns_button_slot();
+    void settings_button_slot();
+    void escape_button_slot();
+    void edit_correction_slot();
+    void edit_chargeoff_slot();
+    void edit_move_slot();
+    void reserve_button_slot();
+    void open_blue_slot();
+    void set_last_place(int id);
 
 public slots:
+    void refresh_table();
     
 };
 
@@ -168,5 +235,6 @@ public:
 
     QVariant data(const QModelIndex &index, int role) const;
 };
+
 
 #endif // GREYSEARCHER_H

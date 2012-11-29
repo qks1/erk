@@ -36,7 +36,13 @@ HEADERS += basetable.h \
     searcher/whitepriceseditor.h \
     changepricedatedialog.h \
     addyeardiscount.h \
-    yearsdiscountsdialog.h
+    yearsdiscountsdialog.h \
+    paintstackedwidget.h \
+    yearsdiscountsitem.h \
+    yearsdiscounts.h \
+    quickquantitywindow.h \
+    searcher/managerreservewidget.h \
+    searcher/storagereservewidget.h
 SOURCES += basetable.cpp \
            constants.cpp \
            customcombobox.cpp \
@@ -64,7 +70,14 @@ SOURCES += basetable.cpp \
     searcher/whitepriceseditor.cpp \
     changepricedatedialog.cpp \
     addyeardiscount.cpp \
-    yearsdiscountsdialog.cpp
+    yearsdiscountsdialog.cpp \
+    paintstackedwidget.cpp \
+    yearsdiscountsitem.cpp \
+    yearsdiscounts.cpp \
+    quickquantitywindow.cpp \
+    searcher/managerreservewidget.cpp \
+    searcher/storagereservewidget.cpp \
+    columns.cpp
 
 RESOURCES += images.qrc
 
@@ -75,4 +88,9 @@ FORMS += \
     searcher/whitepriceseditor.ui \
     changepricedatedialog.ui \
     addyeardiscount.ui \
-    yearsdiscountsdialog.ui
+    yearsdiscountsdialog.ui \
+    yearsdiscountsitem.ui \
+    yearsdiscounts.ui \
+    searcher/managerreservewidget.ui \
+    mrform.ui \
+    searcher/storagereservewidget.ui

@@ -1,10 +1,19 @@
-#include "whitesearcher.h"
+﻿#include "whitesearcher.h"
 
-WhiteSearcher::WhiteSearcher(QWidget *parent) :
+WhiteSearcher::WhiteSearcher(ReserveStruct rstruct,
+                             bool need_blue,
+                             ColumnsStruct *columns,
+                             QWidget *parent) :
     QWidget(parent)
 {
+    this->need_blue = need_blue;
+    this->grey_mode = true;
     // создаём виджеты
-    white_table = new WhiteTable(this);
+    white_table = new WhiteTable("WHITE_COLUMNS",   // settings_section
+                                 true,              // switcher
+                                 false,             // multiselection
+                                 columns,           // columns_struct
+                                 this);             // parent
     catalog = new Catalog(this);
     input = new Input(this);
     ParamsSelector *param = 0;
@@ -13,22 +22,36 @@ WhiteSearcher::WhiteSearcher(QWidget *parent) :
         selectors << param;
     }
     params_reset = new QPushButton("X", this);
-    panel_button_size = 50;
+    panel_button_size = top_panel_size;
     edit_prices_permission = get_privilege(Privileges::Prices_edit_access);
+    reserve = 0;
+    pipe = 0;
+    if(!need_blue)
+        reserve = new ManagerReserveWidget(rstruct, this);
+    else
+        pipe = new StorageReserveWidget(rstruct, this);
 
     buttons_lt = new QHBoxLayout();
     buttons_lt->setMargin(0);
     buttons_lt->setSpacing(0);
 
     new_button = create_panel_button("Новая запись", ":/new", SLOT(new_detail_slot()));
-    edit_button = create_panel_button("Редактировать запись", ":/edit", SLOT(edit_detail_slot()));
     delete_button = create_panel_button("Удалить запись", ":/delete", SLOT(delete_detail_slot()));
+    edit_button = create_panel_button("Редактировать запись", ":/edit", SLOT(edit_detail_slot()));
+    catalog_button = create_panel_button("Показать/скрыть каталог", ":/catalog", SLOT(switch_catalog()));
     if(edit_prices_permission){
         prices_button = create_panel_button("Редактировать цены", ":/prices", SLOT(edit_prices_slot()));
         discounts_button = create_panel_button("Скидки", ":/discounts", SLOT(edit_discounts_slot()));
     }
+    photo_button = create_panel_button("Фото", ":/photo_big", SLOT(open_photo_slot()));
+    docs_button = create_panel_button("Документы", ":/docs", SLOT(open_docs_window()));
     settings_button = create_panel_button("Настройки", ":/settings", SIGNAL(open_settings()));
-
+    reserve_button = create_panel_button("Просмотр выписки", ":/reserve", SLOT(reserve_button_slot()));
+    blue_button = 0;
+    if(need_blue)
+        blue_button = create_panel_button(grey_mode ? "Серый экран" : "Синий экран",
+                            grey_mode ? ":/grey" : ":/blue",
+                            SLOT(switch_grey_mode()));
     // заполняем переменные
     single_group = -1;
     single_group_without_limits = -1;
@@ -85,7 +108,7 @@ inline void WhiteSearcher::white_connects(){
     }
 
     // сброс селекторов
-    QObject::connect(this->params_reset, SIGNAL(clicked()), SIGNAL(params_reset_clicked()));
+    QObject::connect(this->params_reset, SIGNAL(clicked()), SLOT(reset_params()));
     // изменение фильтра по цене
     QObject::connect(this->white_table, SIGNAL(prices_clicked()), SIGNAL(prices_clicked()));
     // изменение фильтра по кол-ву
@@ -95,8 +118,16 @@ inline void WhiteSearcher::white_connects(){
     // открыть серый экран
     QObject::connect(this->white_table, SIGNAL(double_click(QModelIndex)), SLOT(open_grey(QModelIndex)));
     //
-    QObject::connect(this->white_table, SIGNAL(section_resized(int, int)), SIGNAL(section_resized(int, int)));
-    QObject::connect(this->white_table, SIGNAL(section_moved()), SIGNAL(section_moved()));
+    QObject::connect(this->white_table, SIGNAL(section_resized(int, int, QString)), SIGNAL(section_resized(int, int, QString)));
+    QObject::connect(this->white_table, SIGNAL(section_moved(int, int, QString)), SIGNAL(section_moved(int, int, QString)));
+    QObject::connect(this->white_table, SIGNAL(need_refresh()), SLOT(refresh_table()));
+    if(need_blue){
+        QObject::connect(this->pipe, SIGNAL(switch_pipes()), SIGNAL(switch_reserve_signal()));
+    }
+    else{
+        QObject::connect(this->reserve, SIGNAL(need_refresh()), SIGNAL(refresh_searcher()));
+        QObject::connect(this->reserve, SIGNAL(switch_reserves()), SIGNAL(switch_reserve_signal()));
+    }
 }
 
 inline void WhiteSearcher::set_layout(){
@@ -111,26 +142,24 @@ inline void WhiteSearcher::set_layout(){
     int button_size = 25;       // ширина кнопки сброса
     int spacing = 5;            // отступ до кнопки сброса
 
-    // поправка на ширину боковой панели в бубунте. Осторожно, костыль.
-    int panel_width = 0;
-#ifdef Q_OS_LINUX
-    panel_width = 100;
-#endif
     // да и это тоже костыль. Ширина селектора при максимизированном окне.
-    int selector_width = (qApp->desktop()->width() - button_size - panel_width - spacing)/MAX_PARAMS;
+    int selector_width = (qApp->desktop()->screenGeometry().width() - button_size - spacing)/MAX_PARAMS;
 
+    //////////// TOP PANEL ////////////
     // лайаут для виджета с кнопками и текстовым полем
     QHBoxLayout *top_lt = new QHBoxLayout();
     // добавляем кнопки
     top_lt->addLayout(buttons_lt);
-    top_lt->addStretch(1);
+    //top_lt->addStretch(1);
     // добавляем текстовое поле
     top_lt->addWidget(input);
-    input->setFixedSize(input_width, 70);
+    input->setFixedSize(input_width, panel_button_size);
     top_lt->addStretch(1);
+    top_lt->setMargin(0);
     top_panel->setLayout(top_lt);
-    top_panel->setFixedHeight(input->height());
+    top_panel->setFixedHeight(panel_button_size);
 
+    //////////// BOTTOM PANEL ////////////
     // лайаут для виджета с селекторами
     QHBoxLayout *wlt = new QHBoxLayout;
     wlt->setSpacing(0);
@@ -146,17 +175,26 @@ inline void WhiteSearcher::set_layout(){
     params_reset->setFixedSize(button_size, button_size);
     selectors_panel->setLayout(wlt);
     selectors_panel->setMinimumWidth(500);
-    selectors_panel->setFixedHeight(selectors.at(0)->height());
+    selectors_panel->setFixedHeight(bottom_panel_size);
 
     // формируем разделитель, содержащий каталог и таблицу
     QSplitter *splitter = split();
+    splitter->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 
     // главный layout
     QVBoxLayout *mainlt= new QVBoxLayout;
     mainlt->addWidget(top_panel);
     mainlt->addWidget(selectors_panel);
+    if(need_blue){
+        mainlt->addWidget(pipe);
+        pipe->setVisible(searcher_show_reserve);
+    }
+    else{
+        mainlt->addWidget(reserve);
+        reserve->setVisible(searcher_show_reserve);
+    }
     mainlt->addWidget(splitter);
-
+    //mainlt->addWidget(white_table);
     this->setLayout(mainlt);
 
     QSettings *settings = get_settings();
@@ -176,9 +214,22 @@ QSplitter* WhiteSearcher::split(){
     sz << 100 << 400;
     splitter->setSizes(sz);
 
+    splitter->setHandleWidth(1);
+    //splitter->setFixedHeight(splitter->height());
     return splitter;
 }
 
+void WhiteSearcher::switch_reserve(){
+    if(need_blue)
+        this->pipe->setShown(searcher_show_reserve);
+    else
+        this->reserve->setShown(searcher_show_reserve);
+}
+
+void WhiteSearcher::set_reserve_header(){
+    //if(!need_blue)
+        //this->reserve->set_reserve_header();
+}
 
 void WhiteSearcher::set_date(){
     this->white_table->set_date();
@@ -223,7 +274,8 @@ void WhiteSearcher::edit_detail_slot(){
     else{
         WhiteAddDialog *edit = new WhiteAddDialog(id, DIALOG_WHITE_EDIT);
         if(edit->exec() == QDialog::Accepted)
-            fill_table(filters, false, false);
+            //fill_table(filters, false, false);
+            emit need_refresh();
     }
 }
 
@@ -245,7 +297,8 @@ void WhiteSearcher::delete_detail_slot(){
                     error("Ошибка", QString("Ошибка при удалении детали: %1").arg(query.lastError().text()));
                     return;
                 }
-                fill_table(filters, false, false);
+                emit need_refresh();
+                //fill_table(filters, false, false);
                 //QMessageBox::information(this, "Успешно", "Деталь удалена.", QMessageBox::Ok);
             }
         }
@@ -259,15 +312,19 @@ void WhiteSearcher::edit_prices_slot(){
         if(id <= 0)
             error("Ошибка", "Выберите строку");
         else{
-            WhitePricesEditor *pred = new WhitePricesEditor
+            wpe = new WhitePricesEditor
                     (id,
-                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_RETAILPRICE)).toDouble(),
-                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEPRICE)).toDouble(),
-                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEBEGIN)).toInt(),
-                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_UNIT)).toString(),
+                     white_table->table_data(columns_white_ids["name"]).toString(),
+                     white_table->table_data(columns_white_ids["price_ret"]).toDouble(),
+                     white_table->table_data(columns_white_ids["price_whole"]).toDouble(),
+                     white_table->table_data(columns_white_ids["whole_begin"]).toInt(),
                      this);
-            QObject::connect(pred, SIGNAL(accepted()), this, SLOT(refresh_table()));
-            pred->exec();
+            QObject::connect(wpe, SIGNAL(accepted()), this, SLOT(refresh_table()));
+            QObject::connect(wpe, SIGNAL(rejected()), this, SLOT(refresh_table()));
+            QObject::connect(wpe, SIGNAL(up_clicked()), this, SLOT(up_prices_editor()));
+            QObject::connect(wpe, SIGNAL(down_clicked()), this, SLOT(down_prices_editor()));
+            QObject::connect(wpe, SIGNAL(need_reset()), this, SLOT(reset_table()));
+            wpe->exec();
             //if(pred->exec() == QDialog::Accepted)
                 //refresh_table();
         }
@@ -283,15 +340,17 @@ void WhiteSearcher::edit_discounts_slot(){
         if(id <= 0)
             error("Ошибка", "Выберите строку");
         else{
-            YearsDiscountsDialog *dlg = new YearsDiscountsDialog
+            dlg = new YearsDiscounts
                     (id,
-                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_NAME)).toString(),
-                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_RETAILPRICE)).toDouble(),
-                     white_table->table_data(WHITE_TABLE_COLUMNS.indexOf(COLUMN_WHITE_WHOLEPRICE)).toDouble(),
+                     white_table->table_data(columns_white_ids["name"]).toString(),
+                     white_table->table_data(columns_white_ids["price_ret"]).toDouble(),
+                     white_table->table_data(columns_white_ids["price_whole"]).toDouble(),
                      this);
             QObject::connect(dlg, SIGNAL(destroyed()), this, SLOT(refresh_table()));
             QObject::connect(dlg, SIGNAL(accepted()), this, SLOT(refresh_table()));
             QObject::connect(dlg, SIGNAL(rejected()), this, SLOT(refresh_table()));
+            QObject::connect(dlg, SIGNAL(up_clicked()), this, SLOT(up_years_discounts()));
+            QObject::connect(dlg, SIGNAL(down_clicked()), this, SLOT(down_years_discounts()));
             dlg->exec();
         }
     }
@@ -300,8 +359,135 @@ void WhiteSearcher::edit_discounts_slot(){
 
 }
 
+void WhiteSearcher::open_photo_slot(){
+    QDialog *dialog = new QDialog(this);
+    dialog->setWindowTitle("Фото");
+    QSettings *settings = get_settings();
+    QPixmap *pixmap = new QPixmap();
+    QString address = "";
+    QString photo = white_table->table_data(columns_white_ids["photo"]).toString();
+    qDebug() << photo;
+    if(photo.length() > 0){
+        address = QString("%1%2").arg(settings->value(QString("%1PHOTOS_PATH").arg(USERNAME), PHOTOS_PATH).toString()).arg(photo);
+        qDebug() << address;
+        if(!pixmap->load(address))
+            load_default_picture(pixmap);
+    }
+    else
+        load_default_picture(pixmap);
+
+    QLabel *picture_label = new QLabel();
+    (pixmap->width() <= 800 && pixmap->height() <= 600) ?
+                picture_label->setPixmap(*pixmap)
+              : picture_label->setPixmap(pixmap->scaled(800, 600, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    QHBoxLayout *lt = new QHBoxLayout();
+    lt->addWidget(picture_label);
+    dialog->setLayout(lt);
+    dialog->adjustSize();
+    dialog->setFixedSize(dialog->size());
+    dialog->exec();
+    delete settings;
+}
+
+void WhiteSearcher::load_default_picture(QPixmap *pixmap){
+    if(!pixmap->load(":/nophoto"))
+        qDebug("Не удалось загрузить картинку по умолчанию.");
+}
+
+
+void WhiteSearcher::open_docs_window(){
+    // blablabla
+}
+
+void WhiteSearcher::reserve_button_slot(){
+    emit switch_reserve_signal();
+}
+
+void WhiteSearcher::switch_grey_mode(){
+    if(grey_mode){
+        grey_mode = false;
+        blue_button->setIcon(QPixmap(":/blue"));
+    }
+    else{
+        grey_mode = true;
+        blue_button->setIcon(QPixmap(":/grey"));
+    }
+}
+
+
+void WhiteSearcher::switch_catalog(){
+    this->catalog->isHidden() ? show_catalog() : hide_catalog();
+}
+
+void WhiteSearcher::up_years_discounts(){
+    if(!up_selected_string())
+        return;
+    if(dlg != 0){
+        dlg->renew(white_table->table_data(columns_white_ids["id"]).toInt(),
+                    white_table->table_data(columns_white_ids["name"]).toString(),
+                    white_table->table_data(columns_white_ids["price_ret"]).toDouble(),
+                    white_table->table_data(columns_white_ids["price_whole"]).toDouble()
+                    );
+    }
+}
+
+void WhiteSearcher::down_years_discounts(){
+    if(!down_selected_string())
+        return;
+    if(dlg != 0){
+        dlg->renew(white_table->table_data(columns_white_ids["id"]).toInt(),
+                    white_table->table_data(columns_white_ids["name"]).toString(),
+                    white_table->table_data(columns_white_ids["price_ret"]).toDouble(),
+                    white_table->table_data(columns_white_ids["price_whole"]).toDouble()
+                    );
+    }
+}
+
+void WhiteSearcher::up_prices_editor(){
+    if(!up_selected_string())
+        return;
+    if(wpe != 0){
+        wpe->renew(white_table->table_data(columns_white_ids["id"]).toInt(),
+                   white_table->table_data(columns_white_ids["name"]).toString(),
+                   white_table->table_data(columns_white_ids["price_ret"]).toDouble(),
+                   white_table->table_data(columns_white_ids["price_whole"]).toDouble(),
+                   white_table->table_data(columns_white_ids["whole_begin"]).toInt()
+         );
+    }
+}
+
+void WhiteSearcher::down_prices_editor(){
+    if(!down_selected_string())
+        return;
+    if(wpe != 0){
+        wpe->renew(white_table->table_data(columns_white_ids["id"]).toInt(),
+                   white_table->table_data(columns_white_ids["name"]).toString(),
+                   white_table->table_data(columns_white_ids["price_ret"]).toDouble(),
+                   white_table->table_data(columns_white_ids["price_whole"]).toDouble(),
+                   white_table->table_data(columns_white_ids["whole_begin"]).toInt()
+         );
+    }
+}
+
+bool WhiteSearcher::up_selected_string(){
+    if(current_row > 0){
+        white_table->set_current_row(--current_row);
+        return true;
+    }
+    return false;
+}
+
+bool WhiteSearcher::down_selected_string(){
+    if(current_row <  white_table->row_count()-1){
+        white_table->set_current_row(++current_row);
+        return true;
+    }
+    return false;
+}
+
 void WhiteSearcher::refresh_table(){
-    fill_table(filters, false, false);
+    current_row = white_table->current_row();
+    white_table->refresh_table();
     white_table->set_current_row(current_row);
 }
 
@@ -353,7 +539,7 @@ QString WhiteSearcher::rename_column(QString str, int group){
         return (pos > -1 ? params_names[rx.cap(1)] : "?");
     }
     else
-        return WHITE_COLUMNS_NAMES[str];
+        return columns_white_names[str];
 }
 
 
@@ -413,13 +599,15 @@ void WhiteSearcher::restore_width(int index, int width){
     this->white_table->restore_width(index, width);
 }
 
-void WhiteSearcher::restore_order(){
-    this->white_table->restore_order();
+void WhiteSearcher::restore_order(int logical, int newvisual){
+    this->white_table->restore_order(logical, newvisual);
 }
 
 void WhiteSearcher::detail_info(int id){
-    DetailCard card(id, this);
-    card.exec();
+    //DetailCard card(id, this);
+    //card.exec();
+    QuickQuantityWindow w(id, this);
+    w.exec();
 }
 
 void WhiteSearcher::clear_text(){
@@ -457,22 +645,36 @@ void WhiteSearcher::fill_box(int index){
 void WhiteSearcher::text_changed_slot(int type, QString text){
     // очистить селекторы
     for(int i = 0; i < MAX_PARAMS; i++){
-        selectors.at(i)->set_edit_text("");
+        //selectors.at(i)->set_edit_text("");
+        selectors.at(i)->set_selected(-1);
         selectors.at(i)->clear_items();
     }
     emit text_changed_signal(WHITE_MODE, type, text);
 }
 
+void WhiteSearcher::reset_params(){
+    for(int i = 0; i < MAX_PARAMS; i++){
+        //selectors.at(i)->set_edit_text("");
+        selectors.at(i)->set_selected(-1);
+        selectors.at(i)->clear_items();
+    }
+    emit params_reset_clicked();
+}
+
 void WhiteSearcher::open_grey(QModelIndex i){
     int id = white_table->data(i, 0).toInt();
-    emit(create_grey(id));
+    QString name = white_table->data(i, columns_white_ids["name"]).toString();
+    if(grey_mode)
+        emit create_grey(id, name);
+    else
+        emit create_blue(id, name);
 }
 
 void WhiteSearcher::clear_where_strs(){
     where_strings["groups"] = "";
     where_strings["text"] = "";
     where_strings["prices"] = "";
-    where_strings["quantites"] = "";
+    where_strings["quantities"] = "";
     for(int i = 1; i <= MAX_PARAMS; i++)
         where_strings[QString("par%1_val").arg(i)] = "";
 }
@@ -503,6 +705,7 @@ QString WhiteSearcher::glue_where(QString str){
 
 
 void WhiteSearcher::fill_table(Filters *f, bool reset_groups = false, bool delete_last_symbol = false){
+    white_table->delete_model();
     WhiteTableModel *query = new WhiteTableModel(this);
     QString strSelect;
     this->filters = f;
@@ -606,11 +809,18 @@ void WhiteSearcher::fill_table(Filters *f, bool reset_groups = false, bool delet
             sort_order = DEFAULT_WHITE_SORT_ORDER;
             error("Внимание!", "Установлен порядок сортировки по умолчанию");
         }
+
         white_table->fill(query, original_column_names, sort_column, sort_order, reset_page);
     }
 }
 
+void WhiteSearcher::reset_table(){
+    //white_table->reset();
+    emit refresh_searcher();
+}
+
 QString WhiteSearcher::apply_filters(Filters *filters){
+    white_table->clear_last_query();
     clear_where_strs();
     base.transaction();
     QString query, where, groupby, order, limits = "", count, final;
@@ -625,7 +835,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
 
 
     /*
-              ФИЛЬТР ПО ГРУППАМ
+              ФИЛЬТ  ПО Г УППАМ
            where_strings["groups"]
                                         */
     if(filters->group_filter() == 0)
@@ -636,7 +846,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
         where_strings["groups"] = "t.subgroup_id IN (SELECT id FROM " + SUBGROUPS_TABLE + " WHERE group_id = " + QString::number(filters->group_filter()-ENLARGER) + ")";
 
     /*
-              ТЕКСТОВЫЙ ФИЛЬТР
+              ТЕКСТОВЫЙ ФИЛЬТ 
             where_strings["text"]
                                         */
     // из трёх режимов может одновременно применяться только один
@@ -651,7 +861,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
         where_strings["text"] = "t.pattern LIKE '" + filters->parts_filter().join("' OR t.pattern LIKE '") + "'";
 
     /*
-           ФИЛЬТРЫ ПО ПАРАМЕТРАМ
+           ФИЛЬТ Ы ПО ПА АМЕТ АМ
           where_strings["par1..12"]
                                         */
     for(int i = 0; i < MAX_PARAMS; i++){
@@ -664,7 +874,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
     }
 
     /*
-              ФИЛЬТР ПО ЦЕНАМ
+              ФИЛЬТ  ПО ЦЕНАМ
            where_strings["prices"]
                                         */
     if(filters->prices_filter() == POSITIVE_PRICES)
@@ -673,13 +883,26 @@ QString WhiteSearcher::apply_filters(Filters *filters){
         where_strings["prices"] = "t.price_ret = 0";
 
     /*
-            ФИЛЬТР ПО КОЛИЧЕСТВУ
+            ФИЛЬТ  ПО КОЛИЧЕСТВУ
          where_strings["quantities"]
                                         */
     if(filters->quantity_filter() == POSITIVE_QUANTITIES)
         where_strings["quantities"] = "t.quantity > 0";
 
+
     where = glue_where();
+
+    // порядок сортировки
+    order = " ORDER BY " + sorting_order_to_string(filters->white_sort_order_filter());
+
+    // лимиты
+    if(filters->are_there_limits())
+        limits = " OFFSET " + QString::number(filters->begin()) + " LIMIT " + QString::number(this->white_table->get_items_on_page());
+
+    // теперь сформируем строку, которую надо вернуть функции заполнения таблицы
+    final = "SELECT " + filters->columns_filter().join(",") + tables_str + where + groupby + order + limits;
+    white_table->set_last_query(final);
+
     // Для переключателя страниц необходимо подсчитать общее количество записей, удовлетворяющих фильтрам (кроме limits).
     // В table же мы передаём передаём только записи по количеству limits. Поэтому сформируем запрос для подсчёта общего кол-ва записей,
     // выполним его и забудем про это дело.
@@ -691,19 +914,13 @@ QString WhiteSearcher::apply_filters(Filters *filters){
     }
     else
         white_table->set_totals(total);
-    // порядок сортировки
-    order = " ORDER BY " + sorting_order_to_string(filters->white_sort_order_filter());
-
-    // лимиты
-    if(filters->are_there_limits())
-        limits = " OFFSET " + QString::number(filters->begin()) + " LIMIT " + QString::number(this->white_table->get_items_on_page());
 
     // если все детали, удовлетворяющие запросу, принадлежат только одной подгруппе, её номер надо установить в single_group
     // то же, но без учёта лимитов - в single_group_without_limits. Потом объяснить, что к чему!
     // а вообще это не дело, впилить потом в куда-то
     QSqlQuery select_groups(base);
     query_success = true;
-    query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + WHITE_TABLE_COLUMNS.join(",") + ", t.subgroup_id " + tables_str + where + ") AS t";
+    query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + columns_white_table.join(",") + ", t.subgroup_id " + tables_str + where + ") AS t";
     if(!select_groups.exec(query))
         query_success = false;
     select_groups.next();
@@ -711,7 +928,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
     if(single_group_without_limits != -1)
         single_group = single_group_without_limits;
     else{
-        query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + WHITE_TABLE_COLUMNS.join(",") + ", t.subgroup_id " + tables_str + where + limits + ") AS t";
+        query = "SELECT DISTINCT t.subgroup_id FROM (SELECT " + columns_white_table.join(",") + ", t.subgroup_id " + tables_str + where + limits + ") AS t";
         if(!select_groups.exec(query))
             query_success = false;
         select_groups.next();
@@ -720,11 +937,10 @@ QString WhiteSearcher::apply_filters(Filters *filters){
     if(!query_success)
         qDebug() << QString("Не удалось выполнить запрос. %1").arg(select_groups.lastError().text());
 
-    // теперь сформируем строку, которую надо вернуть функции заполнения таблицы
-    final = "SELECT " + filters->columns_filter().join(",") + tables_str + where + groupby + order + limits;
     while(!base.commit());
     //qDebug() << final;
     return final;
 }
+
 
 
