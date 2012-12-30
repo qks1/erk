@@ -1,11 +1,15 @@
 ﻿#include "whitesearcher.h"
 
-WhiteSearcher::WhiteSearcher(ReserveStruct rstruct,
+WhiteSearcher::WhiteSearcher(ReserveStruct *rstruct,
                              bool need_blue,
                              ColumnsStruct *columns,
+                             QStackedWidget *stack,
+                             QStack<QWidget*> prev_wgts,
                              QWidget *parent) :
     QWidget(parent)
 {
+    this->stack = stack;
+    this->prev_wgts = prev_wgts;
     this->need_blue = need_blue;
     this->grey_mode = true;
     // создаём виджеты
@@ -34,28 +38,30 @@ WhiteSearcher::WhiteSearcher(ReserveStruct rstruct,
     buttons_lt = new QHBoxLayout();
     buttons_lt->setMargin(0);
     buttons_lt->setSpacing(0);
-
-    new_button = create_panel_button("Новая запись", ":/new", SLOT(new_detail_slot()));
-    delete_button = create_panel_button("Удалить запись", ":/delete", SLOT(delete_detail_slot()));
-    edit_button = create_panel_button("Редактировать запись", ":/edit", SLOT(edit_detail_slot()));
-    catalog_button = create_panel_button("Показать/скрыть каталог", ":/catalog", SLOT(switch_catalog()));
+    new_button = create_panel_button(this, buttons_lt, "Новая запись", ":/new", SLOT(new_detail_slot()));
+    delete_button = create_panel_button(this, buttons_lt, "Удалить запись", ":/delete", SLOT(delete_detail_slot()));
+    edit_button = create_panel_button(this, buttons_lt, "Редактировать запись", ":/edit", SLOT(edit_detail_slot()));
+    catalog_button = create_panel_button(this, buttons_lt, "Показать/скрыть каталог", ":/catalog", SLOT(switch_catalog()));
     if(edit_prices_permission){
-        prices_button = create_panel_button("Редактировать цены", ":/prices", SLOT(edit_prices_slot()));
-        discounts_button = create_panel_button("Скидки", ":/discounts", SLOT(edit_discounts_slot()));
+        prices_button = create_panel_button(this, buttons_lt, "Редактировать цены", ":/prices", SLOT(edit_prices_slot()));
+        discounts_button = create_panel_button(this, buttons_lt, "Скидки", ":/discounts", SLOT(edit_discounts_slot()));
     }
-    photo_button = create_panel_button("Фото", ":/photo_big", SLOT(open_photo_slot()));
-    docs_button = create_panel_button("Документы", ":/docs", SLOT(open_docs_window()));
-    settings_button = create_panel_button("Настройки", ":/settings", SIGNAL(open_settings()));
-    reserve_button = create_panel_button("Просмотр выписки", ":/reserve", SLOT(reserve_button_slot()));
+    photo_button = create_panel_button(this, buttons_lt, "Фото", ":/photo_big", SLOT(open_photo_slot()));
+    docs_button = create_panel_button(this, buttons_lt, "Документы", ":/docs", SLOT(open_docs_window()));
+    settings_button = create_panel_button(this, buttons_lt, "Настройки", ":/settings", SIGNAL(open_settings()));
+    reserve_button = create_panel_button(this, buttons_lt, "Просмотр выписки", ":/reserve", SLOT(reserve_button_slot()));
     blue_button = 0;
     if(need_blue)
-        blue_button = create_panel_button(grey_mode ? "Серый экран" : "Синий экран",
+        blue_button = create_panel_button(this, buttons_lt,
+                                          grey_mode ? "Серый экран" : "Синий экран",
                             grey_mode ? ":/grey" : ":/blue",
                             SLOT(switch_grey_mode()));
     // заполняем переменные
     single_group = -1;
     single_group_without_limits = -1;
     boxes_filled = false;
+    reserves_list_model = rstruct->list_model;
+
 
     success = true;
     // размещаем все элементы
@@ -65,19 +71,7 @@ WhiteSearcher::WhiteSearcher(ReserveStruct rstruct,
 
     // соединяем сигналы со слотами
     white_connects();
-}
-
-QPushButton* WhiteSearcher::create_panel_button(QString tooltip, QString image_file, const char *method){
-    QPushButton *button = new QPushButton(this);
-    button->setFixedSize(panel_button_size, panel_button_size);
-    button->setToolTip(tooltip);
-    QPixmap new_pixmap(image_file);
-    QIcon new_icon(new_pixmap);
-    button->setIcon(new_icon);
-    button->setIconSize(button->rect().size());
-    buttons_lt->addWidget(button);
-    QObject::connect(button, SIGNAL(clicked()), method);
-    return button;
+    white_table->setFocus();
 }
 
 inline void WhiteSearcher::white_connects(){
@@ -127,7 +121,15 @@ inline void WhiteSearcher::white_connects(){
     else{
         QObject::connect(this->reserve, SIGNAL(need_refresh()), SIGNAL(refresh_searcher()));
         QObject::connect(this->reserve, SIGNAL(switch_reserves()), SIGNAL(switch_reserve_signal()));
+        QObject::connect(this->reserve, SIGNAL(section_resized(int,int,QString)), SIGNAL(section_resized(int,int,QString)));
+        QObject::connect(this->reserve, SIGNAL(section_moved(int,int,QString)), SIGNAL(section_moved(int,int,QString)));
+        QObject::connect(this->reserve, SIGNAL(open_contragents(int,int)), SIGNAL(open_contragents(int,int)));
+        QObject::connect(this->reserve, SIGNAL(clear_contragent_signal()), SIGNAL(clear_contragent()));
     }
+    //connect(opened_docslist, SIGNAL(delete_me()), SLOT(close_current()));
+    //connect(this, SIGNAL(switch_hidden_signal()), opened_docslist, SLOT(switch_hidden()));
+    //connect(opened_docslist, SIGNAL(create_move_dialog(Document*)), SLOT(create_move_dialog_slot(Document*)));
+
 }
 
 inline void WhiteSearcher::set_layout(){
@@ -226,9 +228,32 @@ void WhiteSearcher::switch_reserve(){
         this->reserve->setShown(searcher_show_reserve);
 }
 
+void WhiteSearcher::switch_hidden_public(){
+    emit switch_hidden_signal();
+}
+
 void WhiteSearcher::set_reserve_header(){
     //if(!need_blue)
         //this->reserve->set_reserve_header();
+}
+
+void WhiteSearcher::set_reserve_contragent(int id, QString name){
+    if(!need_blue)
+        this->reserve->set_contragent(id, name);
+}
+
+void WhiteSearcher::clear_reserve_contragent(){
+    if(!need_blue)
+        this->reserve->clear_contragent();
+}
+
+void WhiteSearcher::open_reserves_list(){
+    if(!white_table->current_index().isValid())
+        return;
+    int id = white_table->table_data(columns_white_ids["id"]).toInt();
+    QString name = white_table->table_data(columns_white_ids["name"]).toString();
+    ReservesList *l = new ReservesList(id, name, this);
+    l->exec();
 }
 
 void WhiteSearcher::set_date(){
@@ -351,6 +376,7 @@ void WhiteSearcher::edit_discounts_slot(){
             QObject::connect(dlg, SIGNAL(rejected()), this, SLOT(refresh_table()));
             QObject::connect(dlg, SIGNAL(up_clicked()), this, SLOT(up_years_discounts()));
             QObject::connect(dlg, SIGNAL(down_clicked()), this, SLOT(down_years_discounts()));
+            QObject::connect(dlg, SIGNAL(need_reset()), this, SLOT(reset_table()));
             dlg->exec();
         }
     }
@@ -396,8 +422,52 @@ void WhiteSearcher::load_default_picture(QPixmap *pixmap){
 
 
 void WhiteSearcher::open_docs_window(){
-    // blablabla
+    opened_docslist = new DocsList(true, stack, prev_wgts, reserves_list_model);
+    this->stack->addWidget(opened_docslist);
+    //DocsList *docs = new DocsList(true, stack, prev_wgts, reserves_list_model);
+    prev_wgts.push(stack->currentWidget());
+    stack->setCurrentWidget(opened_docslist);
+    connect(opened_docslist, SIGNAL(delete_me()), SLOT(close_current()));
+    connect(this, SIGNAL(switch_hidden_signal()), opened_docslist, SLOT(switch_hidden()));
+    connect(opened_docslist, SIGNAL(create_move_dialog(Document*)), SLOT(create_move_dialog_slot(Document*)));
+    connect(opened_docslist, SIGNAL(set_reserve_doc_color(int)), SLOT(set_reserve_doc_data_slot(int)));
 }
+
+void WhiteSearcher::create_move_dialog_slot(Document *parent){
+    opened_doc = parent;
+    MovePositions *mp = new MovePositions(reserves_list_model, opened_doc);
+    connect(mp, SIGNAL(doc_selected(int)), SLOT(move_to_doc(int)));
+    connect(mp, SIGNAL(reserve_selected(int)), SLOT(move_to_reserve(int)));
+    mp->exec();
+}
+
+void WhiteSearcher::move_to_doc(int doc_id){
+    //if(opened_doc)
+        opened_doc->move_to_doc(doc_id);
+}
+
+void WhiteSearcher::move_to_reserve(int id){
+    //if(opened_doc)
+        opened_doc->move_to_reserve(id);
+}
+
+void WhiteSearcher::set_reserve_doc_data_slot(int id){
+    reserve->set_doc_color(id);
+}
+
+
+
+void WhiteSearcher::close_current(){
+    disconnect(opened_docslist, SIGNAL(delete_me()), this, SLOT(close_current()));
+    disconnect(this, SIGNAL(switch_hidden_signal()), opened_docslist, SLOT(switch_hidden()));
+    disconnect(opened_docslist, SIGNAL(create_move_dialog(Document*)), this, SLOT(create_move_dialog_slot(Document*)));
+    stack->currentWidget()->close();
+    stack->setCurrentWidget(prev_wgts.last());
+    stack->removeWidget(opened_docslist);
+    delete opened_docslist;
+    prev_wgts.pop();
+}
+
 
 void WhiteSearcher::reserve_button_slot(){
     emit switch_reserve_signal();
@@ -603,6 +673,16 @@ void WhiteSearcher::restore_order(int logical, int newvisual){
     this->white_table->restore_order(logical, newvisual);
 }
 
+void WhiteSearcher::restore_manager_reserve_width(int index, int width){
+    if(this->reserve != 0)
+        this->reserve->restore_width(index, width);
+}
+
+void WhiteSearcher::restore_manager_reserve_order(int logical, int newvisual){
+    if(this->reserve != 0)
+        this->reserve->restore_order(logical, newvisual);
+}
+
 void WhiteSearcher::detail_info(int id){
     //DetailCard card(id, this);
     //card.exec();
@@ -649,7 +729,7 @@ void WhiteSearcher::text_changed_slot(int type, QString text){
         selectors.at(i)->set_selected(-1);
         selectors.at(i)->clear_items();
     }
-    emit text_changed_signal(WHITE_MODE, type, text);
+    emit text_changed_signal(WHITE_MODE, type, create_pattern(text));
 }
 
 void WhiteSearcher::reset_params(){
@@ -721,7 +801,6 @@ void WhiteSearcher::fill_table(Filters *f, bool reset_groups = false, bool delet
     // сбрасываем текущее значение single_group
     this->single_group = -1;
     this->single_group_without_limits = -1;
-
     // если надо перезаполнить боксы (т.е. если фильтр подразумевает изменение набора строк),
     // сбрасываем флаг boxes_filled и очищаем заголовки кнопок
     if(filters->last_applied_filter() != SORT_FILTER && filters->last_applied_filter() != LIMITS_FILTER
@@ -729,14 +808,12 @@ void WhiteSearcher::fill_table(Filters *f, bool reset_groups = false, bool delet
         boxes_filled = false;
         clear_button_labels();
     }
-
     bool reset_page = false;
     if(filters->last_applied_filter() != LIMITS_FILTER){
         pair p = {0, white_table->get_items_on_page()};
         filters->set_limits(p);
         reset_page = true;
     }
-
     if(filters->last_applied_filter() != NOLIMITS_FILTER && filters->last_applied_filter() != LIMITS_FILTER){
         pair limits = {0, this->white_table->get_items_on_page()};
         //qDebug() << this->white_table->get_items_on_page();
@@ -767,7 +844,6 @@ void WhiteSearcher::fill_table(Filters *f, bool reset_groups = false, bool delet
         original_column_names.clear();
         for(int i = 0; i < query->columnCount(); i++)
             original_column_names << query->headerData(i, Qt::Horizontal).toString();
-
         // переименовываем столбцы
         // если single_group > 0, т.е. выбрана конкретная подгруппа,
         // столбцы с параметрами надо переименовать параметрами для этой подгруппы.
@@ -781,7 +857,6 @@ void WhiteSearcher::fill_table(Filters *f, bool reset_groups = false, bool delet
 
         // установим названия кнопок над селекторами, только текст, без подсчёта
         set_text_button_labels();
-
         // если установлен фильтр по цене, надо соответствующим образом раскрасить заголовок
         if(filters->prices_filter() == POSITIVE_PRICES)
             query->setHeaderData(original_column_names.indexOf("price_ret"), Qt::Horizontal, QColor(0,192,0), Qt::BackgroundRole);
@@ -791,7 +866,6 @@ void WhiteSearcher::fill_table(Filters *f, bool reset_groups = false, bool delet
         // если установлен фильтр по кол-ву, тоже красим заголовок
         if(filters->quantity_filter() == POSITIVE_QUANTITIES)
             query->setHeaderData(original_column_names.indexOf("quantity"), Qt::Horizontal, QColor(0,192,0), Qt::BackgroundRole);
-
 
         // устанавливаем названия кнопок над селекторами
         //set_button_labels();
@@ -809,7 +883,6 @@ void WhiteSearcher::fill_table(Filters *f, bool reset_groups = false, bool delet
             sort_order = DEFAULT_WHITE_SORT_ORDER;
             error("Внимание!", "Установлен порядок сортировки по умолчанию");
         }
-
         white_table->fill(query, original_column_names, sort_column, sort_order, reset_page);
     }
 }
@@ -835,7 +908,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
 
 
     /*
-              ФИЛЬТ  ПО Г УППАМ
+              ФИЛЬТР ПО ГРУППАМ
            where_strings["groups"]
                                         */
     if(filters->group_filter() == 0)
@@ -846,7 +919,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
         where_strings["groups"] = "t.subgroup_id IN (SELECT id FROM " + SUBGROUPS_TABLE + " WHERE group_id = " + QString::number(filters->group_filter()-ENLARGER) + ")";
 
     /*
-              ТЕКСТОВЫЙ ФИЛЬТ 
+              ТЕКСТОВЫЙ ФИЛЬТР
             where_strings["text"]
                                         */
     // из трёх режимов может одновременно применяться только один
@@ -861,7 +934,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
         where_strings["text"] = "t.pattern LIKE '" + filters->parts_filter().join("' OR t.pattern LIKE '") + "'";
 
     /*
-           ФИЛЬТ Ы ПО ПА АМЕТ АМ
+           ФИЛЬТРЫ ПО ПАРАМЕТРАМ
           where_strings["par1..12"]
                                         */
     for(int i = 0; i < MAX_PARAMS; i++){
@@ -874,7 +947,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
     }
 
     /*
-              ФИЛЬТ  ПО ЦЕНАМ
+              ФИЛЬТР ПО ЦЕНАМ
            where_strings["prices"]
                                         */
     if(filters->prices_filter() == POSITIVE_PRICES)
@@ -883,7 +956,7 @@ QString WhiteSearcher::apply_filters(Filters *filters){
         where_strings["prices"] = "t.price_ret = 0";
 
     /*
-            ФИЛЬТ  ПО КОЛИЧЕСТВУ
+            ФИЛЬТР ПО КОЛИЧЕСТВУ
          where_strings["quantities"]
                                         */
     if(filters->quantity_filter() == POSITIVE_QUANTITIES)
@@ -909,8 +982,23 @@ QString WhiteSearcher::apply_filters(Filters *filters){
     count = "SELECT count(*) FROM " + TOVMARKS_TABLE + " t " + where;
     total = set_totals(count);
     if(total <= 0){
-        while(!base.commit());
-        return "FAIL";
+        if((filters->last_applied_filter() == ID_FILTER && filters->white_id_mode_filter() == GREATER_OR_EQUAL) ||
+                    filters->last_applied_filter() == BEGIN_TEXT_FILTER ||
+                    filters->last_applied_filter() == PARTS_TEXT_FILTER){
+            while(!base.commit());
+            return "FAIL";
+        }
+        else{
+            QString str = "SELECT '' as ";
+            int i;
+            for(i = 0; i < columns_white_table.size()-1; i++){
+                str += columns_white_table.at(i).mid(columns_white_table.at(i).indexOf(" as ")+4);
+                str += ", '' as ";
+            }
+            str += columns_white_table.at(i).mid(columns_white_table.at(i).indexOf(" as ")+4);
+            base.commit();
+            return str;
+        }
     }
     else
         white_table->set_totals(total);

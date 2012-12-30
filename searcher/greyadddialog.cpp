@@ -1,21 +1,25 @@
 #include "greyadddialog.h"
 #include "ui_greyadddialog.h"
 
-GreyAddDialog::GreyAddDialog(int id, int status, QWidget *parent) :
+GreyAddDialog::GreyAddDialog(int id, QString name, int status, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::GreyAddDialog)
 {
-    common_constructor(id, status);
-    edited = false;
+    place_id = 0;
+    editing = false;
+    moving = false;
+    common_constructor(id, name, status);
     ui->remain_label->hide();
 }
 
-GreyAddDialog::GreyAddDialog(int id, int place_id, int status, QWidget *parent) :
+GreyAddDialog::GreyAddDialog(int id, QString name, int place_id, int status, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::GreyAddDialog)
 {
-    common_constructor(id, status);
-    edited = false;
+    editing = false;
+    moving = false;
+    this->place_id = place_id;
+    common_constructor(id, name, status);
     ui->remain_label->hide();
 
     QSqlQuery query(base);
@@ -52,37 +56,71 @@ GreyAddDialog::GreyAddDialog(int id, int place_id, int status, QWidget *parent) 
 GreyAddDialog::GreyAddDialog(int id,
                int grey_id,
                int old_quantity,
+               int category_id,
+               int inspection_id,
+               QString name,
                QString year,
-               QString inspection,
                QString pack,
                QString storage,
                QString rack,
                QString board,
                QString box,
-               QString category,
                QString add_par_1,
                QString add_par_2,
                int status,
+               bool moving,
                QWidget *parent) :
     QDialog(parent),
     ui(new Ui::GreyAddDialog)
 {
-    common_constructor(id, status);
-    edited = true;
+    // Этот конструктор вызывается при коррекции детали, поэтому передаётся такая куча аргументов.
+    // Если moving==true, то вызвана функция "перемещение".
+    // В этом случае нужно скрыть все виджеты, кроме количества, складов, кнопок ОК и Отмена.
+    common_constructor(id, name, status);
+    this->editing = true;
+    this->moving = moving;
+    if(moving){
+        ui->year_box->hide();
+        ui->year_label->hide();
+        ui->inspection_box->hide();
+        ui->inspection_label->hide();
+        ui->pack_label->hide();
+        ui->pack_text->hide();
+        ui->addpar1_box->hide();
+        ui->addpar1_label->hide();
+        ui->addpar2_label->hide();
+        ui->addpar2_box->hide();
+        ui->photo_label->hide();
+        ui->photo_edit->hide();
+        ui->photo_button->hide();
+        ui->category_box->hide();
+        ui->category_label->hide();
+        ui->apply_button->hide();
+        //ui->storage_box->setFixedWidth(qApp->font().pointSize()*10);
+        //ui->rack_box->setFixedWidth(ui->storage_box->width());
+        //ui->board_box->setFixedWidth(ui->storage_box->width());
+        //ui->box_box->setFixedWidth(ui->storage_box->width());
+        ui->places_frame->setFixedWidth(qApp->font().pointSize() * 40);
+
+        this->setFixedSize(qApp->font().pointSize()*45, qApp->font().pointSize()*20);
+    }
     this->grey_id = grey_id;
+    this->place_id = place_id;
     this->old_quantity = old_quantity;
     ui->quantity_spin->setMaximum(old_quantity);
-    ui->quantity_spin->setValue(old_quantity);
+    ui->quantity_spin->setValue(0);
     connect(ui->quantity_spin, SIGNAL(valueChanged(int)), SLOT(change_remain(int)));
     change_remain(ui->quantity_spin->value());
 
     // теперь заполняем то что есть
-    ui->year_box->setEditText(year);
-    ui->inspection_box->setCurrentIndex(ui->inspection_box->findText(inspection));
-    ui->pack_text->setText(pack);
-    ui->category_box->setCurrentIndex(ui->category_box->findText(category));
-    ui->addpar1_box->setEditText(add_par_1);
-    ui->addpar2_box->setEditText(add_par_2);
+    //if(!moving){
+        ui->year_box->setEditText(year);
+        ui->inspection_box->setCurrentIndex(ui->inspection_box->findData(inspection_id));
+        ui->pack_text->setText(pack);
+        ui->category_box->setCurrentIndex(ui->category_box->findData(category_id));
+        ui->addpar1_box->setEditText(add_par_1);
+        ui->addpar2_box->setEditText(add_par_2);
+    //}
     // складские комбобоксы нужно попутно заполнять
     ui->storage_box->setCurrentIndex(ui->storage_box->findText(storage));
     if(storage.length() > 0){
@@ -103,9 +141,9 @@ GreyAddDialog::GreyAddDialog(int id,
         }
     }
     params["year"] = year;
-    params["inspection"] = inspection;
+    params["inspection_id"] = QString::number(inspection_id);
     params["pack"] = pack;
-    params["category"] = category;
+    params["category_id"] = QString::number(category_id);
     params["add_info"] = add_par_1;
     params["defect"] = add_par_2;
     params["storage"] = storage;
@@ -113,8 +151,9 @@ GreyAddDialog::GreyAddDialog(int id,
     params["board"] = board;
     params["box"] = box;
 
-    // скрываем количество, т.к. его можно редактировать только через списание или перемещение
-    ui->remain_label->show();
+    if(!moving)
+        // скрываем количество, т.к. его можно редактировать только через списание или перемещение
+        ui->remain_label->show();
     ui->apply_button->hide();
 }
 
@@ -127,23 +166,26 @@ void GreyAddDialog::change_remain(int q){
     ui->remain_label->setText(QString("Ост. %1").arg(old_quantity - q));
 }
 
-inline void GreyAddDialog::common_constructor(int id, int status){
+inline void GreyAddDialog::common_constructor(int id, QString name, int status){
     ui->setupUi(this);
-    this->setWindowTitle("Новая запись");
+    this->setWindowTitle(editing ? "Редактирование" : "Новая запись");
     this->trademark_id = id;
     this->status = status;
-    set_name();
+    ui->detail_name_label->setText(name);
 
     ui->rack_box->setEnabled(false);
     ui->board_box->setEnabled(false);
     ui->box_box->setEnabled(false);
 
-    fill_inspections_box();
-    fill_years_box();
+    qDebug() << moving;
+    if(!moving){
+        fill_inspections_box();
+        fill_years_box();
+        fill_categories_box();
+        fill_addpar1_box();
+        fill_addpar2_box();
+    }
     fill_storages_box();
-    fill_categories_box();
-    fill_addpar1_box();
-    fill_addpar2_box();
 
     connects();
 
@@ -159,17 +201,6 @@ void GreyAddDialog::connects(){
     QObject::connect(ui->cancel_button, SIGNAL(clicked()), SLOT(reject()));
     QObject::connect(ui->apply_button, SIGNAL(clicked()), SLOT(apply()));
     QObject::connect(ui->save_button, SIGNAL(clicked()), SLOT(accept()));
-}
-
-void GreyAddDialog::set_name(){
-    QSqlQuery query(base);
-    QString query_str = QString("SELECT name FROM trademarks WHERE id = %1").arg(trademark_id);
-    if(!query.exec(query_str)){
-        error("Ошибка", QString("Не удалось выполнить запрос: ").append(query.lastError().text()));
-        return;
-    }
-    query.next();
-    ui->detail_name_label->setText(query.value(0).toString());
 }
 
 
@@ -416,7 +447,7 @@ bool GreyAddDialog::save_new(bool transaction){
     */
     // потом
 
-    int place_id = find_place();
+    place_id = find_place();
     if(place_id < 0)
         return false;
 
@@ -439,19 +470,21 @@ bool GreyAddDialog::save_new(bool transaction){
     QSqlQuery query(base);
     QString query_str;
 
-    params.clear();
-    params["trademark_id"] = QString::number(trademark_id);
-    params["quantity"] = QString::number(ui->quantity_spin->value());
-    params["place_id"] = QString::number(place_id);
-    params["year"] = ui->year_box->currentText();
-    params["inspection_id"] = QString::number(ui->inspection_box->itemData(ui->inspection_box->currentIndex()).toInt());
-    params["pack"] = ui->pack_text->text();
-    params["category_id"] = QString::number(ui->category_box->itemData(ui->category_box->currentIndex()).toInt());
-    params["add_info"] = ui->addpar1_box->currentText();
-    params["defect"] = ui->addpar2_box->currentText();
-    params["reserve_total"] = QString::number(0);
-    params["status"] = QString::number(this->status);
-    params["add_user_id"] = QString::number(USER_ID);
+    //if(!moving){
+        params.clear();
+        params["trademark_id"] = QString::number(trademark_id);
+        params["quantity"] = QString::number(ui->quantity_spin->value());
+        params["place_id"] = QString::number(place_id);
+        params["year"] = ui->year_box->currentText();
+        params["inspection_id"] = QString::number(ui->inspection_box->itemData(ui->inspection_box->currentIndex()).toInt());
+        params["pack"] = ui->pack_text->text();
+        params["category_id"] = QString::number(ui->category_box->itemData(ui->category_box->currentIndex()).toInt());
+        params["add_info"] = ui->addpar1_box->currentText();
+        params["defect"] = ui->addpar2_box->currentText();
+        params["reserve_total"] = QString::number(0);
+        params["status"] = QString::number(this->status);
+        params["add_user_id"] = QString::number(USER_ID);
+    //}
 
     QString params_names = QStringList(params.keys()).join(", ");
     QString params_values = QStringList(params.values()).join("', '");
@@ -487,6 +520,8 @@ void GreyAddDialog::fill_current(){
 
 }
 
+
+
 bool GreyAddDialog::save_edited(){
     /*int place_id = find_place();
     if(place_id < 0)
@@ -503,22 +538,23 @@ bool GreyAddDialog::save_edited(){
 */
     QSqlQuery query(base);
     QString query_str;
-    int place_id;
 
-    // подготавливаем список изменённых параметров
     QMap<QString, QString> changed_params;
-    if(params["year"] != ui->year_box->currentText())
-        changed_params["year"] = ui->year_box->currentText();
-    if(params["inspection"] != ui->inspection_box->currentText())
-        changed_params["inspection_id"] = QString::number(ui->inspection_box->itemData(ui->inspection_box->currentIndex()).toInt());
-    if(params["pack"] != ui->pack_text->text())
-        changed_params["pack"] = ui->pack_text->text();
-    if(params["category"] != ui->category_box->currentText())
-        changed_params["category_id"] = QString::number(ui->category_box->itemData(ui->category_box->currentIndex()).toInt());
-    if(params["add_info"] != ui->addpar1_box->currentText())
-        changed_params["add_info"] = ui->addpar1_box->currentText();
-    if(params["defect"] != ui->addpar2_box->currentText())
-        changed_params["defect"] = ui->addpar2_box->currentText();
+    if(!moving){
+        // подготавливаем список изменённых параметров
+        if(params["year"] != ui->year_box->currentText())
+            changed_params["year"] = ui->year_box->currentText();
+        if(params["inspection_id"] != QString::number(ui->inspection_box->itemData(ui->inspection_box->currentIndex()).toInt()))
+            changed_params["inspection_id"] = QString::number(ui->inspection_box->itemData(ui->inspection_box->currentIndex()).toInt());
+        if(params["pack"] != ui->pack_text->text())
+            changed_params["pack"] = ui->pack_text->text();
+        if(params["category_id"] != QString::number(ui->category_box->itemData(ui->category_box->currentIndex()).toInt()))
+            changed_params["category_id"] = QString::number(ui->category_box->itemData(ui->category_box->currentIndex()).toInt());
+        if(params["add_info"] != ui->addpar1_box->currentText())
+            changed_params["add_info"] = ui->addpar1_box->currentText();
+        if(params["defect"] != ui->addpar2_box->currentText())
+            changed_params["defect"] = ui->addpar2_box->currentText();
+    }
 
     // изменение места отслеживаем отдельно, чтобы знать, имеет ли место быть перемещение
     bool move = false;
@@ -553,6 +589,20 @@ bool GreyAddDialog::save_edited(){
         }
     }
     else{
+        int existing_id = detail_exists(place_id);
+        if(existing_id > 0){
+            // добавляем кол-во к этой записи
+            if(!add_quantity(existing_id))
+                return false;
+            // отнимаем от текущей
+            QString query_str = QString("UPDATE greytable SET quantity = quantity - %1 WHERE id = %2").arg(ui->quantity_spin->value()).arg(grey_id);
+            if(!query.exec(query_str)){
+                error("Ошибка", QString("Ошибка при сохранении детали.\n").append(query.lastError().text()));
+                return false;
+            }
+            return true;
+        }
+
         // делаем UPDATE
         query_str = "UPDATE greytable SET ";
         QMapIterator<QString, QString> it(changed_params);
@@ -592,7 +642,7 @@ bool GreyAddDialog::apply(){
         QMessageBox::warning(this, "Ошибка", "Введите количество", QMessageBox::Ok);
         return false;
     }
-    if(!edited){
+    if(!editing){
         if(save_new()){
             //edited = true;
             fill_current();

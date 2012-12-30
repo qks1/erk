@@ -2,8 +2,8 @@
 #define INPUT_H
 
 #include <QtGui>
-#include "constants.h"
-#include "helpers.h"
+#include "../common/constants.h"
+#include "../common/helpers.h"
 
 class Input : public QWidget
 {
@@ -14,6 +14,7 @@ public:
     void delete_last_symbol();
     int id_combobox_value();
     void set_input_width(int);
+    void set_eqge_value(int);
 
 
 private:

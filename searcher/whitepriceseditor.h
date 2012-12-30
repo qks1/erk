@@ -2,8 +2,8 @@
 #define WHITEPRICESEDITOR_H
 
 #include <QDialog>
-#include "constants.h"
-#include "helpers.h"
+#include "../common/constants.h"
+#include "../common/helpers.h"
 
 namespace Ui {
 class WhitePricesEditor;

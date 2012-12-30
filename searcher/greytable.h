@@ -3,10 +3,10 @@
 
 #include <QtGui>
 #include <QtSql>
-#include "basetable.h"
-#include "constants.h"
-#include "helpers.h"
-#include "mytablemodel.h"
+#include "../common/basetable.h"
+#include "../common/constants.h"
+#include "../common/helpers.h"
+#include "../common/mytablemodel.h"
 
 class GreyTableModel : public MyTableModel
 {
@@ -47,6 +47,7 @@ public:
 
     void fill(GreyTableModel*, QStringList, int, Qt::SortOrder, bool);       // функция заполнения таблицы
     void close_func();                  // функция, вызываемая при закрытии таблицы.
+    void hide_show_columns();
 
 private:
     inline void connects();

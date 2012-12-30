@@ -3,8 +3,8 @@
 
 #include <QDialog>
 #include <QtSql>
-#include "constants.h"
-#include "helpers.h"
+#include "../common/constants.h"
+#include "../common/helpers.h"
 
 namespace Ui {
 class GreyAddDialog;
@@ -15,38 +15,41 @@ class GreyAddDialog : public QDialog
     Q_OBJECT
     
 public:
-    explicit GreyAddDialog(int id, int status, QWidget *parent = 0);
+    explicit GreyAddDialog(int id, QString name, int status, QWidget *parent = 0);
     GreyAddDialog(int id,
+                  QString name,
                   int place_id,
                   int status,
                   QWidget *parent = 0);
     GreyAddDialog(int id,
                   int grey_id,
                   int old_quantity,
+                  int category_id,
+                  int inspection_id,
+                  QString name,
                   QString year,
-                  QString inspection,
                   QString pack,
                   QString storage,
                   QString rack,
                   QString board,
                   QString box,
-                  QString category,
                   QString add_par_1,
                   QString add_par_2,
                   int status,
+                  bool moving,
                   QWidget *parent = 0);
 
     ~GreyAddDialog();
     
 private:
     Ui::GreyAddDialog *ui;
-    int trademark_id, grey_id, old_quantity;
+    int trademark_id, grey_id, place_id, old_quantity;
     int status;
     QString success_text;
     QMap<QString, QString> params;
-    bool edited;
+    bool editing, moving;
 
-    inline void common_constructor(int id, int status);
+    inline void common_constructor(int id, QString name, int status);
     void connects();
 
     // заполнение комбобоксов
@@ -68,9 +71,6 @@ private:
     bool add_quantity(int);
     // создать новый id и вычесть кол-во из старого, если редактируется только часть кол-ва
     bool create_new_grey();
-
-    // имя детали
-    void set_name();
 
 signals:
     void need_refresh();

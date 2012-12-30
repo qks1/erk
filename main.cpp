@@ -1,9 +1,9 @@
 #include <QtGui>
 #include <QtSql>
-#include "helpers.h"
-#include "constants.h"
-#include "mainwindow.h"
-#include "authorisewindow.h"
+#include "common/helpers.h"
+#include "common/constants.h"
+#include "common/mainwindow.h"
+#include "common/authorisewindow.h"
 
 
 void create_mainwindow(){
@@ -23,7 +23,7 @@ int main(int argc, char **argv){
 
     // создаём стиль для табвиджета, устанавливающий размер вкладок
     app.setStyleSheet("QTabBar::tab { min-width:50px; max-height:20px}"
-                      "QTableView::item:selected {background-color: darkblue; color:white;}");
+                      "QTableView {selection-background-color: darkblue; selection-color: white}");
 
     set_system_font();
 

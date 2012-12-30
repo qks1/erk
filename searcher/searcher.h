@@ -9,26 +9,30 @@
 #include <QtGui>
 #include <QtSql>
 #include "filters.h"
-#include "helpers.h"
-#include "constants.h"
+#include "../common/helpers.h"
+#include "../common/constants.h"
 #include "whitesearcher.h"
 #include "greysearcher.h"
 #include "managerreservewidget.h"
+#include "docs/docslist.h"
+#include "lists/contragentslist.h"
+#include "docs/document.h"
 
 class Searcher : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Searcher(ReserveStruct rstruct,
+    explicit Searcher(ReserveStruct *rstruct,
                        ColumnsStruct *white_columns,
                        ColumnsStruct *grey_columns,
-                       ColumnsStruct *reserve_columns,
                        QWidget *parent = 0);
     void resize_all();
     void restore_white_width(int index, int width);
     void restore_grey_width(int index, int width);
+    void restore_manager_reserve_width(int index, int width);
     void restore_white_order(int logical, int newvisual);
     void restore_grey_order(int logical, int newvisual);
+    void restore_manager_reserve_order(int logical, int newvisual);
     int open_white_columns_list();
     int open_grey_columns_list();
     void hide_show_white_columns();
@@ -41,6 +45,10 @@ public:
     void refresh_blue_table();
     void switch_reserves();
     void set_reserve_header();
+    void set_reserve_contragent(int id, QString name);
+    void clear_reserve_contragent();
+    void switch_hidden();
+    void open_reserves_list();
 
 private:
     QStackedWidget *stack;
@@ -50,6 +58,8 @@ private:
     //ManagerReserveWidget *reserve;
     Filters *filters;
     Filters *old_grey_filters;
+    //QWidget* prev_widget;
+    QStack<QWidget*> prev_widgets;
 
     inline void connects();
     inline void grey_connects(GreySearcher*);
@@ -60,13 +70,14 @@ private:
     int size_of_select(QString);
     int size_of_select(QStringList);
     bool need_blue;
+    int current_reserve_doc;
     QStringList valid_strings(QStringList);
 
 signals:
     void fill(QSqlQuery, QStringList);
     void clear_text_signal();
-    void section_resized(int, int, int, QString);
-    void section_moved(int, int, int, QString);
+    void section_resized(int, int, QString);
+    void section_moved(int, int, QString);
     void open_settings();
     void catalog_hides();
     void catalog_shows();
@@ -79,6 +90,9 @@ signals:
     void rename_tab(QString, bool);
     void rename_tab(QString);
     void switch_reserve_signal();
+    void contragent_returned(int, QString);
+    void clear_reserve_contragent_signal();
+    void switch_hidden_signal();
 
 private slots:
     void open_grey(int, QString);
@@ -123,12 +137,11 @@ private slots:
     void change_grey_category(QString);
     void reset_add_boxes();
     void grey_reset_slot();
-    void white_section_resized(int, int, QString);
-    void grey_section_resized(int, int, QString);
-    void white_section_moved(int, int, QString);
-    void grey_section_moved(int, int, QString);
-    void tempgreyslot();
-    void tempwhiteslot();
+    void open_contragents(int, int);
+    void close_current();
+    void contragent_returned_slot(int, QString);
+    void open_docslist();
+    void open_doc(int);
 
 public slots:
     void show_white_catalog();

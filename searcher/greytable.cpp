@@ -22,6 +22,19 @@ GreyTable::GreyTable(QString settings_section,
     connects();
 
     restore_state();
+    RightAlignmentDelegate *d = new RightAlignmentDelegate(table);
+    table->setItemDelegateForColumn(columns_grey_ids["id"], d);
+    table->setItemDelegateForColumn(columns_grey_ids["quantity"], d);
+    table->setItemDelegateForColumn(columns_grey_ids["price_ret"], d);
+    table->setItemDelegateForColumn(columns_grey_ids["price_whole"], d);
+    table->setItemDelegateForColumn(columns_grey_ids["whole_begin"], d);
+    table->setItemDelegateForColumn(columns_grey_ids["trademark_id"], d);
+    table->setItemDelegateForColumn(columns_grey_ids["reserve"], d);
+
+    table->hideColumn(columns_grey_ids["trademark_id"]);
+    table->hideColumn(columns_grey_ids["inspection_id"]);
+    table->hideColumn(columns_grey_ids["category_id"]);
+
 }
 
 GreyTable::~GreyTable(){
@@ -60,6 +73,7 @@ void GreyTable::fill(GreyTableModel *query,
     this->sort_column = cur_sort_column;
     this->sort_order = cur_sort_order;
 
+    delete table->model();
     table->setModel(query);
 
     // если получен сигнал order_changed, сменить столбец сортировки и порядок
@@ -76,6 +90,14 @@ void GreyTable::fill(GreyTableModel *query,
         restore_state();
     }
 }
+
+void GreyTable::hide_show_columns(){
+    BaseTable::hide_show_columns();
+    this->table->setColumnHidden(columns_grey_ids["trademark_id"], true);
+    this->table->setColumnHidden(columns_grey_ids["inspection_id"], true);
+    this->table->setColumnHidden(columns_grey_ids["category_id"], true);
+ }
+
 
 //--------------------------------------------------------------------------//
 //--------------------------- СЛОТЫ ----------------------------------------//

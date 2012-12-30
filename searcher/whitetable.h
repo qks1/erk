@@ -3,11 +3,11 @@
 
 #include <QtGui>
 #include <QtSql>
-#include "helpers.h"
+#include "../common/helpers.h"
 //#include "switcher.h"
-#include "constants.h"
-#include "mytablemodel.h"
-#include "basetable.h"
+#include "../common/constants.h"
+#include "../common/mytablemodel.h"
+#include "../common/basetable.h"
 
 /*
     Класс, реализующий таблицу для поисковика в белом экране.
@@ -71,7 +71,6 @@ public slots:
 public slots:
 
 };
-
 
 
 #endif // WHITETABLE_H

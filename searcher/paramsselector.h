@@ -11,9 +11,9 @@
 
 #include <QtGui>
 #include <QtSql>
-#include "constants.h"
-#include "helpers.h"
-#include "customcombobox.h"
+#include "../common/constants.h"
+#include "../common/helpers.h"
+#include "../common/customcombobox.h"
 
 class ParamsSelector : public QWidget
 {

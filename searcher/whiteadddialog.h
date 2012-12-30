@@ -3,10 +3,10 @@
 
 #include <QDialog>
 #include <QtGui>
-#include "customcombobox.h"
-#include "helpers.h"
-#include "constants.h"
-#include "headercomboboxdelegate.h"
+#include "../common/customcombobox.h"
+#include "../common/helpers.h"
+#include "../common/constants.h"
+#include "../common/headercomboboxdelegate.h"
 
 namespace Ui {
 class whiteAddDialog;

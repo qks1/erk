@@ -17,6 +17,15 @@ WhiteTable::WhiteTable(QString settings_section,
 
     // восстанавливаем состояние таблицы (столбцы и их ширина)
     restore_state();
+
+    RightAlignmentDelegate *d = new RightAlignmentDelegate(table);
+    table->setItemDelegateForColumn(columns_white_ids["price_ret"], d);
+    table->setItemDelegateForColumn(columns_white_ids["price_whole"], d);
+    table->setItemDelegateForColumn(columns_white_ids["whole_begin"], d);
+    table->setItemDelegateForColumn(columns_white_ids["id"], d);
+    table->setItemDelegateForColumn(columns_white_ids["quantity"], d);
+    table->setItemDelegateForColumn(columns_white_ids["weight"], d);
+    table->setAlternatingRowColors(true);
 }
 
 WhiteTable::~WhiteTable(){
@@ -40,6 +49,12 @@ void WhiteTable::hide_show_columns(){
     // ибо они (наименования) должны отображаться в ячейке со значением (например: 5 кг)
     this->table->setColumnHidden(columns_white_ids["weightunit"], true);
     this->table->setColumnHidden(columns_white_ids["photo"], true);
+    this->table->setColumnHidden(columns_white_ids["created"], true);
+    this->table->setColumnHidden(columns_white_ids["edited"], true);
+    this->table->setColumnHidden(columns_white_ids["retailupdate"], true);
+    this->table->setColumnHidden(columns_white_ids["wholeupdate"], true);
+    this->table->setColumnHidden(columns_white_ids["wholebeginupdate"], true);
+
  }
 
 
@@ -168,6 +183,14 @@ QVariant WhiteTableModel::data(const QModelIndex &index, int role) const{
             return Qt::blue;
     }
 
+    // если кол-во больше нуля, красим его зелёным
+    if(role == Qt::TextColorRole && index.column() == columns_white_ids["quantity"])
+        if(MyTableModel::data(index, Qt::DisplayRole).toInt() > 0){
+            //return QColor(0,200,0);
+            return Qt::red;
+    }
+
+
     if(prices_access){
         // для розничной цены - если дата обновления больше retail_change_date, красим её красным
         if(role == Qt::TextColorRole && index.column() == columns_white_ids["price_ret"])
@@ -213,4 +236,5 @@ QVariant WhiteTableModel::headerData(int section, Qt::Orientation orientation, i
 void WhiteTableModel::sort(int column, Qt::SortOrder order){
     MyTableModel::sort(column, order);
 }
+
 

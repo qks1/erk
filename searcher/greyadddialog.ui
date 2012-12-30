@@ -39,66 +39,6 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <layout class="QGridLayout" name="places_layout">
-        <item row="0" column="0">
-         <widget class="QLabel" name="storage_label">
-          <property name="text">
-           <string>Склад</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLabel" name="rack_label">
-          <property name="text">
-           <string>Стеллаж</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="2">
-         <widget class="QLabel" name="board_label">
-          <property name="text">
-           <string>Полка</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="3">
-         <widget class="QLabel" name="box_label">
-          <property name="text">
-           <string>Ящик</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QComboBox" name="storage_box">
-          <property name="editable">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QComboBox" name="rack_box">
-          <property name="editable">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="2">
-         <widget class="QComboBox" name="board_box">
-          <property name="editable">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="3">
-         <widget class="QComboBox" name="box_box">
-          <property name="editable">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
       <item row="3" column="1">
        <layout class="QVBoxLayout" name="addpar2_layout">
         <item>
@@ -277,6 +217,68 @@
          </layout>
         </item>
        </layout>
+      </item>
+      <item row="2" column="0">
+       <widget class="QFrame" name="places_frame">
+        <layout class="QGridLayout" name="places_layout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="storage_label">
+           <property name="text">
+            <string>Склад</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="rack_label">
+           <property name="text">
+            <string>Стеллаж</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="board_label">
+           <property name="text">
+            <string>Полка</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLabel" name="box_label">
+           <property name="text">
+            <string>Ящик</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QComboBox" name="storage_box">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="rack_box">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QComboBox" name="board_box">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QComboBox" name="box_box">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </item>
      </layout>
     </item>

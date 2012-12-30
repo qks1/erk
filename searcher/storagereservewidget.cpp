@@ -1,13 +1,14 @@
 #include "storagereservewidget.h"
 #include "ui_storagereservewidget.h"
 
-StorageReserveWidget::StorageReserveWidget(ReserveStruct rstruct,
+StorageReserveWidget::StorageReserveWidget(ReserveStruct *rstruct,
                                            QWidget *parent) :
     QWidget(parent),
     ui(new Ui::StorageReserveWidget)
 {
     ui->setupUi(this);
-    this->source = rstruct.source_model;
+    //ui->table_widget->set_
+    this->source = rstruct->source_model;
     model = 0;
 
     set_columns_names();

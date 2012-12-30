@@ -1,21 +1,23 @@
 #include "searcher.h"
 
-Searcher::Searcher(ReserveStruct rstruct,
+Searcher::Searcher(ReserveStruct *rstruct,
                    ColumnsStruct *white_columns,
                    ColumnsStruct *grey_columns,
-                   ColumnsStruct *reserve_columns,
                    QWidget *parent) :
     QWidget(parent)
 {
     need_blue = get_privilege(Privileges::Blue_screen_access);
     //reserve = new ManagerReserveWidget(this);
-    white_searcher = new WhiteSearcher(rstruct, need_blue, white_columns, this);
+    stack = new QStackedWidget();
+    white_searcher = new WhiteSearcher(rstruct, need_blue, white_columns, stack, prev_widgets, this);
     grey_searcher = new GreySearcher(rstruct, need_blue, false, grey_columns, this);
     blue_searcher = 0;
     if(need_blue)
         blue_searcher = new GreySearcher(rstruct, need_blue, true, grey_columns, this);
     filters = new Filters();
     filters_default();
+    //prev_widget = 0;
+    current_reserve_doc = -1;
     white_searcher->fill_table(filters, false, false);
     success = white_searcher->success;
     GLOBAL_MODE = SEARCHER_WHITE_MODE;
@@ -28,7 +30,6 @@ Searcher::Searcher(ReserveStruct rstruct,
 
 
 inline void Searcher::set_layout(){
-    stack = new QStackedWidget();
     stack->addWidget(white_searcher);
     stack->addWidget(grey_searcher);
     if(need_blue)
@@ -59,6 +60,24 @@ void Searcher::set_reserve_header(){
     }
 }
 
+void Searcher::set_reserve_contragent(int id, QString name){
+    if(!need_blue){
+        if(this->white_searcher != 0)
+            this->white_searcher->set_reserve_contragent(id, name);
+        else if(this->grey_searcher != 0)
+            this->grey_searcher->set_reserve_contragent(id, name);
+    }
+}
+
+void Searcher::clear_reserve_contragent(){
+    if(!need_blue){
+        if(this->white_searcher != 0)
+            this->white_searcher->clear_reserve_contragent();
+        else if(this->grey_searcher != 0)
+            this->grey_searcher->clear_reserve_contragent();
+    }
+}
+
 void Searcher::resize_all(){
     white_searcher->resize_all();
 }
@@ -77,6 +96,13 @@ void Searcher::restore_grey_width(int index, int width){
         grey_searcher->restore_width(index, width);
 }
 
+void Searcher::restore_manager_reserve_width(int index, int width){
+    if(white_searcher != 0)
+        white_searcher->restore_manager_reserve_width(index, width);
+    if(grey_searcher != 0)
+        grey_searcher->restore_manager_reserve_width(index, width);
+}
+
 void Searcher::restore_white_order(int logical, int newvisua){
     if(white_searcher != 0)
         white_searcher->restore_order(logical, newvisua);
@@ -85,6 +111,13 @@ void Searcher::restore_white_order(int logical, int newvisua){
 void Searcher::restore_grey_order(int logical, int newvisual){
     if(grey_searcher != 0)
         grey_searcher->restore_order(logical, newvisual);
+}
+
+void Searcher::restore_manager_reserve_order(int logical, int newvisual){
+    if(white_searcher != 0)
+        white_searcher->restore_manager_reserve_order(logical, newvisual);
+    if(grey_searcher != 0)
+        grey_searcher->restore_manager_reserve_order(logical, newvisual);
 }
 
 int Searcher::open_white_columns_list(){
@@ -150,6 +183,7 @@ inline void Searcher::grey_filters_default(){
     filters->clear_grey_add_info();
     filters->clear_grey_defect();
     filters->clear_grey_category();
+    filters->set_grey_id_mode(EQUAL);
 }
 
 inline void Searcher::connects(){
@@ -169,8 +203,8 @@ inline void Searcher::connects(){
     QObject::connect(this->white_searcher, SIGNAL(last_filter_changed(int)), SLOT(set_last_filter(int)));
     QObject::connect(this->white_searcher, SIGNAL(create_grey(int, QString)), SLOT(open_grey(int, QString)));
     QObject::connect(this->white_searcher, SIGNAL(create_blue(int, QString)), SLOT(open_blue(int, QString)));
-    QObject::connect(this->white_searcher, SIGNAL(section_resized(int, int, QString)), SLOT(white_section_resized(int, int, QString)));
-    QObject::connect(this->white_searcher, SIGNAL(section_moved(int, int, QString)), SLOT(white_section_moved(int, int, QString)));
+    QObject::connect(this->white_searcher, SIGNAL(section_resized(int, int, QString)), SIGNAL(section_resized(int, int, QString)));
+    QObject::connect(this->white_searcher, SIGNAL(section_moved(int, int, QString)), SIGNAL(section_moved(int, int, QString)));
     QObject::connect(this->white_searcher, SIGNAL(reset_param_signal(int)), SLOT(reset_param_filter(int)));
     QObject::connect(this->white_searcher, SIGNAL(open_settings()), SIGNAL(open_settings()));
     QObject::connect(this->white_searcher, SIGNAL(catalog_hides()), SIGNAL(catalog_hides()));
@@ -179,17 +213,11 @@ inline void Searcher::connects(){
     QObject::connect(this->white_searcher, SIGNAL(need_refresh()), SIGNAL(need_white_refresh()));
     QObject::connect(this->white_searcher, SIGNAL(switch_reserve_signal()), SIGNAL(switch_reserve_signal()));
     QObject::connect(this->white_searcher, SIGNAL(refresh_searcher()), SIGNAL(need_total_refresh()));
+    QObject::connect(this->white_searcher, SIGNAL(open_contragents(int, int)), SLOT(open_contragents(int, int)));
+    QObject::connect(this->white_searcher, SIGNAL(clear_contragent()), SIGNAL(clear_reserve_contragent_signal()));
+    QObject::connect(this->white_searcher, SIGNAL(open_docslist()), SLOT(open_docslist()));
 }
 
-void Searcher::tempgreyslot(){
-    qDebug("receive from grey, force it to TabWidget...");
-    emit switch_reserve_signal();
-}
-
-void Searcher::tempwhiteslot(){
-    qDebug("receive from white, force it to TabWidget...");
-    emit switch_reserve_signal();
-}
 
 inline void Searcher::grey_connects(GreySearcher *g){
     // сигналы от серого поисковика
@@ -217,13 +245,15 @@ inline void Searcher::grey_connects(GreySearcher *g){
     QObject::connect(g, SIGNAL(change_category_signal(QString)), SLOT(change_grey_category(QString)));
     QObject::connect(g, SIGNAL(reset_add_boxes_signal()), SLOT(reset_add_boxes()));
     QObject::connect(g, SIGNAL(total_reset_signal()), SLOT(grey_reset_slot()));
-    QObject::connect(g, SIGNAL(section_resized(int, int, QString)), SLOT(grey_section_resized(int, int, QString)));
-    QObject::connect(g, SIGNAL(section_moved(int, int, QString)), SLOT(grey_section_moved(int, int, QString)));
+    QObject::connect(g, SIGNAL(section_resized(int, int, QString)), SIGNAL(section_resized(int, int, QString)));
+    QObject::connect(g, SIGNAL(section_moved(int, int, QString)), SIGNAL(section_moved(int, int, QString)));
     QObject::connect(g, SIGNAL(columns_changed()), SIGNAL(grey_columns_changed()));
     QObject::connect(g, SIGNAL(open_settings()), SIGNAL(open_settings()));
     QObject::connect(g, SIGNAL(need_refresh()), SIGNAL(need_grey_refresh()));
     QObject::connect(g, SIGNAL(switch_reserve_signal()), SIGNAL(switch_reserve_signal()));
     QObject::connect(g, SIGNAL(refresh_searcher()), SIGNAL(need_total_refresh()));
+    QObject::connect(g, SIGNAL(open_contragents(int, int)), SLOT(open_contragents(int, int)));
+    QObject::connect(g, SIGNAL(clear_contragent()), SIGNAL(clear_reserve_contragent_signal()));
 
     if(g == blue_searcher){
         QObject::connect(g, SIGNAL(need_blue_refresh()), SIGNAL(need_blue_refresh()));
@@ -255,22 +285,6 @@ void Searcher::hide_white_catalog(){
 
 int Searcher::mode(){
     return filters->mode();
-}
-
-void Searcher::white_section_resized(int index, int width, QString section){
-    emit section_resized(SEARCHER_WHITE_MODE, index, width, section);
-}
-
-void Searcher::grey_section_resized(int index, int width, QString section){
-    emit section_resized(SEARCHER_GREY_MODE, index, width, section);
-}
-
-void Searcher::white_section_moved(int logical, int newvisual, QString section){
-    emit section_moved(SEARCHER_WHITE_MODE, logical, newvisual, section);
-}
-
-void Searcher::grey_section_moved(int logical, int newvisual, QString section){
-    emit section_moved(SEARCHER_GREY_MODE, logical, newvisual, section);
 }
 
 void Searcher::reset_white_text_filters(){
@@ -765,6 +779,72 @@ void Searcher::close_grey(QModelIndex i){
 
 void Searcher::refresh_grey(){
     grey_searcher->fill_table(filters, false);
+}
+
+void Searcher::open_contragents(int doc_num, int type){
+    current_reserve_doc = doc_num;
+    ContragentsList *contragents = new ContragentsList(true, type);
+    prev_widgets.push(stack->currentWidget());
+    stack->addWidget(contragents);
+    stack->setCurrentWidget(contragents);
+    contragents->show();
+    connect(contragents, SIGNAL(delete_me()), SLOT(close_current()));
+    connect(contragents, SIGNAL(selected(int,QString)), SLOT(contragent_returned_slot(int,QString)));
+}
+
+void Searcher::open_docslist(){
+    /*DocsList *docs = new DocsList();
+    prev_widgets.push(stack->currentWidget());
+    stack->addWidget(docs);
+    stack->setCurrentWidget(docs);
+    docs->show();
+    connect(docs, SIGNAL(delete_me()), SLOT(close_current()));
+    connect(this, SIGNAL(switch_hidden_signal()), docs, SLOT(switch_hidden()));
+    connect(docs, SIGNAL(open_doc(int)), SLOT(open_doc(int)));*/
+}
+
+void Searcher::open_doc(int id){
+    /*Document *doc = new Document(id);
+    prev_widgets.push(stack->currentWidget());
+    stack->addWidget(doc);
+    stack->setCurrentWidget(doc);
+    doc->show();
+
+    connect(doc, SIGNAL(delete_me()), SLOT(close_current()));*/
+}
+
+void Searcher::switch_hidden(){
+    this->white_searcher->switch_hidden_public();
+}
+
+void Searcher::open_reserves_list(){
+    white_searcher->open_reserves_list();
+}
+
+void Searcher::contragent_returned_slot(int id, QString name){
+    close_current();
+    // в базу записать же
+    if(current_reserve_doc >= 0){
+        QSqlQuery query(base);
+        QString query_str = QString("UPDATE reserve_docs SET contragent_id = %1 WHERE user_id = %2 AND doc_num = %3")
+                .arg(id)
+                .arg(USER_ID)
+                .arg(current_reserve_doc);
+        if(!query.exec(query_str)){
+            qDebug() << "Ошибка sql-запроса: " << query.lastError().text();
+            return;
+        }
+        current_reserve_doc = -1;
+    }
+
+    emit contragent_returned(id, name);
+}
+
+void Searcher::close_current(){
+    //stack->currentWidget()->close();
+    stack->removeWidget(stack->currentWidget());
+    stack->setCurrentWidget(prev_widgets.last());
+    prev_widgets.pop();
 }
 
 QStringList Searcher::valid_strings(QStringList parts){

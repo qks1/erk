@@ -4,8 +4,9 @@
 #include <QtGui>
 #include <QtSql>
 #include "greytable.h"
-#include "constants.h"
-#include "helpers.h"
+#include "common/constants.h"
+#include "common/helpers.h"
+#include "common/basetableview.h"
 
 namespace Ui {
 class StorageReserveWidget;
@@ -16,7 +17,7 @@ class StorageReserveWidget : public QWidget
     Q_OBJECT
     
 public:
-    explicit StorageReserveWidget(ReserveStruct rstruct, QWidget *parent = 0);
+    explicit StorageReserveWidget(ReserveStruct *rstruct, QWidget *parent = 0);
     ~StorageReserveWidget();
     void set_blue_table(GreyTable *b);
     void delpos(int);

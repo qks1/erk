@@ -2,7 +2,7 @@
 #define FILTERS_H
 
 #include <QtGui>
-#include "helpers.h"
+#include "../common/helpers.h"
 
 /*  класс, описывающий фильтры для поисковика.
     Возможные фильтры:

@@ -37,5 +37,10 @@
         <file alias="reserve">images/reserve.PNG</file>
         <file alias="blue">images/blue.png</file>
         <file alias="grey">images/grey.png</file>
+        <file alias="no">images/no.png</file>
+        <file alias="ok">images/ok.PNG</file>
+        <file alias="green_minus">images/green_minus.PNG</file>
+        <file alias="green_tilda">images/green_tilda.PNG</file>
+        <file alias="minus_big">images/minus_big.png</file>
     </qresource>
 </RCC>

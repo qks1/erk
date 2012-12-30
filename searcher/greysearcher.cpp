@@ -1,6 +1,6 @@
 ﻿#include "greysearcher.h"
 
-GreySearcher::GreySearcher(ReserveStruct rstruct,
+GreySearcher::GreySearcher(ReserveStruct *rstruct,
                            bool need_blue,
                            bool blue,
                            ColumnsStruct *columns,
@@ -51,6 +51,8 @@ GreySearcher::GreySearcher(ReserveStruct rstruct,
     reserve = 0;
     pipe = 0;
 
+    input->set_eqge_value(EQUAL);
+
     if(!need_blue){
         reserve = new ManagerReserveWidget(rstruct, this);
         reserve->set_grey_table(grey_table);
@@ -76,20 +78,19 @@ GreySearcher::GreySearcher(ReserveStruct rstruct,
     edit_prices_permission = get_privilege(Privileges::Prices_edit_access);
 
     // BUTTONS
-    new_button = create_panel_button("Новая запись", ":/new", SLOT(add_button_slot()));
-    delete_button = create_panel_button("Удалить запись", ":/delete", SLOT(delete_button_slot()));
-    edit_button = create_panel_button("Редактировать запись", ":/edit", SLOT(edit_button_slot()));
-    reset_button = create_panel_button("Общий сброс", ":/reset", SLOT(reset_button_slot()));
+    new_button = create_panel_button(this, buttons_lt, "Новая запись", ":/new", SLOT(add_button_slot()));
+    delete_button = create_panel_button(this, buttons_lt, "Удалить запись", ":/delete", SLOT(delete_button_slot()));
+    edit_button = create_panel_button(this, buttons_lt, "Редактировать запись", ":/edit", SLOT(edit_button_slot()));
+    reset_button = create_panel_button(this, buttons_lt, "Общий сброс", ":/reset", SLOT(reset_button_slot()));
     if(edit_prices_permission){
-        prices_button = create_panel_button("Редактировать цены", ":/prices", SLOT(prices_button_slot()));
+        prices_button = create_panel_button(this, buttons_lt, "Редактировать цены", ":/prices", SLOT(prices_button_slot()));
     }
-    docs_button = create_panel_button("Документы", ":/docs", SLOT(docs_button_slot()));
-    //columns_button = create_panel_button("Столбцы", ":/columns", SLOT(columns_button_slot()));
-    settings_button = create_panel_button("Настройки", ":/settings", SLOT(settings_button_slot()));
-    escape_button = create_panel_button("Возврат в белый экран", ":/back_grey", SLOT(escape_button_slot()));
-    reserve_button = create_panel_button("Выписка", ":/reserve", SLOT(reserve_button_slot()));
+    docs_button = create_panel_button(this, buttons_lt, "Документы", ":/docs", SLOT(docs_button_slot()));
+    settings_button = create_panel_button(this, buttons_lt, "Настройки", ":/settings", SLOT(settings_button_slot()));
+    escape_button = create_panel_button(this, buttons_lt, "Возврат в белый экран", ":/back_grey", SLOT(escape_button_slot()));
+    reserve_button = create_panel_button(this, buttons_lt, "Выписка", ":/reserve", SLOT(reserve_button_slot()));
     if(need_blue){
-        //blue_button = create_panel_button((blue ? "Серый экран" : "Синий экран"), ":/blue", (blue ? SIGNAL(close_blue_signal()) : SLOT(open_blue_slot())));
+        //blue_button = create_panel_button(this, buttons_lt, (blue ? "Серый экран" : "Синий экран"), ":/blue", (blue ? SIGNAL(close_blue_signal()) : SLOT(open_blue_slot())));
     }
     if(!blue){
         disconnect(edit_button, SIGNAL(clicked()), this, SLOT(edit_button_slot()));
@@ -170,22 +171,14 @@ void GreySearcher::connects(){
     }
     else{
         QObject::connect(this->reserve, SIGNAL(need_refresh()), SIGNAL(refresh_searcher()));
+        QObject::connect(this->reserve, SIGNAL(switch_reserves()), SIGNAL(switch_reserve_signal()));
+        QObject::connect(this->reserve, SIGNAL(section_resized(int,int,QString)), SIGNAL(section_resized(int,int,QString)));
+        QObject::connect(this->reserve, SIGNAL(section_moved(int,int,QString)), SIGNAL(section_moved(int,int,QString)));
+        QObject::connect(this->reserve, SIGNAL(open_contragents(int,int)), SIGNAL(open_contragents(int,int)));
+        QObject::connect(this->reserve, SIGNAL(clear_contragent_signal()), SIGNAL(clear_contragent()));
     }
 
     //QObject::connect(this)
-}
-
-QPushButton* GreySearcher::create_panel_button(QString tooltip, QString image_file, const char *method){
-    QPushButton *button = new QPushButton(this);
-    button->setFixedSize(panel_button_size, panel_button_size);
-    button->setToolTip(tooltip);
-    QPixmap new_pixmap(image_file);
-    QIcon new_icon(new_pixmap);
-    button->setIcon(new_icon);
-    button->setIconSize(button->rect().size());
-    buttons_lt->addWidget(button);
-    QObject::connect(button, SIGNAL(clicked()), method);
-    return button;
 }
 
 void GreySearcher::open_blue_slot(){
@@ -432,13 +425,16 @@ void GreySearcher::add_button_slot(){
         QMessageBox::warning(this, "Ошибка", "Выберите строку", QMessageBox::Ok);
         return;
     }
+    QString name = grey_table->table_data(columns_grey_ids["name"]).toString();
     GreyAddDialog *gd;
     if(last_added_place == 0)
         gd = new GreyAddDialog(filters->grey_id_filter() > 0 ? filters->grey_id_filter() : grey_table->table_data(columns_grey_ids["trademark_id"]).toInt(),
+                                          name,
                                           this->need_blue ? 3 : 1,
                                           this);
     else
         gd = new GreyAddDialog(filters->grey_id_filter() > 0 ? filters->grey_id_filter() : grey_table->table_data(columns_grey_ids["trademark_id"]).toInt(),
+                               name,
                                this->last_added_place,
                                this->need_blue ? 3 : 1,
                                this);
@@ -525,7 +521,7 @@ void GreySearcher::reserve_button_slot(){
     emit switch_reserve_signal();
 }
 
-void GreySearcher::edit_correction_slot(){
+void GreySearcher::edit_correction_slot(bool moving){
     // если в синем экране выделены несколько строк - выводим ошибку, т.к. редактировать можно только одну позицию
     if(grey_table->selection_size() > 1){
         QMessageBox::information(this, "Ошибка", "Выберите одну строку", QMessageBox::Ok);
@@ -542,28 +538,43 @@ void GreySearcher::edit_correction_slot(){
     int id = (filters->grey_id_filter() > 0 ? filters->grey_id_filter() : grey_table->table_data(columns_grey_ids["trademark_id"]).toInt());
     int grey_id = grey_table->table_data(columns_grey_ids["id"]).toInt();
     int quantity = grey_table->table_data(columns_grey_ids["quantity"]).toInt();
+    int category_id = grey_table->table_data(columns_grey_ids["category_id"]).toInt();
+    int inspection_id = grey_table->table_data(columns_grey_ids["inspection_id"]).toInt();
+    QString name = grey_table->table_data(columns_grey_ids["name"]).toString();
     QString year = grey_table->table_data(columns_grey_ids["year"]).toString();
-    QString inspection = grey_table->table_data(columns_grey_ids["inspection"]).toString();
     QString pack = grey_table->table_data(columns_grey_ids["pack"]).toString();
     QString storage = grey_table->table_data(columns_grey_ids["storage"]).toString();
     QString rack = grey_table->table_data(columns_grey_ids["rack"]).toString();
     QString board = grey_table->table_data(columns_grey_ids["board"]).toString();
     QString box = grey_table->table_data(columns_grey_ids["box"]).toString();
-    QString category = grey_table->table_data(columns_grey_ids["category"]).toString();
     QString addpar1 = grey_table->table_data(columns_grey_ids["addinfo"]).toString();
     QString addpar2 = grey_table->table_data(columns_grey_ids["defect"]).toString();
-    qDebug() << year;
     int status = this->blue ? 3 : 1;
-    GreyAddDialog *egd = new GreyAddDialog(id, grey_id, quantity, year, inspection, pack, storage, rack, board, box, category, addpar1, addpar2, status);
+    GreyAddDialog *egd = new GreyAddDialog(id,
+                                           grey_id,
+                                           quantity,
+                                           category_id,
+                                           inspection_id,
+                                           name,
+                                           year,
+                                           pack,
+                                           storage,
+                                           rack,
+                                           board,
+                                           box,
+                                           addpar1,
+                                           addpar2,
+                                           status,
+                                           moving);
     connect(egd, SIGNAL(need_refresh()), SIGNAL(refresh_searcher()));
     egd->exec();
 }
 
-void GreySearcher::edit_chargeoff_slot(){
-
+void GreySearcher::edit_move_slot(){
+    edit_correction_slot(true);
 }
 
-void GreySearcher::edit_move_slot(){
+void GreySearcher::edit_chargeoff_slot(){
 
 }
 
@@ -580,6 +591,16 @@ int GreySearcher::open_columns_list(){
 
 void GreySearcher::restore_order(int logical, int newvisual){
     this->grey_table->restore_order(logical, newvisual);
+}
+
+void GreySearcher::restore_manager_reserve_width(int index, int width){
+    if(this->reserve != 0)
+        this->reserve->restore_width(index, width);
+}
+
+void GreySearcher::restore_manager_reserve_order(int logical, int newvisual){
+    if(this->reserve != 0)
+        this->reserve->restore_order(logical, newvisual);
 }
 
 void GreySearcher::hide_show_columns(){
@@ -701,6 +722,16 @@ void GreySearcher::switch_reserve(){
 void GreySearcher::set_reserve_header(){
     //if(!need_blue)
         //this->reserve->set_reserve_header();
+}
+
+void GreySearcher::set_reserve_contragent(int id, QString name){
+    if(!need_blue)
+        this->reserve->set_contragent(id, name);
+}
+
+void GreySearcher::clear_reserve_contragent(){
+    if(!need_blue)
+        this->reserve->clear_contragent();
 }
 
 int GreySearcher::input_id_combobox_value(){
@@ -1401,10 +1432,10 @@ QString GreySearcher::apply_filters(){
             QString str = "SELECT '' as ";
             int i;
             for(i = 0; i < columns_grey_table.size()-1; i++){
-                str += columns_grey_table.at(i).mid(columns_grey_table.at(i).indexOf('.')+1);
+                str += columns_grey_table.at(i).mid(columns_grey_table.at(i).indexOf(" as ")+4);
                 str += ", '' as ";
             }
-            str += columns_grey_table.at(i).mid(columns_grey_table.at(i).indexOf('.')+1);
+            str += columns_grey_table.at(i).mid(columns_grey_table.at(i).indexOf(" as ")+4);
             return str;
         }
     }

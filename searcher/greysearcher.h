@@ -17,10 +17,11 @@
 #include "input.h"
 #include "paramsselector.h"
 #include "filters.h"
-#include "constants.h"
-#include "customcombobox.h"
-#include "helpers.h"
+#include "../common/constants.h"
+#include "../common/customcombobox.h"
+#include "../common/helpers.h"
 #include "greyadddialog.h"
+#include "greymovedialog.h"
 #include "managerreservewidget.h"
 #include "storagereservewidget.h"
 
@@ -28,7 +29,7 @@ class GreySearcher : public QWidget
 {
     Q_OBJECT
 public:
-    explicit GreySearcher(ReserveStruct rstruct,
+    explicit GreySearcher(ReserveStruct *rstruct,
                           bool need_blue,
                           bool blue,
                           ColumnsStruct *columns,
@@ -41,10 +42,14 @@ public:
     void clear_text();
     void restore_width(int index, int width);
     void restore_order(int logical, int newvisual);
+    void restore_manager_reserve_width(int index, int width);
+    void restore_manager_reserve_order(int logical, int newvisual);
     int open_columns_list();
     void hide_show_columns();
     void switch_reserve();
     void set_reserve_header();
+    void set_reserve_contragent(int id, QString name);
+    void clear_reserve_contragent();
 
 private:
     GreyTable *grey_table;
@@ -139,7 +144,6 @@ private:
     QString glue_where(QStringList *ex = 0);
     QString glue_where(QString);
     QString apply_filters();
-    QPushButton *create_panel_button(QString, QString, const char *method);
     QMenu *create_edit_button_menu();
 
     
@@ -180,7 +184,8 @@ signals:
     void need_refresh();
     void need_blue_refresh();
     void refresh_searcher();
-
+    void open_contragents(int,int);
+    void clear_contragent();
 
 private slots:
     void text_changed_slot(int, QString);
@@ -216,7 +221,7 @@ private slots:
     void columns_button_slot();
     void settings_button_slot();
     void escape_button_slot();
-    void edit_correction_slot();
+    void edit_correction_slot(bool moving = false);
     void edit_chargeoff_slot();
     void edit_move_slot();
     void reserve_button_slot();

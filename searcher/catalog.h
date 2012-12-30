@@ -3,8 +3,8 @@
 
 #include <QtGui>
 #include <QtSql>
-#include "helpers.h"
-#include "constants.h"
+#include "../common/helpers.h"
+#include "../common/constants.h"
 
 /*
   Класс каталога групп и подгрупп.

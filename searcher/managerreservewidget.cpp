@@ -1,31 +1,47 @@
-#include "managerreservewidget.h"
+﻿#include "managerreservewidget.h"
 #include "ui_managerreservewidget.h"
 
-ManagerReserveWidget::ManagerReserveWidget(ReserveStruct rstruct,
+ManagerReserveWidget::ManagerReserveWidget(ReserveStruct *rstruct,
                                            QWidget *parent) :
     QWidget(parent),
     ui(new Ui::ManagerReserveWidget)
 {
+    QList<int> default_widths;
+    int fs = qApp->font().pointSize();
+    default_widths << fs*3      // select
+                   << fs*5      // id
+                   << fs*8      // grey_id
+                   << fs*24     // name
+                   << fs*8      // quantity
+                   << fs*8      // price
+                   << fs*8      // sumprice
+                   << fs*8      // year
+                   << fs*6      // storage
+                   << fs*6      // rack
+                   << fs*6      // board
+                   << fs*6      // box
+                   << fs*24     // note
+                   << fs*6;     //weight
     ui->setupUi(this);
-    ui->table_widget->setSelectionMode(QTableView::ExtendedSelection);
-    QModelIndex cur = rstruct.selection_model->currentIndex();
+    ui->table_widget->set_variables("MANAGER_RESERVE", false, &(rstruct->columns), default_widths);
+
+    QModelIndex cur = rstruct->selection_model->currentIndex();
     max_docs = 10;
     oldmodel = 0;
     grey_table = 0;
-    this->source = rstruct.source_model;
-    this->list_model = rstruct.list_model;
-    this->selection_model = rstruct.selection_model;
-    this->table_header = rstruct.table_header;
-    //this->table_header->setParent(ui->table_widget);
-    //QHeaderView *table_headerd = new QHeaderView(Qt::Horizontal);
-    //ui->table_widget->setHorizontalHeader(table_header);
-    //ui->table_widget->horizontalHeader()->setVisible(true);
-    ui->table_widget->horizontalHeader()->setHighlightSections(false);
-
+    contragent_id = 0;
+    this->source = rstruct->source_model;
+    this->list_model = rstruct->list_model;
+    this->selection_model = rstruct->selection_model;
+    ui->docs_list->setSelectionMode(QListView::SingleSelection);
+    model = new ReserveProxyModel(this);
+    all_selected = false;
     set_columns_names();
     set_layout();
 
     fill_list();
+    ui->table_widget->restore_columns_width();
+    ui->table_widget->restore_columns_order();
     if(cur.isValid())
         this->ui->docs_list->setCurrentIndex(cur);
 
@@ -49,6 +65,14 @@ void ManagerReserveWidget::connects(){
     connect(ui->clear_button, SIGNAL(clicked()), SLOT(clear_doc()));
     connect(ui->close_button, SIGNAL(clicked()), SIGNAL(switch_reserves()));
     connect(ui->move_button, SIGNAL(clicked()), SLOT(move_doc()));
+    connect(ui->tobase_button, SIGNAL(clicked()), SLOT(tobase()));
+    connect(ui->note_edit, SIGNAL(double_clicked()), SLOT(open_contragents_slot()));
+    connect(ui->note_edit, SIGNAL(textChanged(QString)), SLOT(text_changed_slot()));
+    connect(ui->table_widget->horizontalHeader(), SIGNAL(sectionClicked(int)), SLOT(header_clicked(int)));
+    QObject::connect(ui->table_widget, SIGNAL(section_resized(int, int, QString)), SIGNAL(section_resized(int, int, QString)));
+    QObject::connect(ui->table_widget, SIGNAL(section_moved(int, int, QString)), SIGNAL(section_moved(int, int, QString)));
+    QObject::connect(ui->table_widget, SIGNAL(clicked(QModelIndex)), SLOT(selection_changed(QModelIndex)));
+
 }
 
 void ManagerReserveWidget::set_layout(){
@@ -65,34 +89,58 @@ void ManagerReserveWidget::set_layout(){
     ui->close_button->setFixedSize(ui->show_button->size());
     ui->tobase_button->setFixedSize(ui->plus_button->height(), ui->plus_button->height());
 
-    ui->note_button->setFixedSize(fsize*2.5, fsize*2.5);
-
     ui->docs_list->setFixedHeight(fsize*16);
     ui->docs_list->setFixedWidth(fsize*10);
     ui->note_edit->setFixedHeight(fsize*2.5);
-    //ui->table_widget->setFixedHeight(ui->docs_list->height() - ui->note_edit->height());
-    //ui->right_frame->setFixedHeight(ui->docs_list->height());
-    ui->main_frame->setFixedHeight(ui->docs_list->height());
+    ui->table_widget->setFixedHeight(ui->docs_list->height());
+    ui->right_splitter_frame->setFixedHeight(ui->table_widget->height());
+    //ui->main_frame->setFixedHeight(ui->docs_list->height());
+    ui->splitter->setFixedWidth(qApp->desktop()->width());
+    ui->buttons_widget->setFixedWidth(fsize*32);
+    ui->right_frame->setMinimumWidth(ui->buttons_widget->width());
+    ui->smaller_splitter->setMaximumWidth(qApp->desktop()->width());
+    ui->fake_label->setMinimumWidth(0);
+    ui->right_frame->setMaximumWidth(ui->buttons_widget->width()*2);
 
-    ui->table_widget->verticalHeader()->setDefaultSectionSize(qApp->font().pointSize()*2);
-
-    this->setFixedSize(qApp->desktop()->maximumWidth(), ui->main_frame->frameSize().height());
+    this->setFixedSize(qApp->desktop()->width(), ui->table_widget->height());
 }
 
 void ManagerReserveWidget::set_grey_table(GreyTable *g){
     this->grey_table = g;
 }
 
-int ManagerReserveWidget::resize_section(int num, int w){
-    int old = ui->table_widget->horizontalHeader()->sectionSize(num);
-    ui->table_widget->horizontalHeader()->resizeSection(num, w);
-    return old;
+void ManagerReserveWidget::restore_width(int index, int width){
+    this->ui->table_widget->restore_width(index, width);
 }
 
-void ManagerReserveWidget::set_reserve_header(){
-    this->ui->table_widget->setHorizontalHeader(table_header);
-    //this->table_header->setParent(ui->table_widget);
-    this->table_header->show();
+void ManagerReserveWidget::restore_order(int logical, int newvisual){
+    this->ui->table_widget->restore_order(logical, newvisual);
+}
+
+void ManagerReserveWidget::open_contragents_slot(){
+    int doc_num = ui->docs_list->currentIndex().row() + 1;
+    emit open_contragents(doc_num, 1);
+}
+
+void ManagerReserveWidget::text_changed_slot(){
+    // если поле "для кого" очищено и контрагент в объекте класса установлен, то очистить его
+    if(ui->note_edit->text().length() == 0 && this->contragent_id > 0)
+        initial_clear_contragent();
+}
+
+void ManagerReserveWidget::set_contragent(int id, QString name){
+    this->contragent_id = id;
+    ui->note_edit->setText(name);
+}
+
+void ManagerReserveWidget::clear_contragent(){
+    this->contragent_id = 0;
+    ui->note_edit->clear();
+}
+
+void ManagerReserveWidget::set_doc_color(int num, bool red){
+    list_model->setData(list_model->index(num, 0), red ? Qt::red : Qt::black, Qt::TextColorRole);
+    change_doc(ui->docs_list->currentIndex());
 }
 
 void ManagerReserveWidget::fill_list(){
@@ -105,13 +153,52 @@ void ManagerReserveWidget::fill_list(){
     ui->docs_list->setSelectionModel(selection_model);
     ui->docs_list->setCurrentIndex(list_model->index(0, 0));
     change_doc(list_model->index(0, 0));
+
+}
+
+void ManagerReserveWidget::initial_set_contragent(){
+    clear_contragent();
+    QSqlQuery query(base);
+    QString query_str = QString("SELECT rd.contragent_id, c.name "
+                                " FROM reserve_docs rd "
+                                " JOIN contragents c ON rd.contragent_id = c.id "
+                                " WHERE rd.user_id = %1 AND rd.doc_num = %2")
+            .arg(USER_ID)
+            .arg(ui->docs_list->selectionModel()->currentIndex().row() + 1);
+    if(!query.exec(query_str)){
+        qDebug() << "Ошибка sql-запроса: " << query.lastError().text();
+        return;
+    }
+    if(query.size() < 1)
+        return;
+    query.next();
+    this->contragent_id = query.value(0).toInt();
+    ui->note_edit->setText(query.value(1).toString());
+}
+
+bool ManagerReserveWidget::initial_clear_contragent(){
+    // очищаем поле и атрибут класса
+    clear_contragent();
+    // из базы удалить же
+    QSqlQuery query(base);
+    QString query_str = QString("UPDATE reserve_docs SET contragent_id = NULL WHERE user_id = %1 AND doc_num = %2")
+            .arg(USER_ID)
+            .arg(ui->docs_list->currentIndex().data(Qt::UserRole).toInt());
+    //qDebug() << query_str;
+    if(!query.exec(query_str)){
+        qDebug() << "Ошибка sql-запроса: " << query.lastError().text();
+        return false;
+    }
+    // послать сигнал наверх, чтобы удалить контрагента из всех вкладок
+    emit clear_contragent_signal();
+    return true;
 }
 
 void ManagerReserveWidget::set_columns_names(){
     columns_names["id"] = "";
     columns_names["grey_id"] = "id";
     columns_names["name"] = "Название";
-    columns_names["quantity"] = "Количество";
+    columns_names["quantity"] = "Кол-во";
     columns_names["price"] = "Цена";
     columns_names["sumprice"] = "Сумма";
     columns_names["year"] = "Год";
@@ -120,6 +207,8 @@ void ManagerReserveWidget::set_columns_names(){
     columns_names["board"] = "Полка";
     columns_names["box"] = "Ящик";
     columns_names["note"] = "Требование";
+    columns_names["weight"] = "Вес";
+    columns_names["selected"] = " ";
 }
 
 void ManagerReserveWidget::set_headers(){
@@ -153,8 +242,11 @@ void ManagerReserveWidget::change_doc(QModelIndex cur, QModelIndex prev){
         }
     }
     // после - показываем сожержимое
-    delete ui->table_widget->model();
-    query_str = QString("SELECT r.id as id, "
+    //ui->table_widget->delete_model();
+    //if(model != 0)
+      //  delete model;
+    query_str = QString("SELECT r.selected as selected, "
+                        "r.id as id, "
                         "r.grey_id as grey_id,  "
                         "t.name as name, "
                         "r.quantity as quantity, "
@@ -165,27 +257,29 @@ void ManagerReserveWidget::change_doc(QModelIndex cur, QModelIndex prev){
                         "p.rack as rack, "
                         "p.board as board, "
                         "p.box as box, "
-                        "r.note as note "
+                        "r.note as note, "
+                        "t.weight as weight "
                         "FROM reserve r JOIN greytable g ON r.grey_id = g.id JOIN trademarks t ON g.trademark_id = t.id JOIN places p ON g.place_id = p.id "
-                        "WHERE r.doc_id = (SELECT id FROM reserve_docs WHERE user_id = %1 AND doc_num = %2)")
+                        "WHERE r.doc_id = (SELECT id FROM reserve_docs WHERE user_id = %1 AND doc_num = %2) ORDER BY r.id")
             .arg(USER_ID)
             .arg(cur.data(Qt::UserRole).toInt());
     //qDebug() << query_str;
-    model = new QSortFilterProxyModel(this);
     source->setQuery(query_str, base);
     if(source->lastError().isValid()){
         QMessageBox::information(this, "Не удалось сформировать таблицу", source->lastError().text(), QMessageBox::Ok);
         return;
     }
     model->setSourceModel(source);
+
     set_headers();
     ui->table_widget->setModel(model);
-    ui->table_widget->hideColumn(0);
-    ui->table_widget->resizeColumnsToContents();
     //ui->table_widget->resizeRowsToContents();
+    ui->table_widget->hideColumn(1);
 
     double sum = count_sum();
     list_model->setData(ui->docs_list->currentIndex(), (sum > 0 ? Qt::red : Qt::black), Qt::TextColorRole);
+    ui->table_widget->set_filled();
+    initial_set_contragent();
 }
 
 void ManagerReserveWidget::add_position(){
@@ -195,17 +289,17 @@ void ManagerReserveWidget::add_position(){
     int grey_id = grey_table->table_data(columns_grey_ids["id"]).toInt();
     int doc_num = ui->docs_list->currentIndex().data(Qt::UserRole).toInt();
     int quantity = grey_table->table_data(columns_grey_ids["quantity"]).toInt();
-    int retail_price = grey_table->table_data(columns_grey_ids["price_ret"]).toDouble();
-    int whole_price = grey_table->table_data(columns_grey_ids["price_whole"]).toDouble();
+    double retail_price = grey_table->table_data(columns_grey_ids["price_ret"]).toDouble();
+    double whole_price = grey_table->table_data(columns_grey_ids["price_whole"]).toDouble();
     int whole_begin = grey_table->table_data(columns_grey_ids["whole_begin"]).toInt();
 
     ReserveAddPosition *add = new ReserveAddPosition(grey_id, doc_num, quantity, retail_price, whole_price, whole_begin, this);
     if(add->exec() == QDialog::Accepted){
         //refresh_table();
         change_doc(ui->docs_list->currentIndex());
+        emit need_refresh();
     }
 
-    emit need_refresh();
 }
 
 void ManagerReserveWidget::refresh_table(){
@@ -217,16 +311,16 @@ void ManagerReserveWidget::refresh_table(){
 double ManagerReserveWidget::count_sum(){
     double sum = 0;
     for(int i = 0; i < ui->table_widget->model()->rowCount(); i++)
-        sum += ui->table_widget->model()->data(ui->table_widget->model()->index(i, 5)).toDouble();
+        sum += ui->table_widget->table_data(i, 5).toDouble();
     ui->summ_label->setText(QString::number(sum, 'f', 2));
     return sum;
 }
 
 void ManagerReserveWidget::subtr_quant(){
-    if(ui->table_widget->selectionModel()->selectedRows().count() > 1)
+    if(this->selection_model->selectedRows().count() > 1)
         return;
-    int id = ui->table_widget->model()->data(ui->table_widget->model()->index(ui->table_widget->currentIndex().row(), 0)).toInt();
-    int quantity = ui->table_widget->model()->data(ui->table_widget->model()->index(ui->table_widget->currentIndex().row(), 3)).toInt();
+    int id = ui->table_widget->table_data(0).toInt();
+    int quantity = ui->table_widget->table_data(3).toInt();
     ReserveSubtract *rs = new ReserveSubtract(id, quantity, this);
     if(rs->exec() == QDialog::Accepted){
         //refresh_table();
@@ -239,7 +333,7 @@ void ManagerReserveWidget::delete_position(){
     // удалить позицию из таблицы и вернуть в базу
     if(QMessageBox::question(this, "Удалить позиции?", "Удалить выбранные позиции?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes){
         foreach(QModelIndex i, ui->table_widget->selectionModel()->selectedRows()){
-            int id = ui->table_widget->model()->data(model->index(i.row(), 0)).toInt();
+            int id = ui->table_widget->table_data(i.row(),0).toInt();
             delpos(id);
         }
         //refresh_table();
@@ -262,7 +356,7 @@ void ManagerReserveWidget::clear_doc(){
     if(QMessageBox::question(this, "Очистить заявку?", "Очистить заявку и вернуть всё в базу?", QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes){
         int c = 0;
         while(c < ui->table_widget->model()->rowCount()){
-            int id = ui->table_widget->model()->data(ui->table_widget->model()->index(c, 0)).toInt();
+            int id = ui->table_widget->table_data(c, 0).toInt();
             delpos(id);
             c++;
         }
@@ -271,37 +365,408 @@ void ManagerReserveWidget::clear_doc(){
     emit need_refresh();
 }
 
+void ManagerReserveWidget::selection_changed(QModelIndex i){
+    if(!i.isValid())
+        return;
+
+    if(count_selected() <= 1){
+        // снять выделение
+        model->setData(model->index(last_selected_row, 0), Qt::Unchecked, Qt::CheckStateRole);
+        // установить выделение
+        model->setData(model->index(i.row(), 0), Qt::Checked, Qt::CheckStateRole);
+        ui->table_widget->setCurrentIndex(i);
+    }
+}
+
+
 void ManagerReserveWidget::move_doc(){
+    if(ui->table_widget->model()->rowCount() == 0)
+        return;
+
+    select_all = false;
+    last_selected_row = -1;
+    if(count_selected() == 0){
+        // если всего одна строка, перемещаем её
+        // если много - предлагаем выбрать позиции
+        if(model->rowCount() == 1){
+            select_all = true;
+        }
+        else{
+            QMessageBox::information(this, "Ошибка", "Выберите строки", QMessageBox::Ok);
+            return;
+        }
+    }
+    MovePositions *mp = new MovePositions(list_model, this);
+    connect(mp, SIGNAL(doc_selected(int)), SLOT(move_to_doc(int)));
+    connect(mp, SIGNAL(reserve_selected(int)), SLOT(move_to_reserve(int)));
+    mp->exec();
+}
+
+int ManagerReserveWidget::count_selected(){
+    int n = 0;
+    for(int i = 0; i < model->rowCount(); i++){
+        if(model->data(model->index(i, 0), Qt::CheckStateRole) == Qt::Checked){
+            n++;
+            last_selected_row = i;
+        }
+    }
+    qDebug() << "selected" << n << "strings";
+    return n;
+}
+
+void ManagerReserveWidget::tobase(){
+    if(this->model->rowCount() == 0)
+        return;
+
+    ReserveSelectDocType *wgt = new ReserveSelectDocType(this);
+    connect(wgt, SIGNAL(selected(int, bool)), this, SLOT(create_doc(int, bool)));
+
+    wgt->exec();
+}
+
+void ManagerReserveWidget::move_to_doc(int doc_id){
+    // получили, например, id документа
+    QSqlQuery query(base);
+    QString query_str;
+    // сохраняем в булевой переменной, просмотрен ли документ (если побирать не нужно - также false)
+    query_str = QString("SELECT podbor, discount_percents, (SELECT max(num) FROM docs_details WHERE doc_id = %1) FROM docslist WHERE id = %1").arg(doc_id);
+    if(!query.exec(query_str)){
+        QMessageBox::information(this, "Ошибка", QString("Не удалось выполнить запрос: %1 (move_to_doc_1)").arg(query.lastError().text()), "ОК");
+        return;
+    }
+    if(query.size() == 0){
+        QMessageBox::information(this, "Ошибка", QString("Документ с id = %1 не найден.)").arg(doc_id), "ОК");
+        return;
+    }
+    query.next();
+    bool viewed = (query.value(0).toInt() <= 1 ? false : true);
+    double discount = query.value(1).toDouble();
+    int maxnum = query.value(2).toInt();
+
+    if(!base.transaction()){
+        QMessageBox::information(this, "Ошибка", QString("Не удаётся начать транзакцию: %1 (move_to_doc)").arg(base.lastError().text()), "ОК");
+        return;
+    }
+    // проходимся по всем строкам, ища среди них выделенные
+    // если select_all == true, то перемещаем всё подряд
+    for(int j = 0; j < model->rowCount(); j++){
+        QModelIndex i = model->index(j, 0);
+        if(!select_all && ui->table_widget->table_data(i.row(), 0, Qt::CheckStateRole) == Qt::Unchecked)
+            continue;
+        /* Копируем значения полей из таблицы reserve в таблицу docs_details, где doc_id = id:
+           - grey_id - в grey_id
+           - quantity - в quantity
+           - price - в price
+           - note - в notes
+           А также:
+           - is_discount = true
+           - discount_price = price*(docslist.discount)
+           - num = max(num)+1
+           - podbor = false
+           Предварительно проверить: если документ не просмотрен (viewed == false) и там присутствует деталь с таким grey_id, склеить количество
+           После всего этого удалить из reserve строку с id = rec_id
+        */
+        int rec_id = ui->table_widget->table_data(i.row(),1).toInt();
+        int grey_id = ui->table_widget->table_data(i.row(),2).toInt();
+        int quantity = ui->table_widget->table_data(i.row(),4).toInt();
+        double price = ui->table_widget->table_data(i.row(),5).toDouble();
+        QString notes = ui->table_widget->table_data(i.row(),12).toString();
+
+        // схоронили? а теперь удоляем строку из резерва
+        // удалить её нужно прежде чем создадим новую в документе, иначе в сером экране создастся отрицательное кол-во и триггер будет ругаться
+        query_str = QString("DELETE FROM reserve WHERE id = %1").arg(rec_id);
+        if(!query.exec(query_str)){
+            QMessageBox::information(this, "Ошибка", QString("Не удалось выполнить запрос: %1 (move_to_doc_5)").arg(query.lastError().text()), "ОК");
+            base.rollback();
+            return;
+        }
+
+        // делаем ту самую проверку
+        if(!viewed){
+            query_str = QString("SELECT id FROM docs_details WHERE doc_id = %1 AND grey_id = %2").arg(doc_id).arg(grey_id);
+            if(!query.exec(query_str)){
+                QMessageBox::information(this, "Ошибка", QString("Не удалось выполнить запрос: %1 (move_to_doc_2)").arg(query.lastError().text()), "ОК");
+                base.rollback();
+                return;
+            }
+            if(query.size() > 0){
+                query.next();
+                int t_id = query.value(0).toInt();
+                query_str = QString("UPDATE docs_details SET quantity = quantity + %1, selected = false WHERE id = %2").arg(quantity).arg(t_id);
+                if(!query.exec(query_str)){
+                    QMessageBox::information(this, "Ошибка", QString("Не удалось выполнить запрос: %1 (move_to_doc_3)").arg(query.lastError().text()), "ОК");
+                    base.rollback();
+                    return;
+                }
+                qDebug() << ui->table_widget->table_data(i.row(),2).toString() << "Кол-во суммировано";
+                continue;
+            }
+            // если записи с таким grey_id не нашлось, выходим из блока и вставляем новую строку по общим правилам
+        }
+        query_str = QString("INSERT INTO docs_details (doc_id, grey_id, quantity, price, notes, is_discount, discount_price, num, podbor, selected) "
+                            " VALUES (%1, %2, %3, %4, '%5', true, %6, %7, false, false)")
+                .arg(doc_id)
+                .arg(grey_id)
+                .arg(quantity)
+                .arg(price)
+                .arg(notes)
+                .arg(price*(100-discount)/100)
+                .arg(++maxnum);
+        if(!query.exec(query_str)){
+            QMessageBox::information(this, "Ошибка", QString("Не удалось выполнить запрос: %1 (move_to_doc_4)").arg(query.lastError().text()), "ОК");
+            base.rollback();
+            return;
+        }
+    }
+
+    if(!base.commit()){
+        QMessageBox::information(this, "Ошибка", QString("Не удаётся завершить транзакцию: %1 (move_to_doc)").arg(base.lastError().text()), "ОК");
+        base.rollback();
+        return;
+    }
+    change_doc(ui->docs_list->currentIndex());
+}
+
+void ManagerReserveWidget::move_to_reserve(int id){
+    // полученный id на единицу меньше, чем номер документа
+    int docnum = id+1;
+
+    QSqlQuery query(base);
+    QString query_str;
+    if(!base.transaction()){
+        QMessageBox::information(this, "Ошибка", QString("Не удаётся начать транзакцию: %1 (move_to_reserve)").arg(base.lastError().text()), "ОК");
+        return;
+    }
+    // проходимся по всем строкам, ища среди них выделенные
+    // если select_all == true, то перемещаем всё подряд
+    for(int j = 0; j < model->rowCount(); j++){
+        QModelIndex i = model->index(j, 0);
+        if(!select_all && ui->table_widget->table_data(i.row(), 0, Qt::CheckStateRole) == Qt::Unchecked)
+            continue;
+
+        int rec_id = ui->table_widget->table_data(i.row(),1).toInt();
+        int grey_id = ui->table_widget->table_data(i.row(),2).toInt();
+        int quantity = ui->table_widget->table_data(i.row(),4).toInt();
+        // проверить, есть в нужном документе позиция с таким же grey_id, и если есть - склеить кол-во
+        query_str = QString("SELECT id FROM reserve WHERE grey_id = %1 AND doc_id = (SELECT id FROM reserve_docs WHERE user_id = %2 AND doc_num = %3)")
+                .arg(grey_id)
+                .arg(USER_ID)
+                .arg(docnum);
+        if(!query.exec(query_str)){
+            QMessageBox::information(this, "Ошибка", QString("Не удалось выполнить запрос: %1 (move_to_reserve_1)").arg(query.lastError().text()), "ОК");
+            base.rollback();
+            return;
+        }
+        if(query.size() > 0){
+            query.next();
+            int t_id = query.value(0).toInt();
+
+            // и если есть - то предыдущую строку из резерва надо удалить
+            query_str = QString("DELETE FROM reserve WHERE id = %1").arg(rec_id);
+            if(!query.exec(query_str)){
+                QMessageBox::information(this, "Ошибка", QString("Не удалось выполнить запрос: %1 (move_to_reserve_2)").arg(query.lastError().text()), "ОК");
+                base.rollback();
+                return;
+            }
+
+            query_str = QString("UPDATE reserve SET quantity = quantity + %1, selected = false WHERE id = %2").arg(quantity).arg(t_id);
+            if(!query.exec(query_str)){
+                QMessageBox::information(this, "Ошибка", QString("Не удалось выполнить запрос: %1 (move_to_reserve_3)").arg(query.lastError().text()), "ОК");
+                base.rollback();
+                return;
+            }
+            qDebug() << ui->table_widget->table_data(i.row(),2).toString() << "Кол-во суммировано";
+            continue;
+        }
+        // если мы до сюда добрались - такой позиции нет, тогда просто меняем doc_id
+        query_str = QString("UPDATE reserve SET doc_id = (SELECT id FROM reserve_docs WHERE user_id = %1 AND doc_num = %2), selected = false WHERE id = %3")
+                .arg(USER_ID).arg(docnum).arg(rec_id);
+        if(!query.exec(query_str)){
+            QMessageBox::information(this, "Ошибка", QString("Не удалось выполнить запрос: %1 (move_to_reserve_4)").arg(query.lastError().text()), "ОК");
+            base.rollback();
+            return;
+        }
+    }
+
+    if(!base.commit()){
+        QMessageBox::information(this, "Ошибка", QString("Не удаётся завершить транзакцию: %1 (move_to_reserve)").arg(base.lastError().text()), "ОК");
+        base.rollback();
+        return;
+    }
+    set_doc_color(id);
+}
+
+void ManagerReserveWidget::header_clicked(int index){
+    if(index != 0)
+        return;
+
+    QString query_str;
+    if(!all_selected){
+        all_selected = true;
+        // выделяем всё
+        query_str = QString("UPDATE reserve SET selected = true WHERE doc_id = (SELECT id FROM reserve_docs WHERE user_id = %1 AND doc_num = %2)")
+                .arg(USER_ID)
+                .arg(ui->docs_list->currentIndex().row()+1);
+    }
+    else{
+        all_selected = false;
+        // наоборот, снимаем
+        query_str = QString("UPDATE reserve SET selected = false WHERE doc_id = (SELECT id FROM reserve_docs WHERE user_id = %1 AND doc_num = %2)")
+                .arg(USER_ID)
+                .arg(ui->docs_list->currentIndex().row()+1);
+    }
+    QSqlQuery query(base);
+    if(!query.exec(query_str)){
+        qDebug() << "Header: " << query.lastError().text();
+        return;
+    }
+    source->setQuery(source->query().lastQuery(), base);
+}
 
 
+void ManagerReserveWidget::create_doc(int doctype, bool nocomplect){
+    /*
+      Сначала с таблицу docslist записать информацию о документа:
+        - doctype - выбран в функции tobase и передан в конструкторе,
+        - docnum - выбирается из базы максимальные docnum типа doctype в текущем году и увеличивается на 1,
+            если такового нет - то просто 1
+        - year - текущий год
+        - datetime - sql-функция NOW()
+        - user_id - глобальная переменная USER_ID
+        - contragent_id - если this->contragent_id положителен, то он и подставляется
+        - provider_id - id = 1
+        - notes - если this->contragent_id неположителен, то копируется содержимое ui->note_edit
+    */
+    int year = QDate::currentDate().year();
+    QMap<QString, QString> params;
+    params["doctype_id"] = QString::number(doctype);
+    params["docnum"] = QString("(SELECT coalesce(max(docnum), 0) + 1 FROM docslist WHERE doctype_id = %1 AND year = %2)").arg(doctype).arg(year);
+    params["year"] = QString::number(year);
+    params["docdate"] = "current_date";
+    params["doctime"] = "current_time";
+    params["user_id"] = QString::number(USER_ID);
+    params["podbor"] = nocomplect ? "5" : "1";
+    params["provider_id"] = "1";
+    if(this->contragent_id > 0)
+       params["contragent_id"] = QString::number(this->contragent_id);
+    else if(ui->note_edit->text().length() > 0)
+        params["notes"] = ui->note_edit->text();
+    // формируем строкуу
+    QStringList keys = params.keys();
+    QStringList vals = params.values();
+    QString query_str = QString("INSERT INTO docslist (%1) VALUES (%2) RETURNING id")
+            .arg(keys.join(", "))
+            .arg(vals.join(", "));
+    //qDebug() << query_str;
+    // выполняем запрос. Делаем всё в транзакции!
+    QSqlQuery query(base);
+    if(!base.transaction()){
+        QMessageBox::warning(this, "Ошибка", QString("Невозможно начать транзакцию. ").append(base.lastError().text()), QMessageBox::Ok);
+        return;
+    }
+    if(!query.exec(query_str)){
+        QMessageBox::warning(this, "Ошибка", QString("Невозможно выполнить запрос. ").append(query.lastError().text()), QMessageBox::Ok);
+        base.rollback();
+        return;
+    }
+    // так как мы затребовали id созданной записи, нужно его извлечь и сохранить
+    if(query.size() < 1){
+        base.rollback();
+        return;
+    }
+    query.next();
+    int doc_id = query.value(0).toInt();
+
+    /*
+      Далее каждую позицию из резерва нужно перенести в таблицу docs_details.
+      doc_id - получили только что
+      num - счётчик, начиная с 1
+      grey_id, quantity, price, notes - копируем из резерва
+      is_discount = false, discount = 0, т.к. скидок нет
+      После чего из reserve строку удалить.
+      Индексы в модели резерва:
+        id = 0
+        grey_id = 1
+        quantity = 3
+        price = 4
+        note = 11
+    */
+    int id, grey_id, quantity, num;
+    double price, weight;
+    QString notes;
+    for(int i = 0; i < this->model->rowCount(); i++){
+        id = ui->table_widget->table_data(i, 0).toInt();
+        num = i + 1;
+        grey_id = ui->table_widget->table_data(i, 1).toInt();
+        quantity = ui->table_widget->table_data(i, 3).toInt();
+        price = ui->table_widget->table_data(i, 4).toDouble();
+        notes = ui->table_widget->table_data(i, 11).toString();
+        weight = ui->table_widget->table_data(i, 12).toDouble();
+
+        query_str = QString("DELETE FROM reserve WHERE id = %1").arg(id);
+        if(!query.exec(query_str)){
+            QMessageBox::warning(this, "Ошибка", QString("Невозможно выполнить запрос. ").append(query.lastError().text()), QMessageBox::Ok);
+            base.rollback();
+            return;
+        }
+
+        query_str = QString("INSERT INTO docs_details (doc_id, num, grey_id, quantity, price, notes, is_discount, discount_price, print_string, weight) "
+                            " VALUES (%1, %2, %3, %4, '%5', '%6', %7, '%8', %9, "
+                            "(SELECT s.single_name || ' ' || t.name FROM greytable g "
+                            " JOIN trademarks t ON t.id = g.trademark_id "
+                            " JOIN subgroups s ON s.id = t.subgroup_id WHERE g.id = %3))")
+                .arg(doc_id)
+                .arg(num)
+                .arg(grey_id)
+                .arg(quantity)
+                .arg(price)
+                .arg(notes)
+                .arg("false")
+                .arg(price)
+                .arg(weight);
+        if(!query.exec(query_str)){
+            QMessageBox::warning(this, "Ошибка", QString("Невозможно выполнить запрос. ").append(query.lastError().text()), QMessageBox::Ok);
+            qDebug() << query_str;
+            base.rollback();
+            return;
+        }
+
+    }
+    if(!initial_clear_contragent()){
+        base.rollback();
+        return;
+    }
+    base.commit();
+
+    change_doc(ui->docs_list->currentIndex());
 }
 
 void ManagerReserveWidget::view_doc(){
-    oldmodel = static_cast<QSortFilterProxyModel*>(ui->table_widget->model());
+    //oldmodel = static_cast<QSortFilterProxyModel*>(ui->table_widget->get_model());
+    //oldmodel = this->model;
+    ui->table_widget->showColumn(1);
 
-    QString query_str = QString("SELECT t.name, sum(r.quantity) "
+    QString query_str = QString("SELECT t.name, sum(r.quantity) as sumprice "
                         "FROM reserve r JOIN greytable g ON r.grey_id = g.id JOIN trademarks t ON g.trademark_id = t.id "
                         "WHERE r.doc_id = (SELECT id FROM reserve_docs WHERE user_id = %1 AND doc_num = %2) GROUP BY t.name")
             .arg(USER_ID)
             .arg(ui->docs_list->currentIndex().data(Qt::UserRole).toInt());
-    //qDebug() << query_str;
-    QSqlQueryModel *model = new QSqlQueryModel(this);
-    model->setQuery(query_str, base);
-    if(model->lastError().isValid()){
-        QMessageBox::information(this, "Не удалось сформировать таблицу", model->lastError().text(), QMessageBox::Ok);
+    QSqlQueryModel *temp_model = new QSqlQueryModel(this);
+    temp_model->setQuery(query_str, base);
+    if(temp_model->lastError().isValid()){
+        QMessageBox::information(this, "Не удалось сформировать таблицу", temp_model->lastError().text(), QMessageBox::Ok);
         return;
     }
-    ui->table_widget->setModel(model);
-    ui->table_widget->resizeColumnsToContents();
-
+    ui->table_widget->setModel(temp_model);
+    set_headers();
 }
 
 void ManagerReserveWidget::restore_doc(){
-    if(oldmodel != 0){
-        delete ui->table_widget->model();
-        ui->table_widget->setModel(oldmodel);
-        ui->table_widget->resizeColumnsToContents();
-    }
+    ui->table_widget->delete_model();
+    ui->table_widget->setModel(model);
+    ui->table_widget->restore_columns_width();
+    ui->table_widget->restore_columns_order();
+    ui->table_widget->hideColumn(1);
 }
 
 
@@ -352,7 +817,6 @@ ReserveAddPosition::ReserveAddPosition(int id, int num, int quantity, double ret
     price_changed = false;  // если цена хоть раз изменена вручную, делаем это true и автоматически её боле не меняем
 
     QObject::connect(this->price, SIGNAL(editingFinished()), SLOT(price_entered()));
-    QObject::connect(this->quantity_spin, SIGNAL(valueChanged(int)), SLOT(quantity_changed(int)));
 
     QObject::connect(this->accept_button, SIGNAL(clicked()), SLOT(accept()));
     QObject::connect(this->reject_button, SIGNAL(clicked()), SLOT(reject()));
@@ -368,7 +832,7 @@ void ReserveAddPosition::set_layout(){
     QLabel *price_label = new QLabel("Цена");
     QLabel *note_label = new QLabel("Требование");
 
-    QLabel *price_retail_label = new QLabel(QString("� озн.: %1 р.").arg(base_retail_price));
+    QLabel *price_retail_label = new QLabel(QString("Розн.: %1 р.").arg(base_retail_price));
     QLabel *price_whole_label = new QLabel(QString("Опт.: %1 р.").arg(base_whole_price));
     QLabel *price_begin_label = new QLabel(QString("Опт с %1 шт.").arg(base_whole_begin));
     QLayout *prices_lt = new QVBoxLayout();
@@ -451,7 +915,7 @@ void ReserveAddPosition::accept(){
                                         "VALUES(%1, %2, %3, %4, '%5')")
                     .arg(QString("(SELECT id FROM reserve_docs WHERE doc_num = %1 AND user_id = %2)").arg(doc_num).arg(USER_ID))
                     .arg(grey_id).arg(quantity_spin->text()).arg(price->value()).arg(note->text());
-            qDebug() << query_str;
+            //qDebug() << query_str;
             if(!query.exec(query_str)){
                 QMessageBox::warning(this, "Ошибка", QString("Не удалось добавить в заявку: %1").arg(query.lastError().text()), QMessageBox::Ok);
                 return;
@@ -469,11 +933,59 @@ void ReserveAddPosition::price_entered(){
     }
 }
 
-void ReserveAddPosition::quantity_changed(int q){
-    //set_base_price_text(q < base_whole_begin ? base_retail_price : base_whole_price);
-    //if(!price_changed)
-    //    price->setValue(q < base_whole_begin ? base_retail_price : base_whole_price);
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////// КЛАСС ///////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////// МОДЕЛЬ ТАБЛИЦЫ /////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+ReserveProxyModel::ReserveProxyModel(QWidget *parent) : QSortFilterProxyModel(parent)
+{
 }
+
+Qt::ItemFlags ReserveProxyModel::flags(const QModelIndex &index) const{
+    if(index.column() == 0)
+        return Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsEditable | Qt::ItemIsSelectable;
+    return QSortFilterProxyModel::flags(index);
+}
+
+
+QVariant ReserveProxyModel::data(const QModelIndex &index, int role) const{
+    if(role == Qt::DisplayRole && (index.column() == 5 || index.column() == 6))
+        return QString::number(QSortFilterProxyModel::data(index, role).toDouble(), 'f', 2);
+    // чекбоксы
+    if(index.column() == 0){
+        if(role == Qt::CheckStateRole)
+            return QSortFilterProxyModel::data(index, Qt::DisplayRole).toBool() ? Qt::Checked : Qt::Unchecked;
+        if(role == Qt::DisplayRole)
+            return QVariant();
+    }
+
+    return QSortFilterProxyModel::data(index, role);
+}
+
+bool ReserveProxyModel::setData(const QModelIndex &index, const QVariant &value, int role){
+    qDebug("stavim...");
+    if(index.column() == 0 && role == Qt::CheckStateRole){
+        qDebug("here");
+        QSqlQuery query(base);
+        QModelIndex id_index = QSortFilterProxyModel::index(index.row(), 1);
+        QString query_str = QString("UPDATE reserve SET selected = %1 WHERE id = %2")
+                .arg(value.toBool() ? "true" : "false")
+                .arg(QSortFilterProxyModel::data(id_index).toInt());
+        if(!query.exec(query_str)){
+            qDebug() << query.lastError().text();
+            return false;
+        }
+        QSqlQueryModel *m = (QSqlQueryModel*)this->sourceModel();
+        m->setQuery(m->query().lastQuery(), base);
+        return true;
+    }
+
+    return QSortFilterProxyModel::setData(index, value, role);
+}
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////// КЛАСС ///////////////////////////////////////////////////
@@ -537,104 +1049,57 @@ void ReserveSubtract::accept(){
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////// КЛАСС ///////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////// ПЕ� ЕМЕСТИТЬ ПОЗИЦИИ //////////////////////////////////////////
+//////////////////////////////// ДИАЛОГ ВЫБОРА ТИПА ДОКУМЕНТА /////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-ReserveMovePositions::ReserveMovePositions(QTableView *table, QModelIndexList indexes, QWidget *parent) : QDialog(parent){
-    create_widgets();
-    set_layout();
+ReserveSelectDocType::ReserveSelectDocType(QWidget *parent) : QDialog(parent){
+    this->setWindowTitle("Документ");
+    doctypes = new QComboBox();
+    nocomplect = new QCheckBox("НЕ ПОДБИРАТЬ");
+    okbutton = new QPushButton("OK");
+    doctypes->setFixedWidth(qApp->font().pointSize() * 20);
+    nocomplect->setChecked(false);
+    okbutton->setFixedWidth(doctypes->width());
+    QVBoxLayout *lt = new QVBoxLayout(this);
+    lt->addWidget(doctypes);
+    lt->addWidget(nocomplect);
+    lt->addWidget(okbutton);
+    this->setLayout(lt);
+    this->setFixedSize(qApp->font().pointSize() * 25, qApp->font().pointSize() * 12);
 
-    max_docs = 10;
-    reserves_button->setChecked(true);
-    form_reserves_list();
-
-    switch_widget();
-
-    connects();
-}
-
-inline void ReserveMovePositions::create_widgets(){
-    reserves_button = new QRadioButton("Заявки");
-    docs_button = new QRadioButton("Документы");
-    offers_button = new QRadioButton("Комм. предложения");
-    ok_button = new QPushButton("Переместить");
-    cancel_button = new QPushButton("Отмена");
-    layout = new QStackedLayout();
-    docs_widget = new QWidget(this);
-    offers_widget = new QWidget(this);
-    reserves_list = new QListView();
-    docs_list = new QTableView();
-    offers_list = new QTableView();
-
-
-}
-
-inline void ReserveMovePositions::set_layout(){
-    // лайаут с тремя радиокнопками, они будут расположены вертикально и сдвинуты кверху
-    QVBoxLayout *radiobuttons_vlt = new QVBoxLayout();
-    radiobuttons_vlt->addWidget(reserves_button);
-    radiobuttons_vlt->addWidget(docs_button);
-    radiobuttons_vlt->addWidget(offers_button);
-    radiobuttons_vlt->addStretch(1);
-
-    // лайаут с кнопками ОК и Отмена, они будут в самом низу справа
-    QHBoxLayout *buttons_hlt = new QHBoxLayout();
-    buttons_hlt->addStretch(1);
-    buttons_hlt->addWidget(ok_button);
-    buttons_hlt->addWidget(cancel_button);
-
-    // формируем docs_list
-    //
-
-    // формируем offers_list
-    //
-
-    // формируем stacked_layout
-    layout->addWidget(reserves_list);
-    layout->addWidget(docs_list);
-    layout->addWidget(offers_list);
-
-    // главный лайаут
-    // состоит из двух: сверху hbox с радиокнопками и стакедлайаутом, снизу кнопки ок и отмена
-    QVBoxLayout *main_lt = new QVBoxLayout();
-    QHBoxLayout *top_lt = new QHBoxLayout();
-    top_lt->addLayout(radiobuttons_vlt);
-    top_lt->addLayout(layout);
-    main_lt->addLayout(top_lt);
-    main_lt->addLayout(buttons_hlt);
-
-    this->setLayout(main_lt);
-}
-
-inline void ReserveMovePositions::connects(){
-    // перекючение виджетов по радиокнопкам
-    connect(this->reserves_button, SIGNAL(clicked()), SLOT(switch_widget()));
-    connect(this->docs_button, SIGNAL(clicked()), SLOT(switch_widget()));
-    connect(this->offers_button, SIGNAL(clicked()), SLOT(switch_widget()));
-}
-
-inline void ReserveMovePositions::form_reserves_list(){
-    // в таблице будут два столбца - "Заявка №" и "Для кого"
-    // к каждой ячейке с номером заявки присовокупляем оный в UserRole
+    // fill combobox
+    QSqlQuery query(base);
+    QString query_str = "SELECT id, name FROM doctypes WHERE \"primary\" = 'true'";
+    if(!show_hidden)
+        query_str += " AND type = 1";
+    if(!query.exec(query_str)){
+        QMessageBox::warning(this, "Ошибка", query.lastError().text());
+        return;
+    }
+    while(query.next())
+        doctypes->addItem(query.value(1).toString(), query.value(0));
+    //connect(doctypes, SIGNAL())
+    connect(okbutton, SIGNAL(clicked()), this, SLOT(ok_clicked()));
 
 }
 
-inline void ReserveMovePositions::form_docs_list(){
-
+void ReserveSelectDocType::ok_clicked(){
+    emit selected(doctypes->itemData(doctypes->currentIndex()).toInt(), nocomplect->isChecked());
+    QDialog::accept();
 }
 
-inline void ReserveMovePositions::form_offers_list(){
-
+SmartSplitter::SmartSplitter(QWidget *parent){
+    connect(this, SIGNAL(mouse_released()), SLOT(splitter_moved_slot()));
 }
 
+void SmartSplitter::mouseReleaseEvent(QMouseEvent *e){
+    qDebug() << "mouse released!";
+    splitter_moved_slot();
 
+    QSplitter::mouseReleaseEvent(e);
+}
 
-////// СЛОТЫ
-void ReserveMovePositions::switch_widget(){
-    if(this->reserves_button->isChecked())
-        layout->setCurrentWidget(reserves_list);
-    else if(this->docs_button->isChecked())
-        layout->setCurrentWidget(docs_list);
-    else if(this->offers_button->isChecked())
-        layout->setCurrentWidget(offers_list);
+void SmartSplitter::splitter_moved_slot(){
+    qDebug() << this->sizes()[0] << this->sizes()[1];
+
 }

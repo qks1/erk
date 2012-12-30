@@ -10,14 +10,14 @@ QT += sql
 CONFIG += qaxcontainer
 
 # Input
-HEADERS += basetable.h \
-           constants.h \
-           customcombobox.h \
-           detailcard.h \
-           helpers.h \
-           mainwindow.h \
-           mytablemodel.h \
-           switcher.h \
+HEADERS += common/basetable.h \
+           common/constants.h \
+           common/customcombobox.h \
+           common/detailcard.h \
+           common/helpers.h \
+           common/mainwindow.h \
+           common/mytablemodel.h \
+           common/switcher.h \
            searcher/catalog.h \
            searcher/filters.h \
            searcher/greysearcher.h \
@@ -27,31 +27,41 @@ HEADERS += basetable.h \
            searcher/searcher.h \
            searcher/whitesearcher.h \
            searcher/whitetable.h \
-    settingsdialog.h \
+    common/settingsdialog.h \
     searcher/whiteadddialog.h \
-    headercomboboxdelegate.h \
-    customtabwidget.h \
-    authorisewindow.h \
+    common/headercomboboxdelegate.h \
+    common/customtabwidget.h \
+    common/authorisewindow.h \
     searcher/greyadddialog.h \
     searcher/whitepriceseditor.h \
-    changepricedatedialog.h \
-    addyeardiscount.h \
-    yearsdiscountsdialog.h \
-    paintstackedwidget.h \
-    yearsdiscountsitem.h \
-    yearsdiscounts.h \
-    quickquantitywindow.h \
+    searcher/changepricedatedialog.h \
+    searcher/addyeardiscount.h \
+    searcher/yearsdiscountsdialog.h \
+    searcher/yearsdiscountsitem.h \
+    searcher/yearsdiscounts.h \
+    searcher/quickquantitywindow.h \
     searcher/managerreservewidget.h \
-    searcher/storagereservewidget.h
-SOURCES += basetable.cpp \
-           constants.cpp \
-           customcombobox.cpp \
-           detailcard.cpp \
-           helpers.cpp \
+    searcher/storagereservewidget.h \
+    docs/documentform.h \
+    lists/contragentslist.h \
+    searcher/greymovedialog.h \
+    common/basetableview.h \
+    docs/docslist.h \
+    docs/document.h \
+    docs/r_classes.h \
+    docs/rcombobox.h \
+    docs/movepositions.h \
+    docs/correctdocrecord.h \
+    searcher/reserveslist.h
+SOURCES += common/basetable.cpp \
+           common/constants.cpp \
+           common/customcombobox.cpp \
+           common/detailcard.cpp \
+           common/helpers.cpp \
            main.cpp \
-           mainwindow.cpp \
-           mytablemodel.cpp \
-           switcher.cpp \
+           common/mainwindow.cpp \
+           common/mytablemodel.cpp \
+           common/switcher.cpp \
            searcher/catalog.cpp \
            searcher/filters.cpp \
            searcher/greysearcher.cpp \
@@ -61,36 +71,48 @@ SOURCES += basetable.cpp \
            searcher/searcher.cpp \
            searcher/whitesearcher.cpp \
            searcher/whitetable.cpp \
-    settingsdialog.cpp \
+    common/settingsdialog.cpp \
     searcher/whiteadddialog.cpp \
-    headercomboboxdelegate.cpp \
-    customtabwidget.cpp \
-    authorisewindow.cpp \
+    common/headercomboboxdelegate.cpp \
+    common/customtabwidget.cpp \
+    common/authorisewindow.cpp \
     searcher/greyadddialog.cpp \
     searcher/whitepriceseditor.cpp \
-    changepricedatedialog.cpp \
-    addyeardiscount.cpp \
-    yearsdiscountsdialog.cpp \
-    paintstackedwidget.cpp \
-    yearsdiscountsitem.cpp \
-    yearsdiscounts.cpp \
-    quickquantitywindow.cpp \
+    searcher/changepricedatedialog.cpp \
+    searcher/addyeardiscount.cpp \
+    searcher/yearsdiscountsdialog.cpp \
+    searcher/yearsdiscountsitem.cpp \
+    searcher/yearsdiscounts.cpp \
+    searcher/quickquantitywindow.cpp \
     searcher/managerreservewidget.cpp \
     searcher/storagereservewidget.cpp \
-    columns.cpp
+    common/columns.cpp \
+    docs/documentform.cpp \
+    lists/contragentslist.cpp \
+    searcher/greymovedialog.cpp \
+    common/basetableview.cpp \
+    docs/docslist.cpp \
+    docs/document.cpp \
+    docs/r_classes.cpp \
+    docs/rcombobox.cpp \
+    docs/movepositions.cpp \
+    docs/correctdocrecord.cpp \
+    searcher/reserveslist.cpp
 
 RESOURCES += images.qrc
 
 FORMS += \
     searcher/whiteadddialog.ui \
-    authorisewindow.ui \
+    common/authorisewindow.ui \
     searcher/greyadddialog.ui \
     searcher/whitepriceseditor.ui \
-    changepricedatedialog.ui \
-    addyeardiscount.ui \
-    yearsdiscountsdialog.ui \
-    yearsdiscountsitem.ui \
-    yearsdiscounts.ui \
+    searcher/changepricedatedialog.ui \
+    searcher/addyeardiscount.ui \
+    searcher/yearsdiscountsdialog.ui \
+    searcher/yearsdiscountsitem.ui \
+    searcher/yearsdiscounts.ui \
     searcher/managerreservewidget.ui \
-    mrform.ui \
-    searcher/storagereservewidget.ui
+    searcher/storagereservewidget.ui \
+    docs/documentform.ui \
+    searcher/greymovedialog.ui \
+    docs/correctdocrecord.ui

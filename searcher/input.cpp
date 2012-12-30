@@ -95,6 +95,12 @@ void Input::set_input_width(int w){
     text->setFixedWidth(w);
 }
 
+void Input::set_eqge_value(int v){
+    if(v == EQUAL)
+        eqge->setCurrentIndex(1);
+    else eqge->setCurrentIndex(0);
+}
+
 int Input::id_combobox_value(){
     return this->eqge->currentIndex();
 }
@@ -139,9 +145,8 @@ void Input::text_changed_slot(QString txt){
 }
 
 void Input::id_mode_changed_slot(int value){
-    if(id_mode->isChecked()){
+    if(id_mode->isChecked())
         emit(text_changed_signal(ID_MODE, text->text()));
-    }
 }
 
 void Input::set_cursor_to_begin(){

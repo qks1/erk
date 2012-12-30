@@ -8,10 +8,10 @@
 #include "input.h"
 #include "paramsselector.h"
 #include "filters.h"
-#include "constants.h"
-#include "detailcard.h"
+#include "../common/constants.h"
+#include "../common/detailcard.h"
 #include "whiteadddialog.h"
-#include "helpers.h"
+#include "../common/helpers.h"
 #include "whitepriceseditor.h"
 #include "addyeardiscount.h"
 #include "yearsdiscountsdialog.h"
@@ -19,6 +19,8 @@
 #include "quickquantitywindow.h"
 #include "managerreservewidget.h"
 #include "storagereservewidget.h"
+#include "docs/docslist.h"
+#include "reserveslist.h"
 
 /*
     Поисковик в белом экране.
@@ -31,10 +33,14 @@ class WhiteSearcher : public QWidget
 {
     Q_OBJECT
 public:
-    explicit WhiteSearcher(ReserveStruct rstruct,
+    explicit WhiteSearcher(ReserveStruct *rstruct,
                            bool need_blue,
                            ColumnsStruct *columns,
+                           QStackedWidget *stack,
+                           QStack<QWidget*> prev_wgts,
                            QWidget *parent = 0);
+    QStackedWidget *stack;
+    QStack<QWidget*> prev_wgts;
     void fill_table(Filters*, bool, bool);              // заполнение таблицы
     void clear_text();
     int input_id_combobox_value();
@@ -43,13 +49,20 @@ public:
     void resize_all();
     void restore_width(int index, int width);
     void restore_order(int logical, int newvisual);
+    void restore_manager_reserve_width(int index, int width);
+    void restore_manager_reserve_order(int logical, int newvisual);
     int open_columns_list();
     void hide_show_columns();
     bool success;
     bool edit_prices_permission;
     void set_date();
     void switch_reserve();
+    void switch_hidden_public();
     void set_reserve_header();
+    void set_reserve_contragent(int id, QString name);
+    void clear_reserve_contragent();
+    void open_reserves_list();
+
 
 
 private:
@@ -92,6 +105,9 @@ private:
     int current_row;
     bool need_blue;
     bool grey_mode;
+    QStandardItemModel *reserves_list_model;
+    Document *opened_doc;
+    DocsList *opened_docslist;
 
     // ФУНКЦИИ ДЛЯ КОНСТРУКТОРА:
     inline void set_layout();               // функция размещения объектов
@@ -110,7 +126,6 @@ private:
     QString glue_where(QStringList *ex = 0);
     QString glue_where(QString);
     void clear_where_strs();
-    QPushButton *create_panel_button(QString, QString, const char *method);
     bool up_selected_string();
     bool down_selected_string();
     void load_default_picture(QPixmap*);
@@ -143,6 +158,10 @@ signals:
     void rename_tab(QString);
     void switch_reserve_signal();
     void refresh_searcher();
+    void open_contragents(int, int);
+    void clear_contragent();
+    void open_docslist();
+    void switch_hidden_signal();
 
 private slots:
     void detail_info(int);
@@ -166,6 +185,12 @@ private slots:
     void reset_table();
     void reserve_button_slot();
     void switch_grey_mode();
+    void close_current();
+    void create_move_dialog_slot(Document*);
+    void move_to_doc(int);
+    void move_to_reserve(int);
+    void set_reserve_doc_data_slot(int id);
+
 
 public slots:
     void hide_catalog();
